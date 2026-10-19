@@ -17,9 +17,17 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import os
+
 import anthropic
 
 RAIZ = Path(__file__).resolve().parent.parent
+# a chave pode vir do ambiente ou do .env na raiz do projeto (ignorado pelo git)
+if not os.environ.get("ANTHROPIC_API_KEY") and (RAIZ / ".env").exists():
+    for linha in (RAIZ / ".env").read_text(encoding="utf-8").splitlines():
+        nome, _, valor = linha.partition("=")
+        if nome.strip() == "ANTHROPIC_API_KEY" and valor.strip():
+            os.environ["ANTHROPIC_API_KEY"] = valor.strip()
 PROMPTS = RAIZ / "prompts"
 LOGS = RAIZ / "data" / "agente"
 MODELO = "claude-opus-5-5"
@@ -145,9 +153,9 @@ def classificar(turnos_path, saida_path):
     if erros:
         raise SystemExit("classificar: saída inválida:\n" + "\n".join(erros))
 
-    rel = lambda i: round(turns[i]["start"] - t0)  # noqa: E731  (chave do turno: segundo de início no bloco)
+    rel = lambda i: round(turns[i]["start"] - t0, 1)  # noqa: E731  (chave: início no bloco, ao décimo de segundo)
     por_i = {x["i"]: x for x in out["turnos"]}
-    classe = {str(rel(i)): ([por_i[i]["tipo"], por_i[i]["temas"], por_i[i]["resumo"]] if i in por_i
+    classe = {f"{rel(i):.1f}": ([por_i[i]["tipo"], por_i[i]["temas"], por_i[i]["resumo"]] if i in por_i
                             else [None, [], "Fala da mediação."]) for i in range(len(turns))}
     Path(saida_path).write_text(json.dumps({
         "meta": {"titulo": "Confronto direto (banco de tempo)", "relogio_min": 15,

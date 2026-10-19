@@ -1,9 +1,12 @@
 """Gera a imagem de prévia (og.png, 1200x630) que aparece no card do link no X.
 
 Uso: python make_og.py SITE_DIR
-Lê SITE_DIR/data/dados.json e as nuvens em SITE_DIR/img/.
+Lê SITE_DIR/data/dados.json. O card vira miniatura de ~500 px no feed, então só leva o que se lê
+nesse tamanho: o título e três comparações com números grandes e o nome de cada candidato escrito.
+Os números usam o mesmo arredondamento do painel (meio para cima, como Math.round do JS).
 """
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -15,44 +18,50 @@ L, F = d["candidatos"]["Lula"], d["candidatos"]["Flávio"]
 
 W, H = 1200, 630
 BG, INK, INK2, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#e1e0d9"
-LULA, FLAVIO = "#e34948", "#2a78d6"
+COR = {"Lula": "#e34948", "Flávio": "#2a78d6"}
 FONT, BOLD = "C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/segoeuib.ttf"
-f = lambda size, bold=False: ImageFont.truetype(BOLD if bold else FONT, size)
 
-img = Image.new("RGB", (W, H), BG)
-dr = ImageDraw.Draw(img)
-dr.text((48, 34), "Debate do 2º turno · Band · 18/10/2026", font=f(22), fill=INK2)
-dr.text((48, 64), "Lula × Flávio: o confronto livre em números", font=f(44, True), fill=INK)
 
-# nuvens lado a lado
-top, ch = 138, 330
-for i, (who, color, slug) in enumerate([("Lula", LULA, "lula"), ("Flávio", FLAVIO, "flavio")]):
-    x0 = 48 + i * 564
-    dr.rounded_rectangle((x0, top, x0 + 14, top + 14), radius=3, fill=color)
-    dr.text((x0 + 22, top - 7), who, font=f(22, True), fill=INK)
-    cloud = Image.open(site / "img" / f"nuvem_{slug}.png").convert("RGBA")
-    cloud.thumbnail((540, ch - 30))
-    img.paste(cloud, (x0 + (540 - cloud.width) // 2, top + 28), cloud)
+def f(size, bold=False):
+    return ImageFont.truetype(BOLD if bold else FONT, size)
 
-# faixa de números: Lula | rótulo | Flávio
+
+def arred(x):
+    return int(math.floor(x + 0.5))
+
+
 def mmss(s):
+    s = arred(s)
     return f"{s // 60}:{s % 60:02d}"
 
 
-rows = [("Tempo de fala (áudio)", mmss(L["segundos_fala"]), mmss(F["segundos_fala"])),
-        ("Palavras por minuto", f"{L['palavras_por_minuto']:.0f}", f"{F['palavras_por_minuto']:.0f}"),
-        ("Citou o adversário", f"{L['mencoes_adversario']}", f"{F['mencoes_adversario']}")]
-y0 = top + ch + 14
-dr.line((48, y0 - 8, W - 48, y0 - 8), fill=GRID, width=2)
-cw = (W - 96) // 3
-for i, (lab, a, b) in enumerate(rows):
-    cx = 48 + i * cw + cw // 2
-    dr.text((cx, y0 + 6), lab, font=f(20), fill=INK2, anchor="mt")
-    dr.text((cx - 14, y0 + 36), a, font=f(40, True), fill=INK, anchor="rt")
-    dr.text((cx, y0 + 40), "×", font=f(30), fill=INK2, anchor="mt")
-    dr.text((cx + 14, y0 + 36), b, font=f(40, True), fill=INK, anchor="lt")
-    for x, color in [(cx - 14 - dr.textlength(a, font=f(40, True)) - 20, LULA), (cx + 14 + dr.textlength(b, font=f(40, True)) + 8, FLAVIO)]:
-        dr.rounded_rectangle((x, y0 + 52, x + 12, y0 + 64), radius=3, fill=color)
+img = Image.new("RGB", (W, H), BG)
+dr = ImageDraw.Draw(img)
+dr.text((60, 44), "Debate do 2º turno · Band · 18/10/2026 · confronto livre", font=f(26), fill=INK2)
+dr.text((60, 82), "Lula × Flávio: o confronto livre em números", font=f(52, True), fill=INK)
+
+linhas = [("Tempo de fala (medido no áudio)", mmss(L["segundos_fala"]), mmss(F["segundos_fala"])),
+          ("Palavras por minuto", str(arred(L["palavras_por_minuto"])), str(arred(F["palavras_por_minuto"]))),
+          ("Vezes que citou o adversário", str(L["mencoes_adversario"]), str(F["mencoes_adversario"]))]
+y = 196
+meio = W // 2
+for rot, a, b in linhas:
+    dr.line((60, y - 14, W - 60, y - 14), fill=GRID, width=2)
+    dr.text((meio, y), rot, font=f(26), fill=INK2, anchor="mt")
+    # Lula à esquerda do centro (alinhado à direita), Flávio à direita (alinhado à esquerda)
+    num = f(72, True)
+    dr.text((meio - 40, y + 36), a, font=num, fill=INK, anchor="rt")
+    dr.text((meio + 40, y + 36), b, font=num, fill=INK, anchor="lt")
+    for quem, x_txt, anc in (("Lula", meio - 40 - dr.textlength(a, font=num) - 24, "rt"),
+                             ("Flávio", meio + 40 + dr.textlength(b, font=num) + 24, "lt")):
+        nome = f(30, True)
+        larg = dr.textlength(quem, font=nome)
+        x_sw = x_txt - larg - 30 if anc == "rt" else x_txt
+        x_nome = x_txt if anc == "rt" else x_txt + 30
+        dr.rounded_rectangle((x_sw, y + 72, x_sw + 20, y + 92), radius=4, fill=COR[quem])
+        dr.text((x_nome, y + 66), quem, font=nome, fill=INK, anchor="rt" if anc == "rt" else "lt")
+    y += 134
+dr.text((meio, H - 34), "Perguntas, palavras, temas e mapa do debate no painel", font=f(24), fill=INK2, anchor="mb")
 
 img.save(site / "og.png", optimize=True)
 print("ok ->", site / "og.png")

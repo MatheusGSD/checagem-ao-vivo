@@ -1,0 +1,163 @@
+{
+ "fonte_rotulos": "bloco1_seglab_auto.json (ECAPA, cluster 1 = Lula, 0 = Flávio)",
+ "rotulos_manuais": {
+  "21": "F",
+  "71": "L",
+  "72": "F",
+  "73": "L",
+  "74": "F",
+  "75": "L",
+  "76": "F",
+  "77": "F",
+  "203": "F",
+  "204": "F",
+  "208": "F",
+  "209": "F",
+  "215": "L",
+  "240": "M",
+  "241": "M",
+  "310": "F",
+  "311": "F",
+  "312": "F",
+  "382": "L",
+  "416": "L",
+  "490": "F",
+  "512": "F",
+  "538": "L",
+  "539": "L",
+  "540": "L",
+  "675": "F",
+  "679": "M",
+  "680": "M",
+  "681": "M",
+  "682": "M",
+  "699": "M",
+  "316": "L"
+ },
+ "normalizacao": [
+  [
+   "\\bN[aã]o vou caro\\b",
+   "Vorcaro"
+  ],
+  [
+   "\\b(Bocaro|Borcaro|Vocaro|voc[aá]rio|voc[aá]culo|Vocalo)\\b",
+   "Vorcaro"
+  ],
+  [
+   "\\b(Lussinger|Lussinga|Lucinga|Alucinga|Lucinha|Lussinga)\\b",
+   "Luchsinger"
+  ],
+  [
+   "Roberto Luchsinger",
+   "Roberta Luchsinger"
+  ],
+  [
+   "\\bs[oó]tio careca\\b",
+   "sócio Careca"
+  ],
+  [
+   "\\bNSF\\b",
+   "INSS"
+  ],
+  [
+   "\\b(Milley|Melei|Meleim|Me lei|Me leio|me lei|me leio|Milen)\\b",
+   "Milei"
+  ],
+  [
+   "\\bDelanhol\\b",
+   "Dallagnol"
+  ],
+  [
+   "\\bMedon[cç]a\\b",
+   "Mendonça"
+  ],
+  [
+   "\\bJax Wagner\\b",
+   "Jaques Wagner"
+  ],
+  [
+   "\\bPol[ií]tica Federal\\b",
+   "Polícia Federal"
+  ],
+  [
+   "\\bpresidiados\\b",
+   "presidiários"
+  ],
+  [
+   "\\bLuan\\b",
+   "Lula"
+  ],
+  [
+   "\\bLua\\.",
+   "Lula."
+  ],
+  [
+   "\\bcacuetes\\b",
+   "cacoetes"
+  ],
+  [
+   "\\bdisfar[cç]ateia\\b",
+   "desfaçatez"
+  ],
+  [
+   "\\bdesenfriada\\b",
+   "desenfreada"
+  ],
+  [
+   "\\bem 1922\\b",
+   "em 2022"
+  ],
+  [
+   "22 Fl[aá]vio Bolsa\\b",
+   "22 Flávio Bolsonaro"
+  ],
+  [
+   "\\bmantei\\b",
+   "mantenho"
+  ],
+  [
+   "\\bc[aâ]maras\\b",
+   "câmeras"
+  ],
+  [
+   "\\bjanja\\b",
+   "Janja"
+  ],
+  [
+   "\\ba[cç]afino\\b",
+   "assassino"
+  ],
+  [
+   "\\bFreixito\\b",
+   "Frei Chico"
+  ],
+  [
+   "\\bum cado\\b",
+   "um caso"
+  ],
+  [
+   "\\bchotou\\b",
+   "chutou"
+  ],
+  [
+   "\\bdemorca[cç][aã]o\\b",
+   "demarcação"
+  ],
+  [
+   "\\bno Petro,",
+   "no Petrolão,"
+  ],
+  [
+   "\\bcontra-cheque\\b",
+   "contracheque"
+  ],
+  [
+   "\\bmitir[oô] do Coutumaz\\b",
+   "mentiroso contumaz"
+  ],
+  [
+   "\\brela[cç][aã]o de amizade convocada\\b",
+   "relação de amizade com o Vorcaro"
+  ]
+ ]
+}

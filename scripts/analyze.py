@@ -28,8 +28,20 @@ SLUG = {"Lula": "lula", "Flávio": "flavio"}
 # tons da mesma rampa que passam contraste nas superfícies clara e escura do painel
 CLOUD_TONES = {"Lula": ["#e34948", "#c93a3a", "#e66767", "#b33232"],
                "Flávio": ["#2a78d6", "#256abf", "#3987e5", "#1c5cab"]}
+# versão para o modo escuro: tons mais claros das mesmas rampas, legíveis sobre #1a1a19
+CLOUD_TONES_ESCURO = {"Lula": ["#e66767", "#f08a8a", "#eb7a7a", "#f5a3a3"],
+                      "Flávio": ["#3987e5", "#6da7ec", "#5598e7", "#86b6ef"]}
 
 STOP_SUPERFICIE = nlp.Defaults.stop_words | EXTRA_STOP | {"deixa", "olha", "vai", "vou", "é", "tá", "lhe", "ô"}
+# palavra que nunca aparece em minúscula na transcrição é nome próprio ("Roberta Luchsinger", "Brasil")
+_minusc_todas = {w for t in src["turns"] for w in re.findall(r"\b[a-záéíóúâêôãõç]+\b", t["text"])}
+
+
+def nomes_proprios(expr):
+    for _, disp in COMPOSTOS:  # nomes compostos na forma oficial ("Polícia Federal", "Bolsa Família")
+        expr = re.sub(re.escape(disp.lower()), disp, expr)
+    return " ".join(w[:1].upper() + w[1:] if w.isalpha() and w.islower() and w not in _minusc_todas else w
+                    for w in expr.split())
 
 
 def expressoes(words, n_max=4):
@@ -103,7 +115,7 @@ for c in CANDS:
         "pronomes": {k: len(re.findall(p, low)) for k, p in PRONOUNS.items()},
         "perguntas": text.count("?"),
         "top_lemas": [(w, n) for w, n in lem[c].most_common(40) if n >= MIN_OCORR],
-        "top_bigramas": expressoes(words)[:12],
+        "top_bigramas": [(nomes_proprios(g), n) for g, n in expressoes(words)[:12]],
         "segundos_por_tipo": {k: round(v) for k, v in por_tipo.items()},
         "segundos_por_tema": {k: round(v) for k, v in sorted(por_tema.items(), key=lambda x: -x[1])},
     }
@@ -196,6 +208,9 @@ else:
     raise SystemExit("nenhuma letra máxima coube na escala; aumente a área da nuvem")
 for c, wc in clouds.items():
     wc.to_file(str(site / "img" / f"nuvem_{SLUG[c]}.png"))
+    rng_escuro = random.Random(7)  # mesma disposição, só troca as cores
+    wc.recolor(color_func=lambda *a, **k: rng_escuro.choice(CLOUD_TONES_ESCURO[c]))
+    wc.to_file(str(site / "img" / f"nuvem_{SLUG[c]}_escuro.png"))
 print(f"  nuvens: letra máxima {letra_max}px para {gmax} ocorrências; "
       f"{', '.join(f'{c} {len(w.layout_)} termos' for c, w in clouds.items())}")
 

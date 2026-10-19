@@ -2,4 +2,9 @@
 data/*
 !data/bloco*_correcoes.json
 !data/bloco*_classificacao.json
+!data/bloco*_conversa.json
+!data/glossario.json
 __pycache__/
+
+# chave da API do Claude (nunca vai para o git)
+.env

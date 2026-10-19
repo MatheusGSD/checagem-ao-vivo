@@ -1,0 +1,7 @@
+{
+ "descricao": "Grafia de nomes próprios conferida em fontes públicas. Aplicado por código depois das correções de nomes do agente.",
+ "entradas": [
+  {"errado": "\\bLussinger\\b", "certo": "Luchsinger",
+   "fonte": "https://www.poder360.com.br/poder-justica/amiga-de-lulinha-troca-defesa-apos-novos-inqueritos-no-stf/"}
+ ]
+}

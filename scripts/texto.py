@@ -22,7 +22,7 @@ porque quer vai vou eh ah ã hum tipo bom ok vez cada todo tudo algum minuto obr
 # nomes e expressões que contam como um termo só (regex sem distinção de maiúsculas -> forma exibida)
 COMPOSTOS = [
     (r"careca do inss|careca", "Careca do INSS"),
-    (r"roberta luchsinger|luchsinger|roberta", "Roberta Luchsinger"),
+    (r"roberta lu(?:ch|s)singer|lu(?:ch|s)singer|roberta", "Roberta Luchsinger"),
     (r"daniel vorcaro|vorcaro|daniel", "Daniel Vorcaro"),  # "Daniel" sozinho também é ele ("ó, Daniel, não vende o banco")
     (r"fl[aá]vio bolsonaro", "Flávio Bolsonaro"),  # separa o candidato de "Bolsonaro" (o pai)
     (r"pol[ií]cia federal", "Polícia Federal"),
