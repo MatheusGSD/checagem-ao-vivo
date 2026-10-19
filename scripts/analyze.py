@@ -67,6 +67,8 @@ PRONOUNS = {"eu": r"\b(eu|meu|minha|meus|minhas|comigo)\b",
 COMPOSTOS = [
     (r"careca do inss|careca", "Careca do INSS"),
     (r"roberta luchsinger|luchsinger|roberta", "Roberta Luchsinger"),
+    (r"daniel vorcaro|vorcaro|daniel", "Daniel Vorcaro"),  # "Daniel" sozinho também é ele ("ó, Daniel, não vende o banco")
+    (r"fl[aá]vio bolsonaro", "Flávio Bolsonaro"),  # separa o candidato de "Bolsonaro" (o pai)
     (r"pol[ií]cia federal", "Polícia Federal"),
     (r"bolsa fam[ií]lia", "Bolsa Família"),
     (r"banco central", "Banco Central"),
