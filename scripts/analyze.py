@@ -202,7 +202,6 @@ res["turnos"] = [{"ini": round(t["start"] - t0, 1), "fim": round(t["end"] - t0, 
                   "resumo": t.get("resumo"), "trecho": trecho(t["text"])} for t in turns]
 res["afirmacoes"] = src.get("afirmacoes", [])
 res["perguntas"] = src.get("perguntas", [])
-res["criterios_resposta"] = src.get("criterios_resposta", {})
 
 res["criterio_nuvem"] = {
     "classes": "substantivos, nomes próprios, verbos e adjetivos (na forma de dicionário)",

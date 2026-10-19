@@ -25,6 +25,27 @@ def normaliza(text):
     return text
 
 
+def resolve_pergunta(turns, quem, rel, literal, aparte_max=12):
+    """Acha o turno da pergunta (pelo segundo de início) e confere que o trecho é literal. A fala
+    seguinte é tudo o que o outro candidato disse até quem perguntou retomar a palavra com uma
+    fala de `aparte_max` palavras ou mais (apartes curtos de quem perguntou não interrompem)."""
+    t0 = turns[0]["start"]
+    i = min(range(len(turns)), key=lambda j: abs(turns[j]["start"] - t0 - rel))
+    if turns[i]["speaker"] != quem or abs(turns[i]["start"] - t0 - rel) > 1.5:
+        raise SystemExit(f"pergunta de {quem} em {rel}s não bate com o turno {turns[i]['start'] - t0:.0f}s")
+    if literal not in turns[i]["text"]:
+        raise SystemExit(f"trecho não é literal no turno {rel}s: {literal!r}")
+    resp = []
+    for t in turns[i + 1:]:
+        if t["speaker"] == quem and len(t["text"].split()) >= aparte_max:
+            break
+        if t["speaker"] not in (quem, "Mediação"):
+            resp.append(t)
+    return {"t": rel, "pergunta": literal,
+            "t_resposta": round(resp[0]["start"] - t0) if resp else None,
+            "resposta": " ".join(t["text"] for t in resp) or None}
+
+
 turns = []
 for seg, lab in zip(trans, labels):
     if lab == "?":
@@ -53,8 +74,10 @@ if len(sys.argv) > 5:
     if faltando or keys:
         raise SystemExit("turnos sem classificação:\n" + "\n".join(faltando) +
                          (f"\nchaves sem turno: {sorted(keys)}" if keys else ""))
-    out.update(meta=cls["meta"], afirmacoes=cls["afirmacoes"], perguntas=cls.get("perguntas", []),
-               criterios_resposta=cls.get("criterios_resposta", {}))
+    out.update(meta=cls["meta"], afirmacoes=cls["afirmacoes"],
+               perguntas=[{"quem": f["quem"], "tema": f["tema"],
+                           "instancias": [resolve_pergunta(turns, f["quem"], t, lit) for t, lit in f["instancias"]]}
+                          for f in cls.get("fios_perguntas", [])])
 
 Path(sys.argv[4]).write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
 for who in NOME.values():

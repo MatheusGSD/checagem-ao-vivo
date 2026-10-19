@@ -10,10 +10,10 @@
   "Lula": {
    "turnos": 63,
    "segundos_fala": 881,
-   "palavras": 2604,
-   "palavras_por_minuto": 177.4,
+   "palavras": 2606,
+   "palavras_por_minuto": 177.5,
    "turno_medio_s": 14.0,
-   "diversidade_lexical": 0.601,
+   "diversidade_lexical": 0.6,
    "mencoes_adversario": 13,
    "pronomes": {
     "eu": 71,
@@ -99,6 +99,10 @@
      7
     ],
     [
+     "Daniel Vorcaro",
+     6
+    ],
+    [
      "Brasil",
      6
     ],
@@ -125,10 +129,6 @@
     [
      "arma",
      6
-    ],
-    [
-     "Daniel Vorcaro",
-     5
     ],
     [
      "pergunta",
@@ -1022,7 +1022,7 @@
    "ini": 446.9,
    "fim": 478.4,
    "quem": "Lula",
-   "palavras": 73,
+   "palavras": 75,
    "tipo": "ataque",
    "temas": [
     "Mentira e credibilidade",
@@ -2417,186 +2417,408 @@
  ],
  "perguntas": [
   {
-   "t": 0,
    "quem": "Lula",
-   "pergunta": "Por que votou contra ampliar a licença-maternidade em 2009?",
-   "t_resposta": 25,
-   "resposta": "Disse não ter nada contra as mulheres, citou a esposa e as filhas e passou ao caso Luchsinger.",
-   "status": "desviou",
-   "nota": "Lula repetiu a pergunta aos 0:48 e aos 24:45."
+   "tema": "Licença-maternidade",
+   "instancias": [
+    {
+     "t": 0,
+     "pergunta": "E de 49 deputados, você foi o único que votou contra a mulher ter dois meses mais para cuidar da criança. O que você tem contra as mulheres?",
+     "t_resposta": 25,
+     "resposta": "Lula, obrigado pela sua pergunta. Eu não tenho absolutamente nada contra as mulheres, pelo contrário. Eu sou casado com a Fernanda, uma mulher maravilhosa, sou pai de duas meninas lindas, a Luísa e a Carol. E eu vou dar sempre o meu melhor como presidente da República e como homem, para defender a minha família e fazer o melhor para elas. Agora, Lula, você conhece Roberta Luchsinger?"
+    },
+    {
+     "t": 48,
+     "pergunta": "Por que você votou contra?",
+     "t_resposta": 61,
+     "resposta": "Lula, Roberta Luchsinger, ela fez acusações muito graves contra você ontem. Eu sei que você não deve ter dormido bem, porque ela também falou de muito mais coisa. E você, dizendo que não a conhecia, você deu a oportunidade agora de corrigir a sua resposta. Você conhece Roberta Luchsinger?"
+    }
+   ]
   },
   {
-   "t": 106,
    "quem": "Lula",
-   "pergunta": "Por que mantém escritório com o \"Careca do INSS\"?",
-   "t_resposta": 125,
-   "resposta": "Negou: disse que não mantém escritório com o Careca.",
-   "status": "respondeu"
+   "tema": "Escritório com o Careca do INSS",
+   "instancias": [
+    {
+     "t": 106,
+     "pergunta": "por que você mantém o escritório com careca?",
+     "t_resposta": 125,
+     "resposta": "Eu não mantenho o escritório com careca, Lula. Sabe, a sua campanha está sendo a base da mentira. Isso o povo está reconhecendo. O careca do INSS foi do seu governo. Inclusive, ele pagou coisa para o seu filho. O dinheiro que o seu filho está sendo sustentado lá fora, na Espanha. Vocês sabem, né, que o filho do Lula mora num bairro muito rico, do lado do Vini Júnior. Quem é que está sustentando o seu filho? Inclusive, a Luchsinger falou que sabe quem está sustentando o seu filho."
+    }
+   ]
   },
   {
-   "t": 447,
    "quem": "Lula",
-   "pergunta": "Qual a sua relação de amizade com Vorcaro?",
-   "t_resposta": 481,
-   "resposta": "Falou de condenados por corrupção, saudou Moro e Dallagnol e culpou a bancada do PT pela brecha no INSS.",
-   "status": "desviou"
+   "tema": "Amizade com Vorcaro",
+   "instancias": [
+    {
+     "t": 447,
+     "pergunta": "Explica a sua relação de amizade com o Vorcaro",
+     "t_resposta": 478,
+     "resposta": "Vou falar uma coisa pra você Você tá vendo esse auditório aqui lotado Cheio de gente Sabe quantas pessoas aqui já foram condenadas Ou presas por corrupção e lavagem de dinheiro Só você Inclusive o que a gente prendeu tá aqui aqui, Moro e Dallagnol, bem-vindos, vocês que lutaram muito aqui para combater a corrupção nesse país e você ajudou a desmantelar, né, Lula, com seus amigos lá no Supremo. Então, olha só, o que eu posso falar para o povo brasileiro é que no meu governo eu vou combater a corrupção de verdade. O INSS, que a gente mandou, a primeira coisa que o presidente Bolsonaro fez, quando se elegeu, foi mandar uma MP para o Congresso Nacional para, entre outras coisas, combater a corrupção no INSS. Vocês sabem qual foi a bancada que insistiu ali para fazer uma emendinha para favorecer os sindicatos e conseguir fazer esses descontos de forma totalmente desenfreada, sem controle? Foi a bancada do PT. Lula, o Brasil elegeu agora um Congresso Nacional muito mais à direita, Lula, e não vai ter mais roubalheira de velhinho no governo Bolsonaro e no seu governo está tendo roubalheira no seu governo, Lula."
+    }
+   ]
   },
   {
-   "t": 557,
    "quem": "Lula",
-   "pergunta": "Onde estão os R$ 134 milhões de Vorcaro?",
-   "t_resposta": 832,
-   "resposta": "Disse que o dinheiro foi para o filme sobre Jair Bolsonaro.",
-   "status": "respondeu",
-   "nota": "Resposta contestada: Lula disse que a diretora do filme nega ter recebido. Ele repetiu a pergunta mais de dez vezes."
+   "tema": "Os R$ 134 milhões de Vorcaro",
+   "instancias": [
+    {
+     "t": 610,
+     "pergunta": "E eu queria que você explicasse o que você fez com os 134 milhões.",
+     "t_resposta": 647,
+     "resposta": "Você tem que ter uma explicação aqui. Você fica aqui do meu lado, Lula. Vou conversar junto aqui. Fica tranquilo. Eu não sou um cara violento, não. Fica tranquilo. Eu estou sem carteira aqui, senão vai poder me roubar. A minha carteira pode ser roubada. Olha só, deixa eu falar uma coisa para você, Lula. Quem deve explicações é você. Você deve explicações à nação brasileira. O que é que você está fazendo naquela reuniãozinha fechadinha, lá junto com o seu Haddad, junto com o Galípolo, prometendo para o Daniel Vorcaro, falando assim, ó, Daniel, não vende o banco agora, não? Porque a gente vai trocar o presidente do Banco Central? E aí a gente consegue te ajudar. Foi isso que aconteceu naquela reunião? Me conta, conta agora o que aconteceu naquela reunião fechadinha. O que é que você prometeu para o Vorcaro?"
+    },
+    {
+     "t": 811,
+     "pergunta": "Digo, o que você fez com esse dinheiro? O que você fez?",
+     "t_resposta": 828,
+     "resposta": "Já expliquei várias vezes. Vou explicar quando ele for necessário. Esse dinheiro foi para o filme do melhor presidente do Brasil, que já existiu, que é a GMC de Bolsonaro. Você conhece? o melhor presidente do Brasil e vai ser um filme maravilhoso. Eu vou te dar uma cortesia para você assistir o filme do Bolsonaro para você ver como é que uma pessoa é amada, por que a pessoa é chamada de mito, diferente de você, né? Sempre há um outro dia que ninguém te chama de mito. É óbvio, você não tem por que ser admirado por ninguém. Está no filme. Está no filme. Está explicando."
+    },
+    {
+     "t": 830,
+     "pergunta": "Onde você colocou esse dinheiro?",
+     "t_resposta": 832,
+     "resposta": "Esse dinheiro foi para o filme do melhor presidente do Brasil, que já existiu, que é a GMC de Bolsonaro. Você conhece? o melhor presidente do Brasil e vai ser um filme maravilhoso. Eu vou te dar uma cortesia para você assistir o filme do Bolsonaro para você ver como é que uma pessoa é amada, por que a pessoa é chamada de mito, diferente de você, né? Sempre há um outro dia que ninguém te chama de mito. É óbvio, você não tem por que ser admirado por ninguém. Está no filme. Está no filme. Está explicando."
+    },
+    {
+     "t": 853,
+     "pergunta": "Explica os 174 milhões.",
+     "t_resposta": 857,
+     "resposta": "Está no filme. Está no filme. Está explicando."
+    },
+    {
+     "t": 1031,
+     "pergunta": "Como é que alguém pode pegar 134 milhões e não ver onde foi?",
+     "t_resposta": 1038,
+     "resposta": "Foi no filme que você vai assistir, você vai aplaudir o filme do presidente Bolsonaro que você vai amar, você vê a história de um presidente honesto, correto, patriota, é isso que você vai ver. Agora você que recebe a Bolsa Família, você sabe, foi o presidente Bolsonaro que passou para no mínimo 600 reais o Bolsa Família, você sabia disso, você lembra disso? Porque na época do governo Lula, ele simplesmente abandonou vocês, era 75 reais para um, 100 para outro, era em média 190, o presidente Bolsonaro triplicou esse valor. Então, Lula, eu lamento muito que você queira usar as pessoas mais pobres pensando no seu projeto de poder e não pensando nelas. Eu já falei, você não quer ouvir."
+    },
+    {
+     "t": 1079,
+     "pergunta": "Se você não falar onde você pôs os 134 milhões, eu vou parar de perguntar.",
+     "t_resposta": 1098,
+     "resposta": "Gente, você que está assistindo agora, vai na minha rede social, arroba Flávio Bolsonaro. Eu vou colocar o áudio do Vorcaro para ele, onde o Vorcaro fala assim, deixa eu falar, gente, eu não consigo falar se ele está me preparando, vai na minha rede social agora, arroba Flávio Bolsonaro. Você vai ver lá o áudio do Vorcaro, onde ele fala o seguinte, o filme do Bolsonaro foi tudo bem, tudo certinho. O filme do Lula teve 30 milhões de reais por fora no Instituto Lula. É o Vorcaro que está falando. Você quer explicar?"
+    }
+   ]
   },
   {
-   "t": 859,
    "quem": "Lula",
-   "pergunta": "Como comprou uma casa de R$ 10 milhões?",
-   "t_resposta": 886,
-   "resposta": "Disse que comprou com trabalho, \"diferente do seu filho\", sem detalhar.",
-   "status": "em parte"
+   "tema": "Casa de R$ 10 milhões",
+   "instancias": [
+    {
+     "t": 859,
+     "pergunta": "Me explica como é que você comprou uma casa de 10 milhões de salários, senador.",
+     "t_resposta": 885,
+     "resposta": "Diferente do seu filho com trabalho, não com dinheiro aposentado."
+    }
+   ]
   },
   {
-   "t": 1127,
    "quem": "Lula",
-   "pergunta": "Por que interferiu para que um policial que matou uma criança de 5 anos não fosse preso?",
-   "t_resposta": 1153,
-   "resposta": "Primeiro falou do voto dos presos em Lula; depois (20:14) disse que não houve julgamento e que Lula criminaliza a advocacia.",
-   "status": "em parte"
+   "tema": "Policial que matou uma criança",
+   "instancias": [
+    {
+     "t": 1127,
+     "pergunta": "Você era senador da República e foi interferir para que um policial que matou uma criança de 5 anos com uma bala de fuzil não fosse preso. Me explica por que você fez isso.",
+     "t_resposta": 1153,
+     "resposta": "Ô, Lula, com você, a criminalidade explodiu no Brasil. Inclusive, você pode explicar por que 73% dos presidiários votaram em você? Até teu pai. Ô, Lula."
+    },
+    {
+     "t": 1208,
+     "pergunta": "Esse assassino que você não deixou ser preso Que matou a criança de 5 anos Botou em você?",
+     "t_resposta": 1214,
+     "resposta": "Lula, deixa eu falar uma coisa pra você Você não pode criminalizar a advocacia, Lula Nem teve julgamento, você já condenou o cara Você foi condenado em todas as instâncias Você era senador Você foi condenado em primeira instância Você foi condenado em segunda instância Você foi condenado no STJ Você foi condenado no STF Você foi condenado em todas as instâncias, Lula E foi descondenado pelos seus amigos que você quer falar de justiça?"
+    },
+    {
+     "t": 1238,
+     "pergunta": "Me conta se você recebeu o voto do cara que matou uma criança de 5 anos que você não deixou ele ser preso.",
+     "t_resposta": 1244,
+     "resposta": "Ô Lula, você recebeu o voto de 73% dos presidiários desse país. Me conta. Quando você foi declarado presidente em 2022, os presidiários ficaram em festa. Você que está em casa, você que está em casa, já teve o seu celular roubado? Já teve a sua bolsa roubada? Em quem você acha que o ladrão do seu celular vai votar? Em quem você acha que o ladrão da sua bolsa vai votar. Você vai votar igual ao ladrão do seu celular? Igual ao assaltante da sua bolsa? Vamos mudar o Brasil? Vamos cravar 22 Flávio Bolsonaro na presidência e mudar o Brasil?"
+    }
+   ]
   },
   {
-   "t": 1277,
    "quem": "Lula",
-   "pergunta": "Por que quis acabar com a marcação das munições?",
-   "t_resposta": 1298,
-   "resposta": "Negou: disse que nunca quis tirar a marcação.",
-   "status": "respondeu"
+   "tema": "Marcação das munições",
+   "instancias": [
+    {
+     "t": 1277,
+     "pergunta": "Por que você queria tirar a marca das balas, o número da bala para que não fosse identificada. Me conta.",
+     "t_resposta": 1298,
+     "resposta": "Nunca quis tirar nada disso, agora você é o problema do Brasil. É por causa de você que não fiscaliza as fronteiras. Você que mora na favela dominada pelo tráfico, tem arma aí aonde você mora? Arma ilegal, né? Tem fuzil aí, né? Como é que os fuzis entram?"
+    }
+   ]
   },
   {
-   "t": 1315,
    "quem": "Lula",
-   "pergunta": "Por que empregou parentes de um chefe do Escritório do Crime (caso Marielle)?",
-   "t_resposta": 1326,
-   "resposta": "Disse que o governo Lula emprega condenados do Mensalão e do Petrolão.",
-   "status": "desviou"
+   "tema": "Escritório do Crime e caso Marielle",
+   "instancias": [
+    {
+     "t": 1315,
+     "pergunta": "Me conta por que você deu emprego para a irmã e para a mulher do cara que é o escritório do crime que mandou matar a Marielle.",
+     "t_resposta": 1326,
+     "resposta": "Você está dando emprego para um monte de cara que foi condenado por corrupção no Mensalão, no Petrolão, está tudo no seu governo. Todo mundo voltou para o seu governo. As mesmas pessoas de lá de trás que participaram dos maiores esquemas de corrupção estão te assessorando."
+    }
+   ]
   },
   {
-   "t": 1485,
    "quem": "Lula",
-   "pergunta": "Vai propor o fim da escala 6x1?",
-   "t_resposta": 1597,
-   "resposta": "\"É óbvio que não, é só mais uma mentira sua.\" Depois disse que o trabalhador \"está garantido\".",
-   "status": "em parte",
-   "nota": "Resposta ambígua: não fica claro se o \"não\" é sobre a proposta ou sobre a acusação."
+   "tema": "Armas e munições liberadas",
+   "instancias": [
+    {
+     "t": 1413,
+     "pergunta": "Eu queria saber para onde foram essas armas.",
+     "t_resposta": 1430,
+     "resposta": "Olha, esse número não existe, você inventou, né? Hein? Você inventou o número, você mentiu, você chutou o número."
+    }
+   ]
   },
   {
-   "t": 1641,
    "quem": "Lula",
-   "pergunta": "O seu modelo econômico é o de Milei?",
-   "t_resposta": 1653,
-   "resposta": "Citou Ortega, Maduro e o Irã; depois disse que a direita vai \"consertar\" o país e prometeu um \"tesouraço\" na corrupção.",
-   "status": "desviou",
-   "nota": "Lula repetiu a pergunta cinco vezes."
+   "tema": "Escala 6x1",
+   "instancias": [
+    {
+     "t": 1485,
+     "pergunta": "O mundo pode acreditar na sua palavra que você não vai fazer nenhuma proposta para acabar com o fim da escala 6x1?",
+     "t_resposta": 1530,
+     "resposta": "Além de você ser esquecido de não ir sem ninguém, é você... Cada vez que o Lula falar assim, sabe, sabe, é porque ele está mentindo. Cada vez que eu olhar para cima assim, ele está mentindo. São dois cacoetes que ele tem e começa a reparar. Sempre que ele fala isso, ele está mentindo. Eu quero falar para você, que está me ouvindo agora, o que é a mudança. A sua vida melhorou ou piorou com o governo Lula? Qual a opção que você vai fazer daqui a sete dias? A gente tem mais sete dias para acabar com essa era Lula. É o fim da era Lula. O Brasil vai se livrar dessas pessoas que estão deixando de legado um monte de recorde negativo aí, né, Lula?"
+    },
+    {
+     "t": 1566,
+     "pergunta": "Você vai ou não vai fazer uma proposta para acabar com o fim das casas fechadas?",
+     "t_resposta": 1597,
+     "resposta": "É óbvio que não, é só mais uma mentira sua. Por que você era contra? É mais uma mentira sua, Lula."
+    },
+    {
+     "t": 1600,
+     "pergunta": "Por que você era contra e o PL está dizendo que vai propor mudar desde já?",
+     "t_resposta": 1605,
+     "resposta": "Ele só faz fake news o tempo inteiro. Você, trabalhador, está garantido comigo. Só que eu vou fazer muito melhor para você. Eu vou fazer com que você prospere de verdade. A gente vai falar no próximo bloco aqui sobre prosperidade. E não sobre o legado que ele está deixando, que é só de miséria, é de endividamento. E um monte de recorde negativo. É recorde de mulher assassinada, recorde de mulher espancada, recorde de empresa fechada, recorde de indústrias deixando o Brasil, é recorde de criminalidade. É só recorde ruim. E é o recordista de mentira também, que já foi condenado várias vezes pelo TSE por fake news. Já foi obrigado a tirar um monte de propaganda do óculos e está mentindo contra mim."
+    }
+   ]
   },
   {
-   "t": 1794,
    "quem": "Lula",
-   "pergunta": "O \"tesouraço\" vai cair nas costas de quem?",
-   "t_resposta": 1807,
-   "resposta": "Disse que vai cortar gastos como as viagens com Janja.",
-   "status": "respondeu"
+   "tema": "Modelo Milei",
+   "instancias": [
+    {
+     "t": 1641,
+     "pergunta": "você continua dizendo que o teu modelo é o modelo do Milei?",
+     "t_resposta": 1653,
+     "resposta": "E o seu amigo, que é o Ortega da Nicarágua, um ditador, o seu amigo que é o Maduro, que está preso? Esses são seus amigos. Você mandou o seu vice-presidente para visitar a posse do ditador do Irã. É nisso que você transformou o Brasil. O Brasil acabou internacionalmente por causa da sua política, Lula. Olha os seus amigos."
+    },
+    {
+     "t": 1674,
+     "pergunta": "Você sabe quanto é que está a pobreza na Argentina?",
+     "t_resposta": 1696,
+     "resposta": "Um governo de esquerda virou o Milei, deixou tanta gente na miséria, que é difícil, né? A direita tem que vir e consertar. Consertar as besteiras que esse governo faz. É isso que eu vou fazer. Eu vou consertar o Brasil. O trabalho não vai ser fácil, porque ele está deixando o Brasil muito endividado. Ele está deixando o Brasil na lama. Mas a gente vai conseguir juntos resgatar o nosso país. Milei. Armaginejar. Pergunta se você vai Você vai escolher o... Milei. Você vai escolher o modelo de quem? Eu, o modelo do Lula. Ou da Roberta. O modelo do Lula. Não, da Roberta Luchsinger, não, né?"
+    },
+    {
+     "t": 1720,
+     "pergunta": "Milei ou não?",
+     "t_resposta": 1724,
+     "resposta": "Milei. Armaginejar. Pergunta se você vai Você vai escolher o... Milei. Você vai escolher o modelo de quem? Eu, o modelo do Lula. Ou da Roberta. O modelo do Lula. Não, da Roberta Luchsinger, não, né?"
+    },
+    {
+     "t": 1766,
+     "pergunta": "Você vai pedir o motosserra emprestada do Milei?",
+     "t_resposta": 1772,
+     "resposta": "Vou te dar aqui, meu, a minha câmera pode usar."
+    },
+    {
+     "t": 1774,
+     "pergunta": "eu quero que você me diga se você já pegou emprestada a motosserra do Milei.",
+     "t_resposta": 1782,
+     "resposta": "O que eu vou fazer, Lula, é tesouraço na corrupção no seu governo. É isso que eu vou fazer."
+    }
+   ]
   },
   {
-   "t": 25,
+   "quem": "Lula",
+   "tema": "\"Tesouraço\"",
+   "instancias": [
+    {
+     "t": 1794,
+     "pergunta": "E o tesouraço? Vai cair nas costas de quem?",
+     "t_resposta": 1807,
+     "resposta": "Na sua, no seu especialidade, na sua viagem com a Janja, de 7 bilhões já se gastou com a Janja, eu vou tirar dele da Janja e vou dar para você. Entendeu?"
+    }
+   ]
+  },
+  {
    "quem": "Flávio",
-   "pergunta": "Você conhece Roberta Luchsinger?",
-   "t_resposta": 77,
-   "resposta": "Disse que o caso é da Polícia Federal.",
-   "status": "desviou",
-   "nota": "Flávio repetiu a pergunta aos 1:01 e aos 3:50."
+   "tema": "Roberta Luchsinger",
+   "instancias": [
+    {
+     "t": 25,
+     "pergunta": "Agora, Lula, você conhece Roberta Luchsinger?",
+     "t_resposta": 48,
+     "resposta": "Você não respondeu a pergunta. Ou seja, o que você tem garantir que as mulheres tenham apenas mais dois meses para cuidar de uma criança? Por que você votou contra?"
+    },
+    {
+     "t": 61,
+     "pergunta": "Você conhece Roberta Luchsinger?",
+     "t_resposta": 77,
+     "resposta": "A Roberta é uma questão da Polícia Federal. E a Polícia Federal vai cuidar. E quando a Polícia Federal fizer a investigação, você vai saber o que é a Roberta."
+    },
+    {
+     "t": 230,
+     "pergunta": "Você já não conhece o Roberta Luchsinger?",
+     "t_resposta": 246,
+     "resposta": "Quem? Lulinha é meu filho Acho que ele é inocente E ele vai apurar o seu inquérito Ele não vai ser negado Ele não é uma política federal Que traga ele aqui para ser julgado O juiz que está com o processo, que é o seu amigo, que é o André Mendonça, que traga ele para ser julgado. Ele virá a prestar depoimento e não irá se esconder. No meu mundo, ninguém se esconde. Meu mundo é coisa à sua apurada. Eu quero que você explique a quadrilha do INSS, que foi montada no seu governo, no governo do seu pai, e que nós conseguimos debelar. Com dois anos de trabalho, nós conseguimos debelar essa quadrilha e prendemos muita gente. E já arrecadamos R$ 100 bilhões da quadrilha. E já pagamos R$ 3,5 bilhões aos aposentados."
+    }
+   ]
   },
   {
-   "t": 88,
    "quem": "Flávio",
-   "pergunta": "Por que a PF não vai à casa do seu filho? Cadê o Lulinha?",
-   "t_resposta": 148,
-   "resposta": "Disse que o filho abriu os sigilos bancário e telefônico e será investigado se houver problema.",
-   "status": "respondeu"
+   "tema": "Lulinha e a Polícia Federal",
+   "instancias": [
+    {
+     "t": 88,
+     "pergunta": "Por que a sua Polícia Federal só vai na casa dela e não vai na casa do seu filho? Cadê o Lulinha?",
+     "t_resposta": 106,
+     "resposta": "Deixa eu lhe contar uma coisa. A Roberta é um problema da Polícia Federal. Se vocês aliciaram ela para ela prestar depoimento, Então, tem uma coisa, o dado concreto é que ela é uma questão da Polícia Federal que vai investigar. E você é que tem que responder, por que você mantém o escritório com careca?"
+    },
+    {
+     "t": 187,
+     "pergunta": "Por que ele está fugido lá na Espanha? Por que ele não está aqui?",
+     "t_resposta": 203,
+     "resposta": "O seu irmão está fugindo nos Estados Unidos tramando contra o Brasil. O seu irmão está fugindo nos Estados Unidos tramando contra o Brasil. Tramando contra o Brasil, pedindo intervenção do Trump no Brasil. Vocês viram que hoje na manifestação de vocês tinha um torpedo americano que mandava atacar um torpedo no Brasil? Na verdade, o que vocês estão fazendo é trair a pátria e vocês serão julgados por isso."
+    }
+   ]
   },
   {
-   "t": 125,
    "quem": "Flávio",
-   "pergunta": "Quem está sustentando o seu filho na Espanha?",
-   "t_resposta": 148,
-   "resposta": "Falou da abertura dos sigilos, sem dizer quem o sustenta.",
-   "status": "desviou"
+   "tema": "Quem sustenta o filho de Lula",
+   "instancias": [
+    {
+     "t": 125,
+     "pergunta": "Quem é que está sustentando o seu filho?",
+     "t_resposta": 148,
+     "resposta": "O meu filho abriu a sua conta bancária e abriu o seu telefone para ser investigado. Porque eu não sou um pai que protege o filho como você foi protegido pelo seu pai. Se tiver investigação, se tiver problema, será investigado. Seja meu filho, seja meu irmão, qualquer um. Eu não escondo e nem mudo o diretor da Polícia Federal e nem mando o ministro ir embora que não quis trocar o diretor da Polícia Federal. Mas eu queria dizer para vocês o seguinte, o careca é resultado de uma quadrilha que eles montaram para roubar a Previdência. Nós destruímos a quadrilha, prendemos a quadrilha e já pagamos os aposentados. A quadrilha foi montada ou não foi?"
+    }
+   ]
   },
   {
-   "t": 187,
    "quem": "Flávio",
-   "pergunta": "Por que o seu filho está na Espanha e não aqui?",
-   "t_resposta": 203,
-   "resposta": "Acusou Eduardo Bolsonaro de conspirar nos EUA; depois (4:16) disse que o filho virá depor e não vai se esconder.",
-   "status": "em parte"
+   "tema": "\"Balcão de negócios\"",
+   "instancias": [
+    {
+     "t": 301,
+     "pergunta": "O seu governo virou um balcão de negócios?",
+     "t_resposta": 318,
+     "resposta": "A Roberta é um caso da Polícia Federal e ela tem que ser investigada, tem que prestar depoimento. E eu quero ver no depoimento se ela vai contar as mentiras que ela contou ontem."
+    }
+   ]
   },
   {
-   "t": 330,
    "quem": "Flávio",
-   "pergunta": "Como acusar Bolsonaro pelo INSS se o seu irmão é vice de um sindicato envolvido?",
-   "t_resposta": 382,
-   "resposta": "\"Quem montou a quadrilha tem que explicar.\"",
-   "status": "desviou"
+   "tema": "Irmão de Lula e o INSS",
+   "instancias": [
+    {
+     "t": 330,
+     "pergunta": "você acha que o Bolsonaro montou um esquema para favorecer o seu irmão, o Frei Chico, que é vice-presidente de um sindicato que roubou os aposentados?",
+     "t_resposta": 382,
+     "resposta": "Quem montou o quadrilha tem que explicar mesmo."
+    }
+   ]
   },
   {
-   "t": 665,
    "quem": "Flávio",
-   "pergunta": "O que prometeu a Vorcaro na reunião com Haddad e Galípolo?",
-   "t_resposta": 693,
-   "resposta": "Disse que falou que Vorcaro virou banqueiro no governo Bolsonaro e seria preso no dele.",
-   "status": "respondeu"
+   "tema": "Reunião com Vorcaro",
+   "instancias": [
+    {
+     "t": 665,
+     "pergunta": "Me conta, conta agora o que aconteceu naquela reunião fechadinha. O que é que você prometeu para o Vorcaro?",
+     "t_resposta": 693,
+     "resposta": "Aconteceu que eu falei, você foi feito banqueiro. No governo Bolsonaro E vai ser feito prisioneiro no meu governo E ele está preso Vocês fizeram ele um banqueiro E eu fiz ele um prisioneiro Provando que ele tinha quebrado Dado um golpe de 60 bilhões de reais E além disso, você sabe Eu não sei se você participou Não vou fazer a acusação Mas os bacanais que havia nesse país Com o dinheiro do Vorcaro A quantidade de festa que ele fez A quantidade de sacanagem A quantidade de mulher, a quantidade de senadores, ministros, outra coisa, tudo isso vai ter que ser apurado, para a gente colocar as coisas à limpa nesse país. E você sabe que só eu posso fazer isso, porque você não faz, você não tem pedigree para isso. O seu pedigree é um pedigree ruim."
+    }
+   ]
   },
   {
-   "t": 909,
    "quem": "Flávio",
-   "pergunta": "Por que só lembrou do Bolsa Família agora, com um reajuste de \"três reais por dia\"?",
-   "t_resposta": 997,
-   "resposta": "Disse que a reposição da inflação é obrigação legal e que mandou pagar quando soube.",
-   "status": "respondeu"
+   "tema": "Bolsa Família e os mais pobres",
+   "instancias": [
+    {
+     "t": 909,
+     "pergunta": "Não tem vergonha não, Lula, de você tratar os pobres dessa forma, achando que você pode comprar o voto deles?",
+     "t_resposta": 978,
+     "resposta": "Deixa eu falar uma coisa, Flávio. Eu só estou pedindo uma explicação para você, cara. Uma, eu não estou pedindo duas. Eu falei de você explicar os 134 milhões e você vai falar de Bolsa Família, porra. Explica para o Renegue aí, os 134 milhões. Deixa eu lhe contar uma coisa. Eu tenho orgulho de ter tido a verdade, tá? Porque no meu governo, pagar a reposição inflacionária é obrigação, é lei. É obrigação. Ninguém pode deixar de receber. Cometeram o equilíbrio na fazenda. Quando eu descobri, eu mandei pagar. Da mesma forma que eu anistiei 12 bilhões e 700 de dívidas dos meios. Agora, eu quero que você me fale dos 34, 134 milhões. Se você não falar, eu não vou perguntar outra coisa para você. Não vou perguntar, porque eu quero que você fale. Como é que alguém pode pegar 134 milhões e não ver onde foi? Diga, pelo amor de Deus."
+    },
+    {
+     "t": 995,
+     "pergunta": "Explica ali porque você esqueceu do Bolsa Família.",
+     "t_resposta": 997,
+     "resposta": "Deixa eu lhe contar uma coisa. Eu tenho orgulho de ter tido a verdade, tá? Porque no meu governo, pagar a reposição inflacionária é obrigação, é lei. É obrigação. Ninguém pode deixar de receber. Cometeram o equilíbrio na fazenda. Quando eu descobri, eu mandei pagar. Da mesma forma que eu anistiei 12 bilhões e 700 de dívidas dos meios. Agora, eu quero que você me fale dos 34, 134 milhões. Se você não falar, eu não vou perguntar outra coisa para você. Não vou perguntar, porque eu quero que você fale. Como é que alguém pode pegar 134 milhões e não ver onde foi? Diga, pelo amor de Deus."
+    },
+    {
+     "t": 1750,
+     "pergunta": "Você esqueceu dos mais pobres desse país, Lula?",
+     "t_resposta": 1755,
+     "resposta": "Vamos, 20 segundos, Milei. Dá uma mulher de chá para ele, pô. Ele vai te emprestar."
+    },
+    {
+     "t": 1761,
+     "pergunta": "Fala para essa câmera aqui por que você esqueceu dos mais pobres.",
+     "t_resposta": 1766,
+     "resposta": "Você vai pedir o motosserra emprestada do Milei? Fala ali, ó. Vai pegar o motosserra? Não, não vou, eu quero que você me diga se você já pegou emprestada a motosserra do Milei. É só isso, gente, me diga."
+    }
+   ]
   },
   {
-   "t": 1098,
    "quem": "Flávio",
-   "pergunta": "Explica os R$ 30 milhões \"por fora\" ao Instituto Lula citados no áudio de Vorcaro?",
-   "t_resposta": 1127,
-   "resposta": "Falou da \"desfaçatez dos milicianos\" e mudou de assunto para o caso do policial.",
-   "status": "desviou"
+   "tema": "R$ 30 milhões ao Instituto Lula",
+   "instancias": [
+    {
+     "t": 1098,
+     "pergunta": "O filme do Lula teve 30 milhões de reais por fora no Instituto Lula. É o Vorcaro que está falando. Você quer explicar?",
+     "t_resposta": 1127,
+     "resposta": "O que eu acho importante é a desfaçatez dos milicianos. Eu acho desfaçatez. É extremamente importante. Ele precisa me explicar, eu vou mudar de assunto para ver se você explica alguma coisa. Você era senador da República e foi interferir para que um policial que matou uma criança de 5 anos com uma bala de fuzil não fosse preso. Me explica por que você fez isso."
+    }
+   ]
   },
   {
-   "t": 1153,
    "quem": "Flávio",
-   "pergunta": "Por que 73% dos presidiários votaram em você?",
-   "t_resposta": 1164,
-   "resposta": "\"Eu quero que vote 100%. Até teu pai.\"",
-   "status": "desviou",
-   "nota": "Flávio repetiu a pergunta aos 20:44."
+   "tema": "Voto dos presos",
+   "instancias": [
+    {
+     "t": 1153,
+     "pergunta": "Inclusive, você pode explicar por que 73% dos presidiários votaram em você?",
+     "t_resposta": 1164,
+     "resposta": "Eu quero que vote 100%. Até teu pai. Teu pai pode votar em mim. Ele quer votar em um cara melhor, porque ele te conhece. Ele te conhece e ele sabe que eu sou melhor do que você."
+    },
+    {
+     "t": 1244,
+     "pergunta": "Ô Lula, você recebeu o voto de 73% dos presidiários desse país. Me conta.",
+     "t_resposta": 1277,
+     "resposta": "Eu vou perguntar pela última vez. Vou perguntar pela outra vez. Por que você trabalhou para que o assassino de uma criança de 5 anos fosse resolvida? E vou emendar uma outra pergunta. Por que você queria tirar a marca das balas, o número da bala para que não fosse identificada. Me conta."
+    }
+   ]
   },
   {
-   "t": 1460,
    "quem": "Flávio",
-   "pergunta": "O que vai fazer para tirar as pessoas do endividamento?",
-   "t_resposta": 1485,
-   "resposta": "Listou as perguntas que Flávio não respondeu e perguntou sobre a escala 6x1.",
-   "status": "não respondeu"
+   "tema": "Fuzis nas fronteiras",
+   "instancias": [
+    {
+     "t": 1298,
+     "pergunta": "Como é que os fuzis entram?",
+     "t_resposta": 1315,
+     "resposta": "Ele não fiscaliza as fronteiras. Me conta outra coisa. Me conta por que você deu emprego para a irmã e para a mulher do cara que é o escritório do crime que mandou matar a Marielle."
+    }
+   ]
+  },
+  {
+   "quem": "Flávio",
+   "tema": "Endividamento",
+   "instancias": [
+    {
+     "t": 1460,
+     "pergunta": "Fala o que você pode fazer para tirar as pessoas do endividamento",
+     "t_resposta": 1485,
+     "resposta": "Bom, já que você não explicou para ninguém os 134 milhões Já que você não explicou porque absorveu o bandido que matou uma criança, o policial Já que você não explicou porque não queria a marca da bala Já que você não explicou porque você não votou o auxílio de maternidade para a mulher, eu vou perguntar uma coisa para você mais simples. O mundo pode acreditar na sua palavra que você não vai fazer nenhuma proposta para acabar com o fim da escala 6x1? Fala olhando para cá para o povo ver. Porque sabe o que acontece? As pessoas mentem pelos olhos. Eu estou vendo nos seus olhos muita mentira. Fala ali olhando, fala ali olhando."
+    }
+   ]
   }
  ],
- "criterios_resposta": {
-  "respondeu": "tratou diretamente do que foi perguntado, mesmo que a resposta seja contestada",
-  "em parte": "tocou no assunto, mas sem responder ao ponto central",
-  "desviou": "respondeu com outro assunto ou com um contra-ataque",
-  "não respondeu": "ignorou a pergunta"
- },
  "criterio_nuvem": {
   "classes": "substantivos, nomes próprios, verbos e adjetivos (na forma de dicionário)",
   "inteiros": [

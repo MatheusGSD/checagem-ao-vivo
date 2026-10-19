@@ -31,11 +31,6 @@
   --med: #b5b3ab;
   --tip-bg: #0b0b0b;
   --tip-ink: #f0efec;
-  /* status: fixos nos dois temas, sempre com ícone + rótulo */
-  --st-good: #0ca30c;
-  --st-warn: #fab219;
-  --st-serious: #ec835a;
-  --st-crit: #d03b3b;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -175,26 +170,23 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   font-size: 13px; line-height: 1.4; opacity: 0; transition: opacity .08s; box-shadow: 0 4px 18px rgba(0,0,0,.18);
 }
 #tip .h { font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
-/* perguntas e respostas */
-.pb { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; gap: 10px 14px; align-items: center; margin-bottom: 10px; }
-.pb .nm { font-size: 14px; display: flex; align-items: center; gap: 8px; }
-.stack { display: flex; height: 28px; gap: 2px; }
-.stack i { display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 13px; font-weight: 600; color: #0b0b0b; min-width: 0; }
-.stack i:first-child { border-radius: 4px 0 0 4px; } .stack i:last-child { border-radius: 0 4px 4px 0; }
-.stack i:only-child { border-radius: 4px; }
-.st-respondeu { background: var(--st-good); } .st-em-parte { background: var(--st-warn); }
-.st-desviou { background: var(--st-serious); } .st-nao-respondeu { background: var(--st-crit); }
-.stack i.st-nao-respondeu, .stack i.st-respondeu { color: #fff; }
-.qcol h3 { font-size: 15px; margin: 0 0 6px; display: flex; gap: 8px; align-items: center; }
-.q { padding: 12px 0; border-top: 1px solid var(--grid); font-size: 14px; }
-.q .pq { font-weight: 600; margin-bottom: 4px; }
-.q .rs { color: var(--ink-2); }
-.q .nt { color: var(--muted); font-size: 13px; margin-top: 4px; }
-.q .tm { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; margin-right: 6px; }
-.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 2px 8px 2px 6px; border-radius: 999px; border: 1px solid var(--border); color: var(--ink); white-space: nowrap; margin-bottom: 6px; }
-.chip b { width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: #0b0b0b; }
-.chip b.st-respondeu, .chip b.st-nao-respondeu { color: #fff; }
-@media (max-width: 520px) { .pb { grid-template-columns: 1fr; gap: 4px; } }
+/* perguntas e o que veio depois */
+.seg-ctl { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 3px; gap: 2px; margin: 16px 0 6px; flex-wrap: wrap; }
+.seg-ctl button { font: inherit; font-size: 14px; border: 0; background: transparent; color: var(--ink-2); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.seg-ctl button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.fio { border-top: 1px solid var(--grid); padding: 18px 0 6px; }
+.fio h3 { font-size: 16px; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fio h3 .rep { font-size: 13px; font-weight: 500; color: var(--ink-2); }
+.troca { display: grid; gap: 6px; margin-bottom: 14px; }
+.bolha { max-width: 78%; border-radius: 14px; padding: 9px 13px; font-size: 14px; line-height: 1.45; background: var(--page); border: 1px solid var(--border); }
+.bolha .q-who { font-size: 12px; color: var(--ink-2); display: flex; align-items: center; gap: 6px; margin-bottom: 3px; font-variant-numeric: tabular-nums; }
+.bolha.lula { justify-self: start; border-left: 3px solid var(--lula); border-top-left-radius: 4px; }
+.bolha.flavio { justify-self: end; border-right: 3px solid var(--flavio); border-top-right-radius: 4px; }
+.bolha.perg { font-weight: 600; }
+.bolha.vazia { color: var(--muted); font-style: italic; }
+.bolha button.mais { font: inherit; font-size: 13px; background: none; border: 0; padding: 0; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; margin-left: 4px; }
+.fio details { margin: 0 0 12px; }
+@media (max-width: 520px) { .bolha { max-width: 92%; } }
 footer { color: var(--ink-2); font-size: 14px; margin-top: 32px; }
 footer p { margin: 0 0 10px; max-width: 760px; }
 a { color: inherit; text-underline-offset: 2px; }
@@ -216,13 +208,16 @@ a { color: inherit; text-underline-offset: 2px; }
   </section>
 
   <section class="card" aria-labelledby="h-perg">
-    <h2 id="h-perg">Perguntou, respondeu?</h2>
-    <p class="sub">Cada pergunta direta feita ao adversário e o que veio em seguida. Perguntas repetidas contam uma vez. Retóricas e as dirigidas ao eleitor ficaram de fora.</p>
-    <div class="legend" id="perg-legend"></div>
-    <div id="perg-bars"></div>
-    <div class="grid2" id="perg-list" style="margin-top:18px"></div>
-    <details><summary>Critérios</summary><ul id="perg-crit" style="margin:8px 0 0;padding-left:18px"></ul>
-      <p style="margin:8px 0 0">A avaliação foi feita por IA (Claude) a partir da transcrição e é um julgamento. A resposta resumida e o minuto estão ao lado de cada pergunta para você conferir.</p></details>
+    <h2 id="h-perg">Perguntas e o que veio depois</h2>
+    <p class="sub">Toda pergunta direta que um fez ao outro, nas palavras de cada um, e a fala seguinte do adversário: tudo o que ele disse até quem perguntou retomar a palavra. Não avaliamos se houve resposta. Leia e tire suas conclusões.</p>
+    <div class="legend"><span class="key"><span class="sw lula"></span>Lula perguntou</span><span class="key"><span class="sw flavio"></span>Flávio perguntou</span></div>
+    <div id="perg-strip"></div>
+    <div class="seg-ctl" role="group" aria-label="Filtrar perguntas" id="perg-filtro">
+      <button type="button" data-f="todas" aria-pressed="true">Todas</button>
+      <button type="button" data-f="Lula" aria-pressed="false">Lula perguntou</button>
+      <button type="button" data-f="Flávio" aria-pressed="false">Flávio perguntou</button>
+    </div>
+    <div id="perg-list"></div>
   </section>
 
   <section class="card" aria-labelledby="h-relogio">
@@ -295,7 +290,7 @@ a { color: inherit; text-underline-offset: 2px; }
   </section>
 
   <footer>
-    <p><strong>Como foi feito.</strong> O áudio da transmissão foi transcrito com Whisper (large-v3-turbo). As vozes foram separadas por impressão vocal (ECAPA) e conferidas manualmente. A classificação de tipo de fala, temas e afirmações foi feita por IA (Claude) e revisada. Erros de transcrição são possíveis. Na dúvida, vale o vídeo original.</p>
+    <p><strong>Como foi feito.</strong> O áudio da transmissão foi transcrito com Whisper (large-v3-turbo). As vozes foram separadas automaticamente por impressão vocal (ECAPA), e as trocas rápidas foram corrigidas por IA (Claude) lendo a transcrição. Tipo de fala, temas, resumos e a lista de afirmações também são interpretação de IA (Claude) e ainda não passaram por revisão humana. Contagens, nuvens e a fala seguinte de cada pergunta são calculadas por código, com regras fixas. Erros de transcrição são possíveis. Na dúvida, vale o vídeo original.</p>
     <p id="fonte"></p>
     <p><a href="data/dados.json">Baixar os dados (JSON)</a> · <a href="https://github.com/MatheusGSD/debate-lula-flavio">Código no GitHub</a></p>
   </footer>
@@ -411,29 +406,67 @@ function render(d) {
     : `<li class="empty">Em revisão.</li>`;
 }
 
-const STATUS = [["respondeu", "Respondeu", "✓"], ["em parte", "Em parte", "◐"], ["desviou", "Desviou", "↪"], ["não respondeu", "Não respondeu", "✕"]];
-const stCls = s => "st-" + s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ /g, "-");
-const chip = s => { const [k, lab, ic] = STATUS.find(x => x[0] === s); return `<span class="chip"><b class="${stCls(k)}" aria-hidden="true">${ic}</b>${lab}</span>`; };
+const outro = q => q === "Lula" ? "Flávio" : "Lula";
+const CORTE = 240;  // caracteres da fala seguinte mostrados antes do "ler tudo"
+
+function bolha(who, t, texto, perg) {
+  if (!texto) return `<div class="bolha ${C[who]} vazia"><div class="q-who">${sw(who)}${NOME[who]}</div>Não falou mais neste bloco.</div>`;
+  const longo = !perg && texto.length > CORTE;
+  const curto = longo ? texto.slice(0, CORTE).replace(/\s+\S*$/, "") + "…" : texto;
+  return `<div class="bolha ${C[who]}${perg ? " perg" : ""}"><div class="q-who">${sw(who)}${NOME[who]} · ${mmss(t)}</div>` +
+    `<span class="txt" data-full="${longo ? esc(texto) : ""}">${esc(curto)}</span>` +
+    (longo ? `<button type="button" class="mais">ler tudo</button>` : "") + `</div>`;
+}
 
 function renderPerguntas(d) {
-  const P = d.perguntas || [];
-  if (!P.length) { document.getElementById("h-perg").closest("section").hidden = true; return; }
-  document.getElementById("perg-legend").innerHTML = STATUS.map(([k, lab, ic]) =>
-    `<span class="key"><span class="sw ${stCls(k)}" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:10px;border-radius:50%;color:${k === "respondeu" || k === "não respondeu" ? "#fff" : "#0b0b0b"}">${ic}</span>${lab}</span>`).join("");
-  const outro = q => q === "Lula" ? "Flávio" : "Lula";
-  document.getElementById("perg-bars").innerHTML = ["Lula", "Flávio"].map(q => {
-    const qs = P.filter(p => p.quem === q), n = qs.length;
-    const segs = STATUS.map(([k, lab]) => [k, lab, qs.filter(p => p.status === k).length]).filter(s => s[2]);
-    return `<div class="pb"><div class="nm">${sw(q)}<span>${n} perguntas de ${NOME[q]}<br><span style="color:var(--ink-2);font-size:13px">como ${NOME[outro(q)]} reagiu</span></span></div>
-      <div class="stack" role="img" aria-label="${segs.map(s => `${s[1]}: ${s[2]}`).join(", ")}">${segs.map(([k, lab, c]) =>
-        `<i class="${stCls(k)}" style="flex:${c}" data-tip="${esc(lab)}|${NOME[outro(q)]}|${c} de ${n}">${c}</i>`).join("")}</div></div>`;
+  const P = (d.perguntas || []).slice().sort((a, b) => a.instancias[0].t - b.instancias[0].t);
+  const sec = document.getElementById("h-perg").closest("section");
+  if (!P.length) { sec.hidden = true; return; }
+
+  // faixa do tempo: cada ponto é uma vez que a pergunta foi feita
+  const T = d.duracao_bloco_s, W = 1000, H = 92, m = { l: 74, r: 12 };
+  const x = s => m.l + s / T * (W - m.l - m.r), row = { "Lula": 26, "Flávio": 60 };
+  let g = "";
+  for (let s = 0; s <= T; s += 300) g += `<line x1="${x(s)}" x2="${x(s)}" y1="10" y2="${H - 18}" stroke="var(--grid)"/><text x="${x(s)}" y="${H - 2}" text-anchor="middle" font-size="12" fill="var(--muted)">${s / 60} min</text>`;
+  for (const q of ["Lula", "Flávio"]) {
+    const n = P.filter(p => p.quem === q).reduce((s, p) => s + p.instancias.length, 0);
+    g += `<text x="0" y="${row[q] + 4}" font-size="13" fill="var(--ink-2)">${NOME[q]} · ${n}</text>`;
+  }
+  P.forEach((p, i) => p.instancias.forEach(it => {
+    g += `<circle cx="${x(it.t)}" cy="${row[p.quem]}" r="6" fill="var(--${C[p.quem]})" stroke="var(--surface)" stroke-width="2" data-fio="${i}" data-pt="${esc(p.tema)}|${mmss(it.t)}|${esc(it.pergunta)}" style="cursor:pointer"/>`;
+  }));
+  const strip = document.getElementById("perg-strip");
+  strip.innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Momentos em que cada candidato fez perguntas">${g}</svg>`;
+  strip.querySelectorAll("circle").forEach(c => {
+    const [tema, tm, txt] = c.dataset.pt.split("|");
+    c.addEventListener("pointermove", e => showTip(e, `<div class="h">${esc(tema)} · ${tm}</div>${esc(txt)}`));
+    c.addEventListener("pointerleave", hideTip);
+    c.addEventListener("click", () => { filtra("todas"); document.getElementById("fio-" + c.dataset.fio).scrollIntoView({ behavior: "smooth", block: "start" }); });
+  });
+
+  // fios: pergunta do lado de quem perguntou, fala seguinte do lado do outro
+  const troca = (p, it) => `<div class="troca">${bolha(p.quem, it.t, it.pergunta, true)}${bolha(outro(p.quem), it.t_resposta, it.resposta, false)}</div>`;
+  document.getElementById("perg-list").innerHTML = P.map((p, i) => {
+    const [first, ...rest] = p.instancias;
+    return `<div class="fio" id="fio-${i}" data-quem="${p.quem}"><h3>${sw(p.quem)}${esc(p.tema)}` +
+      (p.instancias.length > 1 ? ` <span class="rep">· ${NOME[p.quem]} perguntou ${p.instancias.length} vezes</span>` : "") + `</h3>` +
+      troca(p, first) +
+      (rest.length ? `<details><summary>${rest.length === 1 ? "Ver a outra vez" : `Ver as outras ${rest.length} vezes`}</summary><div style="margin-top:10px">${rest.map(it => troca(p, it)).join("")}</div></details>` : "") +
+      `</div>`;
   }).join("");
-  document.getElementById("perg-list").innerHTML = ["Lula", "Flávio"].map(q =>
-    `<div class="qcol"><h3>${sw(q)} ${NOME[q]} perguntou</h3>` + P.filter(p => p.quem === q).sort((a, b) => a.t - b.t).map(p =>
-      `<div class="q">${chip(p.status)}<div class="pq"><span class="tm">${mmss(p.t)}</span>${esc(p.pergunta)}</div>
-        <div class="rs"><span class="tm">${mmss(p.t_resposta)}</span>${NOME[outro(q)]}: ${esc(p.resposta)}</div>
-        ${p.nota ? `<div class="nt">${esc(p.nota)}</div>` : ""}</div>`).join("") + "</div>").join("");
-  document.getElementById("perg-crit").innerHTML = Object.entries(d.criterios_resposta || {}).map(([k, v]) => `<li>${chip(k)} ${esc(v)}</li>`).join("");
+  document.getElementById("perg-list").addEventListener("click", e => {
+    const b = e.target.closest("button.mais");
+    if (!b) return;
+    const txt = b.previousElementSibling;
+    txt.textContent = txt.dataset.full;
+    b.remove();
+  });
+
+  const filtra = f => {
+    document.querySelectorAll("#perg-filtro button").forEach(b => b.setAttribute("aria-pressed", b.dataset.f === f));
+    document.querySelectorAll("#perg-list .fio").forEach(el => { el.hidden = f !== "todas" && el.dataset.quem !== f; });
+  };
+  document.getElementById("perg-filtro").addEventListener("click", e => { const b = e.target.closest("button"); if (b) filtra(b.dataset.f); });
 }
 
 function hbars(id, rows, f, fixedMax) {

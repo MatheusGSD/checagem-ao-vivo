@@ -8,8 +8,8 @@ O painel é estático e fica em `docs/`, publicado pelo GitHub Pages.
 
 1. **Gravação:** áudio da live no YouTube com `yt-dlp --live-from-start`.
 2. **Transcrição:** `scripts/transcribe.py`, com faster-whisper `large-v3-turbo` na CPU e tempo por palavra.
-3. **Quem fala:** `scripts/diarize.py` extrai embeddings de voz ECAPA (SpeechBrain) por janela de ~3 s e agrupa as vozes. Trocas rápidas e falas da mediação foram corrigidas à mão em `data/bloco1_correcoes.json`, que também normaliza nomes que o Whisper errou (Vorcaro, Milei, Luchsinger…).
-4. **Turnos e classificação:** `scripts/build_turns.py` junta tudo em turnos. A classificação de cada turno (tipo, temas, resumo) e a lista de afirmações estão em `data/bloco1_classificacao.json`. Foram feitas por IA (Claude) e revisadas.
+3. **Quem fala:** `scripts/diarize.py` extrai embeddings de voz ECAPA (SpeechBrain) por janela de ~3 s e agrupa as vozes. Trocas rápidas e falas da mediação foram corrigidas por IA (Claude), lendo a transcrição, em `data/bloco1_correcoes.json`, que também normaliza nomes que o Whisper errou (Vorcaro, Milei, Luchsinger…).
+4. **Turnos e classificação:** `scripts/build_turns.py` junta tudo em turnos. A classificação de cada turno (tipo, temas, resumo) e a lista de afirmações estão em `data/bloco1_classificacao.json`. Foram feitas por IA (Claude) lendo a transcrição e ainda não passaram por revisão humana.
 5. **Análise:** `scripts/analyze.py` gera `docs/data/dados.json` e as nuvens de palavras com spaCy `pt_core_news_lg`. O cálculo usa lemas, palavras distintivas por log-odds com prior de Dirichlet informativo (Monroe, Colaresi & Quinn 2008) e expressões repetidas.
 6. **Prévia para redes:** `scripts/make_og.py` gera `docs/og.png`.
 
