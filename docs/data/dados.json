@@ -10,10 +10,10 @@
   "Lula": {
    "turnos": 63,
    "segundos_fala": 881,
-   "palavras": 2606,
-   "palavras_por_minuto": 177.5,
+   "palavras": 2604,
+   "palavras_por_minuto": 177.4,
    "turno_medio_s": 14.0,
-   "diversidade_lexical": 0.6,
+   "diversidade_lexical": 0.601,
    "mencoes_adversario": 13,
    "pronomes": {
     "eu": 71,
@@ -24,11 +24,11 @@
    "top_lemas": [
     [
      "explicar",
-     18
+     24
     ],
     [
      "contar",
-     17
+     13
     ],
     [
      "pai",
@@ -39,19 +39,19 @@
      12
     ],
     [
+     "134 milhões",
+     11
+    ],
+    [
+     "Milei",
+     11
+    ],
+    [
      "perguntar",
-     11
-    ],
-    [
-     "milei",
-     11
-    ],
-    [
-     "votar",
      10
     ],
     [
-     "mentira",
+     "votar",
      10
     ],
     [
@@ -59,15 +59,7 @@
      9
     ],
     [
-     "federal",
-     9
-    ],
-    [
      "mentir",
-     9
-    ],
-    [
-     "cara",
      9
     ],
     [
@@ -75,11 +67,11 @@
      9
     ],
     [
-     "mulher",
+     "Polícia Federal",
      8
     ],
     [
-     "polícia",
+     "mulher",
      8
     ],
     [
@@ -107,7 +99,7 @@
      7
     ],
     [
-     "brasil",
+     "Brasil",
      6
     ],
     [
@@ -115,7 +107,7 @@
      6
     ],
     [
-     "explica",
+     "mentira",
      6
     ],
     [
@@ -159,7 +151,7 @@
      5
     ],
     [
-     "bolsonaro",
+     "Bolsonaro",
      5
     ],
     [
@@ -175,11 +167,19 @@
      5
     ],
     [
-     "diga",
+     "cara",
      5
     ],
     [
-     "roberta",
+     "Roberta Luchsinger",
+     4
+    ],
+    [
+     "43 mentiras",
+     4
+    ],
+    [
+     "depoimento",
      4
     ]
    ],
@@ -260,7 +260,7 @@
   "Flávio": {
    "turnos": 63,
    "segundos_fala": 941,
-   "palavras": 3190,
+   "palavras": 3189,
    "palavras_por_minuto": 203.4,
    "turno_medio_s": 14.9,
    "diversidade_lexical": 0.627,
@@ -273,15 +273,15 @@
    "perguntas": 60,
    "top_lemas": [
     [
-     "lula",
-     56
+     "Lula",
+     54
     ],
     [
      "governo",
      25
     ],
     [
-     "brasil",
+     "Brasil",
      21
     ],
     [
@@ -297,27 +297,27 @@
      13
     ],
     [
-     "bolsonaro",
+     "Bolsonaro",
      13
     ],
     [
+     "Roberta Luchsinger",
+     11
+    ],
+    [
      "dinheiro",
-     12
+     11
     ],
     [
      "roubar",
      11
     ],
     [
-     "roberta",
-     10
-    ],
-    [
      "condenar",
      10
     ],
     [
-     "vorcaro",
+     "Vorcaro",
      10
     ],
     [
@@ -341,23 +341,11 @@
      9
     ],
     [
-     "luchsinger",
-     8
-    ],
-    [
-     "bolsa",
-     8
-    ],
-    [
      "recorde",
      8
     ],
     [
-     "polícia",
-     7
-    ],
-    [
-     "federal",
+     "Polícia Federal",
      7
     ],
     [
@@ -365,19 +353,15 @@
      7
     ],
     [
-     "família",
-     6
-    ],
-    [
      "mentira",
      6
     ],
     [
-     "inss",
+     "aposentado",
      6
     ],
     [
-     "aposentado",
+     "explicar",
      6
     ],
     [
@@ -401,11 +385,19 @@
      6
     ],
     [
+     "Bolsa Família",
+     5
+    ],
+    [
+     "INSS",
+     5
+    ],
+    [
      "mulher",
      5
     ],
     [
-     "lulinha",
+     "Lulinha",
      5
     ],
     [
@@ -421,15 +413,23 @@
      5
     ],
     [
-     "explicar",
-     5
-    ],
-    [
      "cara",
      5
     ],
     [
-     "real",
+     "ajudar",
+     5
+    ],
+    [
+     "mudar",
+     5
+    ],
+    [
+     "país",
+     5
+    ],
+    [
+     "colocar",
      5
     ]
    ],
@@ -511,34 +511,40 @@
  "distintivas": {
   "Lula": [
    {
-    "palavra": "contar",
-    "z": 2.15,
-    "Lula": 17,
-    "Flávio": 3
+    "palavra": "explicar",
+    "z": 2.34,
+    "Lula": 24,
+    "Flávio": 6
    },
    {
-    "palavra": "explicar",
-    "z": 1.94,
-    "Lula": 18,
-    "Flávio": 5
+    "palavra": "134 milhões",
+    "z": 2.13,
+    "Lula": 11,
+    "Flávio": 0
    },
    {
     "palavra": "bala",
-    "z": 1.92,
+    "z": 1.93,
     "Lula": 9,
     "Flávio": 0
    },
    {
     "palavra": "criança",
-    "z": 1.92,
+    "z": 1.93,
     "Lula": 9,
     "Flávio": 0
    },
    {
     "palavra": "perguntar",
-    "z": 1.91,
-    "Lula": 11,
+    "z": 1.8,
+    "Lula": 10,
     "Flávio": 1
+   },
+   {
+    "palavra": "contar",
+    "z": 1.75,
+    "Lula": 13,
+    "Flávio": 3
    },
    {
     "palavra": "modelo",
@@ -559,16 +565,10 @@
     "Flávio": 0
    },
    {
-    "palavra": "milei",
+    "palavra": "Milei",
     "z": 1.52,
     "Lula": 11,
     "Flávio": 3
-   },
-   {
-    "palavra": "diga",
-    "z": 1.43,
-    "Lula": 5,
-    "Flávio": 0
    },
    {
     "palavra": "pegar",
@@ -603,10 +603,10 @@
   ],
   "Flávio": [
    {
-    "palavra": "lula",
-    "z": -3.58,
+    "palavra": "Lula",
+    "z": -3.5,
     "Lula": 2,
-    "Flávio": 56
+    "Flávio": 54
    },
    {
     "palavra": "condenar",
@@ -633,12 +633,6 @@
     "Flávio": 11
    },
    {
-    "palavra": "luchsinger",
-    "z": -1.4,
-    "Lula": 0,
-    "Flávio": 8
-   },
-   {
     "palavra": "recorde",
     "z": -1.4,
     "Lula": 0,
@@ -652,12 +646,12 @@
    },
    {
     "palavra": "presidente",
-    "z": -1.35,
+    "z": -1.34,
     "Lula": 2,
     "Flávio": 13
    },
    {
-    "palavra": "brasil",
+    "palavra": "Brasil",
     "z": -1.28,
     "Lula": 6,
     "Flávio": 21
@@ -675,12 +669,6 @@
     "Flávio": 6
    },
    {
-    "palavra": "bolsa",
-    "z": -1.11,
-    "Lula": 1,
-    "Flávio": 8
-   },
-   {
     "palavra": "câmera",
     "z": -1.11,
     "Lula": 0,
@@ -688,6 +676,18 @@
    },
    {
     "palavra": "sócio",
+    "z": -0.99,
+    "Lula": 0,
+    "Flávio": 4
+   },
+   {
+    "palavra": "morar",
+    "z": -0.99,
+    "Lula": 0,
+    "Flávio": 4
+   },
+   {
+    "palavra": "difícil",
     "z": -0.99,
     "Lula": 0,
     "Flávio": 4
@@ -1731,7 +1731,7 @@
     "Corrupção em geral"
    ],
    "resumo": "Diz que condenados do Mensalão e do Petrolão voltaram ao governo.",
-   "trecho": "Você está dando emprego para um monte de cara que foi condenado por corrupção no Mensalão, no Petro, está tudo no seu governo. Todo mundo voltou para o seu governo. As mesmas…"
+   "trecho": "Você está dando emprego para um monte de cara que foi condenado por corrupção no Mensalão, no Petrolão, está tudo no seu governo. Todo mundo voltou para o seu governo. As mesmas…"
   },
   {
    "ini": 1340.6,
@@ -2227,7 +2227,7 @@
    "ini": 1815.9,
    "fim": 1831.8,
    "quem": "Lula",
-   "palavras": 54,
+   "palavras": 52,
    "tipo": "ataque",
    "temas": [
     "Mentira e credibilidade"
@@ -2596,5 +2596,95 @@
   "em parte": "tocou no assunto, mas sem responder ao ponto central",
   "desviou": "respondeu com outro assunto ou com um contra-ataque",
   "não respondeu": "ignorou a pergunta"
+ },
+ "criterio_nuvem": {
+  "classes": "substantivos, nomes próprios, verbos e adjetivos (na forma de dicionário)",
+  "inteiros": [
+   "Careca do INSS",
+   "Roberta Luchsinger",
+   "Polícia Federal",
+   "Bolsa Família",
+   "Banco Central",
+   "Instituto Lula",
+   "Escritório do Crime",
+   "escala 6x1",
+   "André Mendonça",
+   "Frei Chico",
+   "Jaques Wagner",
+   "Rui Costa",
+   "crime organizado",
+   "lavagem de dinheiro",
+   "fake news",
+   "Estados Unidos",
+   "Congresso Nacional",
+   "licença-maternidade",
+   "Pé-de-Meia",
+   "terras indígenas",
+   "Vini Jr."
+  ],
+  "tambem_entram": "siglas (PT, PL, STF, INSS...), palavras com hífen e números com unidade (\"134 milhões\", \"73%\")",
+  "minimo_ocorrencias": 2,
+  "muletas_excluidas": [
+   "achar",
+   "agora",
+   "ah",
+   "algum",
+   "ali",
+   "aqui",
+   "aí",
+   "bom",
+   "cada",
+   "candidata",
+   "candidato",
+   "coisa",
+   "cá",
+   "dar",
+   "deixar",
+   "dizer",
+   "eh",
+   "então",
+   "estar",
+   "falar",
+   "fazer",
+   "ficar",
+   "gente",
+   "haver",
+   "hoje",
+   "hum",
+   "ir",
+   "lá",
+   "minuto",
+   "não",
+   "né",
+   "obrigado",
+   "ok",
+   "olha",
+   "olhar",
+   "poder",
+   "porque",
+   "pra",
+   "pro",
+   "quer",
+   "querer",
+   "saber",
+   "senhor",
+   "senhora",
+   "ser",
+   "sim",
+   "ter",
+   "tipo",
+   "todo",
+   "tudo",
+   "tá",
+   "tô",
+   "vai",
+   "ver",
+   "vez",
+   "vir",
+   "vou",
+   "ã"
+  ],
+  "frases_excluidas": "\"deixa eu (lhe/te) contar/falar/dizer/perguntar (uma coisa)\", \"vou (te/lhe) falar/contar/dizer\" e o vocativo \"cara\" depois de vírgula (\"é só isso, cara\")",
+  "escala": "mesma escala nas duas nuvens; a letra cresce com a raiz quadrada da contagem, para que a área ocupada seja proporcional a quantas vezes a palavra foi dita"
  }
 }

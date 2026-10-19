@@ -244,12 +244,13 @@ a { color: inherit; text-underline-offset: 2px; }
   <section aria-labelledby="h-nuvem">
     <div class="card">
       <h2 id="h-nuvem">Mapa de palavras</h2>
-      <p class="sub">Substantivos, verbos e adjetivos na forma de dicionário ("propostas" conta como "proposta"), sem palavras vazias nem muletas de fala. Quanto maior, mais vezes foi dita.</p>
+      <p class="sub">Termos ditos pelo menos duas vezes. As duas nuvens estão na mesma escala: palavras do mesmo tamanho foram ditas o mesmo número de vezes, e a área de cada uma é proporcional à contagem.</p>
       <div class="grid2">
-        <figure class="cloud" style="margin:0"><h3><span class="sw lula"></span>Lula</h3><img src="img/nuvem_lula.png" alt="Nuvem de palavras das falas de Lula" id="img-lula"></figure>
-        <figure class="cloud" style="margin:0"><h3><span class="sw flavio"></span>Flávio</h3><img src="img/nuvem_flavio.png" alt="Nuvem de palavras das falas de Flávio Bolsonaro" id="img-flavio"></figure>
+        <figure class="cloud" style="margin:0"><h3><span class="sw lula"></span>Lula</h3><img src="img/nuvem_lula.png?v=2" alt="Nuvem de palavras das falas de Lula" id="img-lula"></figure>
+        <figure class="cloud" style="margin:0"><h3><span class="sw flavio"></span>Flávio</h3><img src="img/nuvem_flavio.png?v=2" alt="Nuvem de palavras das falas de Flávio Bolsonaro" id="img-flavio"></figure>
       </div>
-      <details><summary>Ver as 25 palavras mais ditas por cada um</summary><div class="tbl-wrap"><table id="tbl-lemas"></table></div></details>
+      <details><summary>Ver os 25 termos mais ditos por cada um</summary><div class="tbl-wrap"><table id="tbl-lemas"></table></div></details>
+      <details><summary>Como lemos as palavras</summary><ul id="crit-nuvem" style="margin:8px 0 0;padding-left:18px"></ul></details>
     </div>
   </section>
 
@@ -358,6 +359,15 @@ function render(d) {
   for (let i = 0; i < Math.max(tl.length, tf.length); i++)
     t += `<tr><td>${i + 1}</td><td>${esc(tl[i]?.[0])}</td><td class="num">${tl[i]?.[1] ?? ""}</td><td>${esc(tf[i]?.[0])}</td><td class="num">${tf[i]?.[1] ?? ""}</td></tr>`;
   document.getElementById("tbl-lemas").innerHTML = t + "</tbody>";
+  const cn = d.criterio_nuvem;
+  if (cn) document.getElementById("crit-nuvem").innerHTML = [
+    `<b>Entram:</b> ${esc(cn.classes)}; também ${esc(cn.tambem_entram)}.`,
+    `<b>Contam como um termo só:</b> ${cn.inteiros.map(esc).join(", ")}.`,
+    `<b>Mínimo:</b> ${cn.minimo_ocorrencias} ocorrências.`,
+    `<b>Saem:</b> palavras gramaticais (artigos, preposições, pronomes, a lista padrão do spaCy em português), as frases ${esc(cn.frases_excluidas)} e estas muletas e verbos genéricos: ${cn.muletas_excluidas.map(esc).join(", ")}.`,
+    `<b>Tamanho:</b> ${esc(cn.escala)}.`,
+    `O nome do adversário fica na nuvem: quem cita mais o outro aparece aqui também.`,
+  ].map(s => `<li style="margin-bottom:6px">${s}</li>`).join("");
 
   // distintivas
   const maxZ = Math.max(...d.distintivas.Lula.map(s => Math.abs(s.z)), ...d.distintivas["Flávio"].map(s => Math.abs(s.z)), 1);

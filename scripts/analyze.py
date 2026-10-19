@@ -63,11 +63,66 @@ PRONOUNS = {"eu": r"\b(eu|meu|minha|meus|minhas|comigo)\b",
             "você/senhor": r"\b(você|o senhor|a senhora|seu|sua|seus|suas)\b"}
 
 
-def lemmas(text):
-    doc = nlp(text)
-    return [t.lemma_.lower() for t in doc
-            if t.is_alpha and not t.is_stop and len(t) > 2 and t.lemma_.lower() not in EXTRA_STOP
-            and t.pos_ in {"NOUN", "PROPN", "VERB", "ADJ"}]
+# nomes e expressões que contam como um termo só (regex sem distinção de maiúsculas -> forma exibida)
+COMPOSTOS = [
+    (r"careca do inss|careca", "Careca do INSS"),
+    (r"roberta luchsinger|luchsinger|roberta", "Roberta Luchsinger"),
+    (r"pol[ií]cia federal", "Polícia Federal"),
+    (r"bolsa fam[ií]lia", "Bolsa Família"),
+    (r"banco central", "Banco Central"),
+    (r"instituto lula", "Instituto Lula"),
+    (r"escrit[oó]rio do crime", "Escritório do Crime"),
+    (r"escala 6x1", "escala 6x1"),
+    (r"andr[eé] mendon[cç]a", "André Mendonça"),
+    (r"frei chico", "Frei Chico"),
+    (r"jaques wagner", "Jaques Wagner"),
+    (r"rui costa", "Rui Costa"),
+    (r"crime organizado", "crime organizado"),
+    (r"lavagem de dinheiro", "lavagem de dinheiro"),
+    (r"fake news", "fake news"),
+    (r"estados unidos", "Estados Unidos"),
+    (r"congresso nacional", "Congresso Nacional"),
+    (r"licen[cç]a[- ]de[- ]maternidade|licen[cç]a[- ]maternidade|aux[ií]lio de maternidade", "licença-maternidade"),
+    (r"p[eé][- ]de[- ]meia", "Pé-de-Meia"),
+    (r"terras ind[ií]genas", "terras indígenas"),
+    (r"vini j[uú]nior", "Vini Jr."),
+]
+# números com unidade viram termo ("134 milhões", "73%")
+NUMERO = re.compile(r"(?:R\$\s*)?\b(\d+(?:[.,]\d+)?)\s*(%|mil\b|milh(?:ão|ões)\b|bilh(?:ão|ões)\b|reais\b|mentiras\b)", re.I)
+SIGLA = re.compile(r"\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,5}\b")  # PT, PL, STF, INSS...
+CLASSES = {"NOUN", "PROPN", "VERB", "ADJ"}
+# frases-muleta removidas antes da contagem ("deixa eu lhe contar uma coisa")
+MULETAS_FRASE = re.compile(
+    r"\b(?:deixa eu (?:lhe |te )?(?:contar|falar|dizer|perguntar)|(?:eu )?vou (?:te |lhe )?(?:falar|contar|dizer))"
+    r"(?: uma coisa)?(?: (?:pra|para) (?:você|vocês))?|,\s*cara\b", re.I)
+# formas que o lematizador do spaCy deixa de reduzir (imperativos no começo da frase)
+LEMA_FIX = {"finger": "fingir", "explica": "explicar", "diga": "dizer", "conta": "contar", "fala": "falar", "olha": "olhar"}
+
+
+def termos(text):
+    """Conta os termos de um texto. Ordem: expressões compostas, números com unidade e siglas saem
+    primeiro (inteiros); o resto passa pelo spaCy e fica o lema de substantivos, nomes próprios,
+    verbos e adjetivos que não sejam palavra vazia nem muleta. Devolve (Counter, nome_proprio)."""
+    cont, proprio = Counter(), Counter()
+    text = MULETAS_FRASE.sub(" ", text)
+    for pat, disp in COMPOSTOS:
+        rx = re.compile(rf"\b(?:{pat})\b", re.I)
+        cont[disp] += len(rx.findall(text))
+        text = rx.sub(" ", text)
+    for m in NUMERO.finditer(text):
+        num, uni = m.group(1), m.group(2).lower()
+        cont[f"{num}%" if uni == "%" else f"{num} {uni}"] += 1
+    text = NUMERO.sub(" ", text)
+    for m in SIGLA.finditer(text):
+        cont[m.group(0)] += 1
+    text = SIGLA.sub(" ", text)
+    for t in nlp(text):
+        palavra = t.is_alpha or ("-" in t.text and all(p.isalpha() for p in t.text.split("-")))
+        lema = t.lemma_.lower() if t.pos_ == "NOUN" else LEMA_FIX.get(t.lemma_.lower(), t.lemma_.lower())
+        if (palavra and not t.is_stop and len(t) > 2 and lema not in EXTRA_STOP and t.pos_ in CLASSES):
+            cont[lema] += 1
+            proprio[lema] += t.pos_ == "PROPN"
+    return +cont, proprio
 
 
 def mattr(tokens, w=100):
@@ -80,14 +135,22 @@ def mattr(tokens, w=100):
 t0 = min(t["start"] for t in turns)
 res = {"meta": src.get("meta", {}), "inicio_bloco_s": t0,
        "duracao_bloco_s": round(max(t["end"] for t in turns) - t0), "candidatos": {}}
-lem = {}
+lem, proprio = {}, Counter()
+for c in CANDS:
+    lem[c], p = termos(" ".join(t["text"] for t in turns if t["speaker"] == c))
+    proprio += p
+# nome próprio (marcado como tal na maioria das ocorrências) aparece com inicial maiúscula
+total = lem["Lula"] + lem["Flávio"]
+exibe = {w: (w[:1].upper() + w[1:] if proprio[w] * 2 > total[w] else w) for w in total}
+lem = {c: Counter({exibe[w]: n for w, n in lem[c].items()}) for c in CANDS}
+MIN_OCORR = 2
+
 for c in CANDS:
     ts = [t for t in turns if t["speaker"] == c]
     text = " ".join(t["text"] for t in ts)
     low = text.lower()
     words = re.findall(r"\w+", low)
     secs = sum(t["end"] - t["start"] for t in ts)
-    lem[c] = lemmas(text)
     por_tipo, por_tema = defaultdict(float), defaultdict(float)
     for t in ts:
         d = t["end"] - t["start"]
@@ -105,14 +168,14 @@ for c in CANDS:
         "mencoes_adversario": len(re.findall(OPP_MENTIONS[c], low)),
         "pronomes": {k: len(re.findall(p, low)) for k, p in PRONOUNS.items()},
         "perguntas": text.count("?"),
-        "top_lemas": Counter(lem[c]).most_common(40),
+        "top_lemas": [(w, n) for w, n in lem[c].most_common(40) if n >= MIN_OCORR],
         "top_bigramas": expressoes(words)[:12],
         "segundos_por_tipo": {k: round(v) for k, v in por_tipo.items()},
         "segundos_por_tema": {k: round(v) for k, v in sorted(por_tema.items(), key=lambda x: -x[1])},
     }
 
 # log-odds com prior de Dirichlet informativo (Monroe, Colaresi & Quinn 2008, "Fightin' Words")
-ca, cb = Counter(lem["Lula"]), Counter(lem["Flávio"])
+ca, cb = lem["Lula"], lem["Flávio"]
 prior = ca + cb
 a0, na, nb = sum(prior.values()), sum(ca.values()), sum(cb.values())
 scores = []
@@ -139,16 +202,54 @@ res["afirmacoes"] = src.get("afirmacoes", [])
 res["perguntas"] = src.get("perguntas", [])
 res["criterios_resposta"] = src.get("criterios_resposta", {})
 
-for c in CANDS:
-    freq = dict(Counter(lem[c]).most_common(120))
-    if not freq:
-        continue
+res["criterio_nuvem"] = {
+    "classes": "substantivos, nomes próprios, verbos e adjetivos (na forma de dicionário)",
+    "inteiros": [d for _, d in COMPOSTOS],
+    "tambem_entram": "siglas (PT, PL, STF, INSS...), palavras com hífen e números com unidade (\"134 milhões\", \"73%\")",
+    "minimo_ocorrencias": MIN_OCORR,
+    "muletas_excluidas": sorted(EXTRA_STOP),
+    "frases_excluidas": "\"deixa eu (lhe/te) contar/falar/dizer/perguntar (uma coisa)\", \"vou (te/lhe) falar/contar/dizer\" "
+                        "e o vocativo \"cara\" depois de vírgula (\"é só isso, cara\")",
+    "escala": "mesma escala nas duas nuvens; a letra cresce com a raiz quadrada da contagem, "
+              "para que a área ocupada seja proporcional a quantas vezes a palavra foi dita",
+}
+
+# mesma escala nas duas nuvens: a maior contagem geral define a letra máxima, e a letra de cada
+# palavra é proporcional à raiz da contagem (relative_scaling=1 sobre sqrt -> área ~ contagem)
+gmax = max(max(lem[c].values()) for c in CANDS)
+
+
+def nuvem(c, letra_max):
+    freq = {w: math.sqrt(n) for w, n in lem[c].items() if n >= MIN_OCORR}
     rng = random.Random(7)
     tones = CLOUD_TONES[c]
-    WordCloud(width=1200, height=760, mode="RGBA", background_color=None, prefer_horizontal=0.92,
-              font_path="C:/Windows/Fonts/segoeuib.ttf", random_state=7, margin=6,
-              color_func=lambda *a, **k: rng.choice(tones)) \
-        .generate_from_frequencies(freq).to_file(str(site / "img" / f"nuvem_{SLUG[c]}.png"))
+    return WordCloud(width=1200, height=760, mode="RGBA", background_color=None, prefer_horizontal=0.92,
+                     font_path="C:/Windows/Fonts/segoeuib.ttf", random_state=7, margin=6,
+                     relative_scaling=1, max_words=len(freq), min_font_size=8,
+                     max_font_size=round(letra_max * math.sqrt(max(lem[c].values()) / gmax)),
+                     color_func=lambda *a, **k: rng.choice(tones)).generate_from_frequencies(freq)
+
+
+def proporcional(wc, c, k):
+    """Toda palavra coube com letra ~ k * raiz(contagem)? (1 px de folga pelo arredondamento)"""
+    n_freq = sum(1 for n in lem[c].values() if n >= MIN_OCORR)
+    return len(wc.layout_) == n_freq and all(abs(fs - k * math.sqrt(lem[c][w])) <= 1.5
+                                             for (w, _), fs, *_ in wc.layout_)
+
+
+# a biblioteca encolhe as palavras seguintes quando uma não cabe; baixa a letra máxima até as
+# duas nuvens caberem inteiras na escala certa
+for letra_max in range(240, 60, -10):
+    k = letra_max / math.sqrt(gmax)
+    clouds = {c: nuvem(c, letra_max) for c in CANDS}
+    if all(proporcional(clouds[c], c, k) for c in CANDS):
+        break
+else:
+    raise SystemExit("nenhuma letra máxima coube na escala; aumente a área da nuvem")
+for c, wc in clouds.items():
+    wc.to_file(str(site / "img" / f"nuvem_{SLUG[c]}.png"))
+print(f"  nuvens: letra máxima {letra_max}px para {gmax} ocorrências; "
+      f"{', '.join(f'{c} {len(w.layout_)} termos' for c, w in clouds.items())}")
 
 (site / "data" / "dados.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
 for c in CANDS:
