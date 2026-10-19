@@ -6,16 +6,16 @@
  },
  "agente": {
   "etapa": "classificar",
-  "data": "2026-10-19T02:02:34+00:00",
+  "data": "2026-10-19T17:40:01+00:00",
   "modelo_pedido": "claude-opus-5-5",
   "modelo_respondeu": "claude-opus-5-5",
   "esforco": "high",
   "prompt": "prompts/classificar.md",
   "prompt_sha256": "d1e76d5bc6f4c1bd93f8a3128d8bba1d905899598e3e10e286ee5542b70617eb",
-  "entrada_sha256": "6b6ab56e53076334077a1d624b29a5f8288befecd0ebea08ec9b183889080104",
+  "entrada_sha256": "86504c985539afd1cc05b17f9f06e320448074ae3a1bd7f98ea5ef88feebc66e",
   "tokens": {
-   "entrada": 17509,
-   "saida": 42007
+   "entrada": 17706,
+   "saida": 47285
   }
  },
  "tipos": {
@@ -26,60 +26,65 @@
  },
  "turnos": {
   "0.0": [
+   null,
+   [],
+   "Fala da mediação."
+  ],
+  "1.6": [
    "ataque",
    [
     "Mulheres"
    ],
-   "Diz que, em 2009, Flávio foi o único de 49 deputados a votar contra ampliar a licença-maternidade e pergunta o que ele tem contra mulheres."
+   "Diz que Flávio, deputado estadual em 2009, foi o único de 49 a votar contra ampliar a licença-maternidade e pergunta o que tem contra mulheres."
   ],
-  "24.6": [
+  "26.7": [
    "defesa",
    [
     "Mulheres",
     "Lulinha e Luchsinger"
    ],
-   "Diz não ter nada contra mulheres, cita a esposa e as duas filhas e pergunta se Lula conhece Roberta Luchsinger."
+   "Diz não ter nada contra mulheres, cita esposa e filhas e pergunta se Lula conhece Roberta Luchsinger."
   ],
-  "48.3": [
+  "50.1": [
    "ataque",
    [
     "Mulheres"
    ],
-   "Diz que Flávio não respondeu e pergunta de novo por que votou contra mais dois meses de licença-maternidade."
+   "Diz que Flávio não respondeu e pergunta por que votou contra mais dois meses de licença para as mães."
   ],
-  "61.2": [
+  "63.0": [
    "ataque",
    [
     "Lulinha e Luchsinger",
     "Mentira e credibilidade"
    ],
-   "Diz que Roberta Luchsinger fez acusações graves contra Lula, lembra que ele disse não conhecê-la e repete a pergunta."
+   "Diz que Roberta Luchsinger fez acusações graves contra Lula e pergunta se ele quer corrigir a resposta de que não a conhecia."
   ],
-  "77.1": [
+  "79.0": [
    "defesa",
    [
     "Lulinha e Luchsinger",
     "PF e Judiciário"
    ],
-   "Diz que o caso de Roberta é assunto da Polícia Federal, que vai investigar."
+   "Diz que Roberta é assunto da Polícia Federal, que vai investigar o caso."
   ],
-  "87.5": [
+  "89.0": [
    "ataque",
    [
     "Lulinha e Luchsinger",
     "PF e Judiciário"
    ],
-   "Pergunta por que a Polícia Federal de Lula está investigando Roberta."
+   "Pergunta por que a Polícia Federal de Lula investiga Roberta."
   ],
-  "89.6": [
+  "91.5": [
    "ataque",
    [
     "Lulinha e Luchsinger",
     "Fraude no INSS"
    ],
-   "Diz que Roberta é parceira do “careca” que ele associa a Flávio."
+   "Diz que Roberta é parceira de um sócio de Flávio, a quem chama de \"careca\"."
   ],
-  "92.4": [
+  "94.3": [
    "ataque",
    [
     "Lulinha e Luchsinger",
@@ -87,500 +92,514 @@
    ],
    "Diz que Roberta afirmou ser sócia do filho de Lula e pergunta por que a PF não vai à casa dele."
   ],
-  "105.8": [
+  "107.6": [
    "defesa",
    [
     "Lulinha e Luchsinger",
     "PF e Judiciário",
     "Fraude no INSS"
    ],
-   "Diz que Roberta é questão da PF, sugere que ela foi aliciada e pergunta por que Flávio mantém escritório com o “careca”."
+   "Repete que Roberta é questão da PF, sugere que ela foi aliciada para depor e pergunta por que Flávio mantém escritório com \"careca\"."
   ],
-  "125.3": [
+  "127.2": [
    "ataque",
    [
     "Lulinha e Luchsinger",
     "Fraude no INSS",
     "Mentira e credibilidade"
    ],
-   "Nega manter escritório com o “careca”, diz que ele pagou ao filho de Lula e pergunta quem sustenta o filho na Espanha."
+   "Nega manter escritório com \"careca\", diz que ele foi do governo Lula e pagou ao filho dele, e pergunta quem sustenta o filho na Espanha."
   ],
-  "147.6": [
+  "148.9": [
    "defesa",
    [
     "Lulinha e Luchsinger",
     "Fraude no INSS",
     "PF e Judiciário"
    ],
-   "Diz que o filho abriu sigilos à investigação, que não interfere na PF e que seu governo desmontou a quadrilha do INSS."
+   "Diz que o filho abriu sigilos à investigação, que não troca diretor da PF e que seu governo desmontou a quadrilha do INSS."
   ],
-  "186.9": [
-   "ataque",
-   [
-    "Corrupção em geral"
-   ],
-   "Diz que no governo Lula há muitas quadrilhas."
-  ],
-  "190.0": [
-   "ataque",
-   [
-    "Corrupção em geral",
-    "Família Bolsonaro"
-   ],
-   "Responde: “No governo do seu pai.”"
-  ],
-  "191.2": [
+  "188.7": [
    "ataque",
    [
     "Lulinha e Luchsinger",
     "PF e Judiciário"
    ],
-   "Diz que a PF não foi atrás do filho de Lula e pergunta por que ele está na Espanha e não no Brasil."
+   "Diz que a PF não foi atrás do filho de Lula e pergunta por que ele está na Espanha."
   ],
-  "203.2": [
+  "205.1": [
    "ataque",
    [
     "Família Bolsonaro",
     "Política externa"
    ],
-   "Acusa o irmão de Flávio de tramar contra o Brasil nos EUA pedindo intervenção de Trump e cita um torpedo em manifestação."
+   "Diz que o irmão de Flávio está nos Estados Unidos tramando contra o Brasil e pedindo intervenção de Trump, e fala em traição à pátria."
   ],
-  "229.6": [
+  "231.9": [
    "ataque",
    [
     "Mentira e credibilidade",
     "Lulinha e Luchsinger"
    ],
-   "Acusa Lula de mentir diante das câmeras e proteger o filho, e ironiza se ele também não conhece Lulinha."
+   "Acusa Lula de mentir diante das câmeras e proteger o filho; pergunta se ele também não conhece Roberta e Lulinha."
   ],
-  "245.7": [
-   "outro",
-   [
-    "Bate-boca"
-   ],
-   "Pergunta: “Quem?”"
-  ],
-  "249.0": [
+  "247.5": [
    "outro",
    [
     "Lulinha e Luchsinger"
    ],
-   "Responde: “Lulinha”."
+   "Pergunta \"Quem?\"."
   ],
-  "249.9": [
+  "250.8": [
+   "outro",
+   [
+    "Lulinha e Luchsinger"
+   ],
+   "Responde \"Lulinha\"."
+  ],
+  "251.8": [
    "outro",
    [
     "Lulinha e Luchsinger"
    ],
    "Diz que Lulinha é seu filho."
   ],
-  "251.7": [
+  "252.8": [
    "outro",
    [
     "Lulinha e Luchsinger"
    ],
-   "Pergunta, em tom irônico, se esse Lula conhece."
+   "Pergunta \"Ah, você conhece esse?\"."
   ],
-  "252.8": [
+  "254.7": [
    "defesa",
    [
     "Lulinha e Luchsinger"
    ],
    "Diz achar que o filho é inocente."
   ],
-  "253.8": [
+  "255.9": [
    "outro",
    [
     "Lulinha e Luchsinger"
    ],
-   "Repete: “Esse você conhece?”"
+   "Repete \"Esse você conhece?\"."
   ],
-  "254.6": [
+  "256.5": [
    "defesa",
    [
     "Lulinha e Luchsinger",
     "PF e Judiciário"
    ],
-   "Diz que o filho tem três inquéritos, pede que o ministro André Mendonça o chame a depor e afirma que ele não se esconderá."
+   "Diz que o filho tem três inquéritos, que o juiz André Mendonça, a quem chama de amigo de Flávio, deve chamá-lo e que ele vai depor."
   ],
-  "276.7": [
+  "278.6": [
    "ataque",
    [
     "Lulinha e Luchsinger"
    ],
-   "Diz que Roberta Luchsinger não está dizendo isso."
+   "Diz que Roberta Luchsinger não está falando o mesmo que Lula."
   ],
-  "279.6": [
+  "281.5": [
    "ataque",
    [
     "Fraude no INSS",
     "Família Bolsonaro"
    ],
-   "Cobra explicação sobre a quadrilha do INSS, que diz ter sido montada no governo Bolsonaro, e cita valores recuperados e pagos."
+   "Pede que Flávio explique a quadrilha do INSS montada no governo de seu pai e diz que seu governo a desmontou e ressarciu aposentados."
   ],
-  "301.4": [
+  "303.3": [
    "ataque",
    [
     "Lulinha e Luchsinger",
     "Corrupção em geral"
    ],
-   "Diz que Roberta afirmou ser sócia do filho de Lula, cita portas abertas em ministérios e pergunta se o governo virou balcão de negócios."
+   "Diz que Roberta afirmou ser sócia do filho de Lula, que \"Marcola\" abria portas de ministérios e pergunta se o governo virou balcão de negócios."
   ],
-  "318.1": [
+  "320.0": [
    "defesa",
    [
     "Lulinha e Luchsinger",
     "PF e Judiciário",
     "Mentira e credibilidade"
    ],
-   "Diz que Roberta é caso da PF, deve depor e que quer ver se ela repetirá o que chama de mentiras."
+   "Diz que Roberta deve ser investigada e depor, e que quer ver se ela repetirá o que chama de mentiras."
   ],
-  "329.7": [
+  "331.3": [
    "ataque",
    [
     "Fraude no INSS",
     "Corrupção em geral",
     "Mentira e credibilidade"
    ],
-   "Acusa governos de Lula de corrupção, cita aliados na CPI do INSS e o irmão Frei Chico, e pede respeito citando seus votos."
+   "Diz que governos de Lula são marcados por corrupção, cita aliados contra a CPI do INSS e o irmão Frei Chico, vice de sindicato."
   ],
-  "382.4": [
-   "ataque",
-   [
-    "Fraude no INSS"
-   ],
-   "Diz que quem montou a quadrilha tem que explicar."
-  ],
-  "386.7": [
+  "378.0": [
    "outro",
    [
+    "Eleição e votos",
     "Bate-boca"
    ],
-   "Diz que Lula tem que respeitá-lo."
+   "Pede respeito e diz ter tido 56 milhões de votos."
   ],
-  "388.0": [
-   "ataque",
-   [
-    "Fraude no INSS"
-   ],
-   "Diz: “Explique.”"
-  ],
-  "388.9": [
+  "387.1": [
    "ataque",
    [
     "Fraude no INSS",
     "Eleição e votos"
    ],
-   "Diz que o governo Lula tem envolvidos em roubar 5 milhões de aposentados, cita a avó aposentada e promete proteger aposentadorias."
+   "Diz que o governo Lula tem envolvidos no roubo de 5 milhões de aposentados e que, em seu governo, aposentadorias serão preservadas."
   ],
-  "446.9": [
+  "446.2": [
    "ataque",
    [
     "Mentira e credibilidade",
     "Caso Vorcaro",
     "Família Bolsonaro"
    ],
-   "Diz que Flávio contou 43 mentiras no caso Vorcaro, que o pai mentia 11 vezes por dia, e pede explicação da amizade com Vorcaro."
+   "Diz que a mentira é o forte da família Bolsonaro, que Flávio contou 43 mentiras sobre Vorcaro e pede que explique a amizade com ele."
   ],
-  "478.4": [
+  "480.5": [
    "outro",
    [
     "Bate-boca"
    ],
-   "Diz que vai falar uma coisa para Lula."
+   "Diz \"Fala uma coisa para você, Lula\"."
   ],
-  "479.6": [
+  "481.8": [
    "ataque",
    [
     "Caso Vorcaro"
    ],
-   "Repete: “Explica, explica”."
+   "Repete \"Explica, explica\"."
   ],
-  "480.7": [
+  "482.5": [
    "ataque",
    [
     "Corrupção em geral",
     "Fraude no INSS",
     "PF e Judiciário"
    ],
-   "Diz que Lula é o único condenado no auditório, saúda Moro e Dallagnol e atribui ao PT emenda que facilitou descontos no INSS."
+   "Diz que Lula é o único presente condenado por corrupção, saúda Moro e Dallagnol e atribui à bancada do PT emenda sobre descontos no INSS."
   ],
-  "546.1": [
+  "548.0": [
    "outro",
    [
     "Eleição e votos"
    ],
    "Diz que Flávio vai perder a eleição e pergunta se ele acha que já ganhou."
   ],
-  "553.1": [
+  "554.3": [
    "outro",
    [
-    "Eleição e votos"
+    "Eleição e votos",
+    "Bate-boca"
    ],
-   "Diz que isso está “repreendido em nome de Jesus”."
+   "Diz que não acha que ganhou, \"repreende\" a fala em nome de Jesus e diz que Lula vai descansar."
   ],
-  "557.4": [
+  "559.7": [
    "ataque",
    [
     "Caso Vorcaro",
     "PF e Judiciário"
    ],
-   "Diz que Flávio perderá imunidade e que inquéritos vão andar, e cobra explicação sobre 134 milhões ligados a Vorcaro."
+   "Diz que Flávio perderá a imunidade dia 25 e seus inquéritos vão andar, e pede explicação sobre 134 milhões ligados a Vorcaro."
   ],
-  "579.0": [
+  "578.3": [
+   "outro",
+   [
+    "Bate-boca"
+   ],
+   "Diz \"Eu quero olhar para você aqui em casa\"."
+  ],
+  "580.3": [
+   "ataque",
+   [
+    "Caso Vorcaro"
+   ],
+   "Repete o pedido para que conte sobre os 134 milhões."
+  ],
+  "581.5": [
    "ataque",
    [
     "Caso Vorcaro",
     "Corrupção em geral"
    ],
-   "Diz que áudio de Vorcaro cita 30 milhões por fora ao Instituto Lula e associa a palavra “corrupto” ao PT."
+   "Diz que áudio de Vorcaro cita 30 milhões por fora ao Instituto Lula e associa a palavra \"corrupto\" ao PT."
   ],
-  "609.6": [
+  "611.4": [
    "ataque",
    [
     "Caso Vorcaro",
     "Mentira e credibilidade",
     "Família Bolsonaro"
    ],
-   "Diz que Flávio negou e depois admitiu receber 134 milhões de Vorcaro e pergunta se o dinheiro ajudou o irmão."
+   "Chama Flávio de irresponsável, diz que ele mentiu sobre os 134 milhões de Vorcaro e pergunta se o dinheiro ajudou o irmão."
   ],
-  "647.1": [
+  "650.4": [
    "outro",
    [
     "Bate-boca"
    ],
-   "Diz que Lula deve uma explicação e pede que fique tranquilo."
+   "Convida Lula a ficar a seu lado e diz que não vai mordê-lo nem é violento."
   ],
-  "652.9": [
+  "658.4": [
    "outro",
    [
     "Bate-boca"
    ],
-   "Pergunta: “A família Bolsonaro?”"
+   "Pergunta \"Quer distância com miliciano?\"."
   ],
-  "654.1": [
+  "659.7": [
    "outro",
    [
     "Bate-boca"
    ],
-   "Diz que não é violento e pede que Lula fique tranquilo."
+   "Diz estar sem carteira para que Lula não possa roubá-lo."
   ],
-  "656.5": [
-   "outro",
-   [
-    "Bate-boca"
-   ],
-   "Pergunta: “Fica com o miliciano?”"
-  ],
-  "657.8": [
-   "outro",
-   [
-    "Bate-boca"
-   ],
-   "Diz que está sem carteira, “senão vai poder me roubar”."
-  ],
-  "660.0": [
+  "661.5": [
    null,
    [],
    "Fala da mediação."
   ],
-  "664.9": [
+  "665.5": [
    "ataque",
    [
     "Caso Vorcaro"
    ],
-   "Pergunta o que Lula prometeu a Vorcaro em reunião fechada com Haddad e Galípolo sobre a venda do banco."
+   "Diz que Lula deve explicações e pergunta o que prometeu a Vorcaro em reunião fechada com Haddad e Galípolo."
   ],
-  "693.0": [
+  "694.9": [
    "defesa",
    [
     "Caso Vorcaro",
     "Família Bolsonaro"
    ],
-   "Diz que Vorcaro virou banqueiro no governo Bolsonaro e foi preso no seu governo."
+   "Diz que Vorcaro virou banqueiro no governo Bolsonaro e prisioneiro no seu, e que ele está preso."
   ],
-  "700.3": [
+  "702.3": [
    "outro",
    [
     "PF e Judiciário"
    ],
-   "Diz: “A sua Polícia Federal”."
+   "Começa a falar \"A sua polícia federal...\" e é interrompido."
   ],
-  "702.4": [
+  "704.4": [
    "ataque",
    [
     "Caso Vorcaro",
     "Corrupção em geral"
    ],
-   "Diz que Vorcaro deu golpe de 60 bilhões, cita festas com políticos pagas por ele e diz que só ele pode apurar."
+   "Diz que Vorcaro deu golpe de 60 bilhões, cita festas com senadores e ministros a apurar e diz que Flávio não tem \"pedigree\"."
   ],
-  "743.4": [
+  "745.3": [
    "ataque",
    [
     "PF e Judiciário",
     "Caso Vorcaro",
-    "Corrupção em geral"
+    "Lulinha e Luchsinger"
    ],
-   "Diz que André Mendonça prendeu Vorcaro, acusa Lula de usar a PF para proteger aliados e promete autonomia à PF."
+   "Diz que André Mendonça, não Lula, prendeu Vorcaro, acusa Lula de direcionar a PF e promete autonomia à instituição."
   ],
-  "811.3": [
+  "812.9": [
    "ataque",
    [
     "Caso Vorcaro",
     "Mentira e credibilidade"
    ],
-   "Diz que Flávio pegou 134 milhões, mentiu e pergunta o que ele fez com o dinheiro."
+   "Pergunta o que Flávio fez com os R$ 134 milhões e diz que ele mentiu à sociedade."
   ],
-  "827.7": [
+  "829.5": [
    "defesa",
    [
     "Caso Vorcaro"
    ],
-   "Diz que já explicou várias vezes e explicará quando necessário."
+   "Diz que já explicou várias vezes e explicará quando for necessário."
   ],
-  "830.0": [
+  "832.0": [
    "ataque",
    [
     "Caso Vorcaro"
    ],
-   "Pergunta onde Flávio colocou o dinheiro."
+   "Pergunta onde Flávio colocou os R$ 134 milhões."
   ],
-  "831.5": [
+  "834.3": [
    "defesa",
    [
     "Caso Vorcaro",
     "Família Bolsonaro"
    ],
-   "Diz que o dinheiro foi para o filme sobre Jair Bolsonaro e oferece a Lula um convite para assistir."
+   "Diz que o dinheiro foi para o filme sobre Jair Bolsonaro, oferece cortesia a Lula e diz que ninguém o chama de mito."
   ],
-  "853.3": [
+  "855.2": [
    "ataque",
    [
     "Caso Vorcaro"
    ],
-   "Pede que Flávio explique os “174 milhões”."
+   "Pede novamente explicação sobre os R$ 134 milhões."
   ],
-  "857.0": [
+  "859.0": [
    "defesa",
    [
     "Caso Vorcaro"
    ],
-   "Diz que o dinheiro está no filme."
+   "Diz \"Está no filme\"."
   ],
-  "859.3": [
+  "860.2": [
+   "ataque",
+   [
+    "Caso Vorcaro"
+   ],
+   "Pergunta o que está no filme e se não foi pago no filme."
+  ],
+  "862.0": [
+   "ataque",
+   [
+    "Caso Vorcaro"
+   ],
+   "Menciona os R$ 30 milhões por fora que atribui a Lula."
+  ],
+  "863.2": [
+   "ataque",
+   [
+    "Caso Vorcaro"
+   ],
+   "Diz que a diretora do filme afirmou não ter recebido nada."
+  ],
+  "865.1": [
+   "ataque",
+   [
+    "Caso Vorcaro"
+   ],
+   "Pergunta se os R$ 30 milhões por fora foram para o bolso de Lula ou para o filme dele."
+  ],
+  "867.2": [
    "ataque",
    [
     "Caso Vorcaro",
     "Mentira e credibilidade"
    ],
-   "Diz que a diretora do filme negou receber, pergunta se o dinheiro foi para o bolso e cobra explicação sobre casa de 10 milhões."
+   "Diz que Flávio contou 43 mentiras sobre o tema e pergunta como comprou casa de 10 milhões com salário de senador."
   ],
-  "885.5": [
+  "886.3": [
    "defesa",
    [
-    "Lulinha e Luchsinger",
-    "Fraude no INSS"
+    "Caso Vorcaro",
+    "Lulinha e Luchsinger"
    ],
-   "Diz que, diferente do filho de Lula, comprou com trabalho e não com dinheiro de aposentado."
+   "Diz que comprou com trabalho, diferente do filho de Lula, e não com dinheiro de aposentado."
   ],
-  "888.2": [
+  "890.0": [
    "ataque",
    [
     "Caso Vorcaro"
    ],
-   "Compara seu apartamento à casa de 10 milhões de Flávio, que diz ter sido paga em parte com dinheiro do BRB."
+   "Diz ter apartamento de 1,5 milhão após 12 anos como presidente e que Flávio pagou parte de casa de 10 milhões com dinheiro do BRB."
   ],
-  "908.9": [
+  "910.7": [
    "ataque",
    [
     "Economia e dívidas",
     "Bolsa Família",
     "Lulinha e Luchsinger"
    ],
-   "Atribui juros altos a gastos de Lula para se reeleger e acusa-o de lembrar do Bolsa Família só agora."
+   "Questiona o patrimônio do filho de Lula, critica juros e gastos de 350 bilhões e trata reajuste do Bolsa Família como busca de votos."
   ],
-  "977.9": [
+  "979.6": [
    "ataque",
    [
     "Caso Vorcaro"
    ],
-   "Reclama que pediu explicação sobre 134 milhões e Flávio falou de Bolsa Família."
+   "Reclama que pediu explicação sobre os R$ 134 milhões e Flávio falou de Bolsa Família; repete o pedido."
   ],
-  "994.7": [
+  "996.8": [
    "ataque",
    [
     "Bolsa Família"
    ],
-   "Pede que Lula explique por que “esqueceu” do Bolsa Família."
+   "Pede que Lula explique por que esqueceu do Bolsa Família."
   ],
-  "996.9": [
+  "998.8": [
    "defesa",
    [
     "Bolsa Família",
     "Economia e dívidas",
     "Caso Vorcaro"
    ],
-   "Diz que a reposição inflacionária é obrigação legal, que mandou pagar, cita anistia de dívidas e volta a cobrar os 134 milhões."
+   "Diz que reposição inflacionária é obrigação legal, cita anistia de 12,7 bilhões a MEIs e insiste na pergunta sobre os 134 milhões."
   ],
-  "1030.3": [
-   "outro",
-   [
-    "Bate-boca"
-   ],
-   "Diz que Lula pode continuar perguntando."
-  ],
-  "1031.4": [
-   "ataque",
-   [
-    "Caso Vorcaro"
-   ],
-   "Pergunta como alguém pega 134 milhões e não sabe para onde foram."
-  ],
-  "1038.3": [
+  "1041.3": [
    "ataque",
    [
     "Bolsa Família",
     "Caso Vorcaro"
    ],
-   "Repete que o dinheiro foi para o filme e diz que Bolsonaro elevou o Bolsa Família a 600 reais, triplicando o valor."
+   "Diz que o dinheiro foi para o filme, que Bolsonaro elevou o Bolsa Família a no mínimo 600 reais e que Lula pagava média de 190."
   ],
-  "1075.6": [
+  "1077.4": [
    "ataque",
    [
     "Caso Vorcaro"
    ],
-   "Diz que, se Flávio não falar dos 134 milhões, vai parar de perguntar."
+   "Diz que vai parar de perguntar se Flávio não falar dos 134 milhões."
   ],
-  "1078.1": [
+  "1080.0": [
    "defesa",
    [
     "Caso Vorcaro"
    ],
-   "Diz que já respondeu e Lula não quer ouvir."
+   "Diz \"Eu já falei\"."
   ],
-  "1078.8": [
+  "1080.7": [
    "ataque",
    [
     "Caso Vorcaro"
    ],
-   "Diz que o dinheiro não foi para o filme e que vai mudar de pergunta se Flávio não explicar."
+   "Diz que o dinheiro não foi para o filme e que vai parar de perguntar se não houver explicação."
   ],
-  "1097.7": [
+  "1087.8": [
+   "defesa",
+   [
+    "Caso Vorcaro"
+   ],
+   "Diz \"Foi no filme\"."
+  ],
+  "1088.2": [
    "ataque",
    [
-    "Caso Vorcaro",
-    "Corrupção em geral"
+    "Caso Vorcaro"
    ],
-   "Pede que o público veja em sua rede áudio de Vorcaro citando 30 milhões por fora ao Instituto Lula e pergunta se Lula explica."
+   "Repete que não foi no filme e diz que não há registro de pagamento no Banco Central."
   ],
-  "1126.7": [
+  "1099.4": [
+   "outro",
+   [
+    "Caso Vorcaro"
+   ],
+   "Pede que espectadores procurem em sua rede social o áudio de Vorcaro e reclama de interrupção."
+  ],
+  "1111.2": [
+   "outro",
+   [
+    "Bate-boca"
+   ],
+   "Diz \"Fale, fale, fale\"."
+  ],
+  "1113.0": [
+   "ataque",
+   [
+    "Caso Vorcaro"
+   ],
+   "Diz que áudio de Vorcaro cita 30 milhões por fora para o Instituto Lula e pergunta se Lula quer explicar."
+  ],
+  "1128.5": [
    "ataque",
    [
     "Segurança e armas"
    ],
-   "Pergunta por que Flávio, como senador, interferiu para que policial que matou criança de 5 anos não fosse preso."
+   "Fala em \"desfaçatez dos milicianos\" e pergunta por que Flávio interferiu para que policial que matou criança de cinco anos não fosse preso."
   ],
-  "1152.6": [
+  "1154.3": [
    "ataque",
    [
     "Segurança e armas",
@@ -588,29 +607,30 @@
    ],
    "Diz que a criminalidade explodiu com Lula e pergunta por que 73% dos presidiários votaram nele."
   ],
-  "1163.9": [
-   "outro",
-   [
-    "Eleição e votos"
-   ],
-   "Diz querer 100% dos votos, “até teu pai”."
-  ],
-  "1168.1": [
-   "outro",
-   [
-    "Bate-boca"
-   ],
-   "Repete: “Até teu pai.”"
-  ],
-  "1169.6": [
+  "1165.8": [
    "outro",
    [
     "Eleição e votos",
     "Família Bolsonaro"
    ],
-   "Diz que o pai de Flávio pode votar nele porque conhece o filho."
+   "Diz querer 100% dos votos, inclusive o do pai de Flávio."
   ],
-  "1175.8": [
+  "1170.8": [
+   "outro",
+   [
+    "Bate-boca"
+   ],
+   "Diz \"Ô Lula\"."
+  ],
+  "1171.4": [
+   "outro",
+   [
+    "Família Bolsonaro",
+    "Eleição e votos"
+   ],
+   "Diz que o pai de Flávio, por conhecê-lo, saberia que Lula é melhor."
+  ],
+  "1177.7": [
    "defesa",
    [
     "Família Bolsonaro",
@@ -618,473 +638,512 @@
    ],
    "Diz que o pai não pode votar para presidente por ter sido vítima de perseguição."
   ],
-  "1178.7": [
+  "1180.1": [
    "outro",
    [
-    "Eleição e votos",
-    "Família Bolsonaro"
+    "Família Bolsonaro",
+    "Eleição e votos"
    ],
-   "Pede, dirigindo-se a Jair Bolsonaro, que vote nele."
+   "Pede o voto de Bolsonaro dizendo que é melhor do que o filho dele."
   ],
-  "1184.1": [
+  "1186.0": [
    "ataque",
    [
     "Eleição e votos",
     "Segurança e armas"
    ],
-   "Diz que Lula teve votos de presos por crimes graves e pergunta ao eleitor se quer votar igual a eles."
+   "Diz que Lula teve votos de estupradores e assaltantes nos presídios e pergunta ao eleitor se quer votar igual."
   ],
-  "1207.9": [
+  "1210.1": [
    "ataque",
    [
     "Segurança e armas",
     "Eleição e votos"
    ],
-   "Pergunta se o policial que matou a criança votou em Flávio."
+   "Pergunta se o autor da morte da criança de 5 anos, que diz que Flávio ajudou a não ser preso, votou nele."
   ],
-  "1213.9": [
+  "1215.9": [
+   "outro",
+   [
+    "Bate-boca"
+   ],
+   "Pede para falar."
+  ],
+  "1217.1": [
+   "ataque",
+   [
+    "Segurança e armas",
+    "Eleição e votos"
+   ],
+   "Repete \"Votou em você?\"."
+  ],
+  "1217.5": [
+   "defesa",
+   [
+    "Segurança e armas",
+    "PF e Judiciário"
+   ],
+   "Diz que Lula não pode criminalizar a advocacia e que condena alguém sem julgamento."
+  ],
+  "1221.6": [
+   "outro",
+   [
+    "Segurança e armas"
+   ],
+   "Diz \"Você não podia ser assassino\"."
+  ],
+  "1222.6": [
    "ataque",
    [
     "PF e Judiciário",
-    "Segurança e armas"
+    "Corrupção em geral"
    ],
-   "Diz que o policial nem foi julgado, que Lula foi condenado em todas as instâncias e “descondenado” por amigos."
+   "Diz que Lula foi condenado em todas as instâncias e \"descondenado\" por amigos."
   ],
-  "1237.6": [
+  "1239.5": [
    "ataque",
    [
     "Segurança e armas",
     "Eleição e votos"
    ],
-   "Pergunta se Flávio recebeu o voto do policial que matou a criança de 5 anos."
+   "Pergunta se Flávio recebeu o voto do autor da morte da criança de 5 anos."
   ],
-  "1244.1": [
+  "1245.7": [
    "ataque",
    [
     "Eleição e votos",
     "Segurança e armas"
    ],
-   "Repete que Lula teve 73% dos votos de presos, pergunta ao eleitor em quem o ladrão vota e pede voto no 22."
+   "Pergunta se Lula recebeu votos de 73% dos presidiários e pergunta ao eleitor em quem votaria quem rouba celulares."
   ],
-  "1276.8": [
+  "1277.9": [
    "ataque",
    [
     "Segurança e armas"
    ],
-   "Pergunta por que Flávio agiu pelo policial e por que queria retirar a marcação das balas."
+   "Pergunta por que Flávio atuou no caso do policial e da criança de 5 anos e por que queria tirar a marcação das balas."
   ],
-  "1297.9": [
+  "1299.8": [
    "ataque",
    [
     "Segurança e armas"
    ],
-   "Nega querer retirar marcação de balas e atribui a Lula a falta de fiscalização nas fronteiras e a entrada de fuzis."
+   "Nega querer tirar a marcação das balas e diz que Lula não fiscaliza fronteiras, permitindo a entrada de fuzis."
   ],
-  "1314.6": [
+  "1318.2": [
    "ataque",
    [
     "Segurança e armas"
    ],
-   "Pergunta por que Flávio empregou a irmã e a mulher de integrante do Escritório do Crime ligado à morte de Marielle."
+   "Pergunta por que Flávio deu emprego à irmã e à mulher de homem que associa ao Escritório do Crime e à morte de Marielle."
   ],
-  "1325.8": [
+  "1327.6": [
    "ataque",
    [
     "Corrupção em geral"
    ],
-   "Diz que Lula emprega condenados do Mensalão e Petrolão que hoje o assessoram."
+   "Diz que Lula emprega no governo condenados no Mensalão e no caso Petrobras."
   ],
-  "1340.6": [
-   "ataque",
-   [
-    "Segurança e armas"
-   ],
-   "Pergunta se Flávio vai responder e diz que mudará de assunto."
-  ],
-  "1344.3": [
+  "1342.4": [
    "outro",
    [
     "Bate-boca"
    ],
-   "Diz que está respondendo."
+   "Pergunta se Flávio não vai responder e diz que mudará de assunto."
   ],
-  "1345.1": [
-   "ataque",
-   [
-    "Segurança e armas",
-    "Eleição e votos"
-   ],
-   "Diz que Flávio não respondeu às três perguntas e repete as do voto do policial e da marcação das balas."
-  ],
-  "1362.9": [
-   "outro",
-   [
-    "Eleição e votos",
-    "Lulinha e Luchsinger"
-   ],
-   "Pergunta se o filho de Lula votou nele."
-  ],
-  "1363.9": [
-   "ataque",
-   [
-    "Segurança e armas",
-    "Família Bolsonaro"
-   ],
-   "Diz que o governo Bolsonaro liberou mais de um milhão de armas e 1,1 bilhão de balas e pergunta quantas armas Flávio tem."
-  ],
-  "1384.8": [
-   "ataque",
-   [
-    "Segurança e armas"
-   ],
-   "Diz que o problema é a arma ilegal que Lula deixa entrar e que domina comunidades."
-  ],
-  "1401.3": [
-   "ataque",
-   [
-    "Segurança e armas",
-    "Família Bolsonaro"
-   ],
-   "Começa a repetir que o pai de Flávio, por decreto, fez algo sobre armas."
-  ],
-  "1406.6": [
+  "1346.3": [
    "outro",
    [
     "Bate-boca"
    ],
-   "Pede que Lula “vire a página do passado”."
+   "Diz \"Eu estou te respondendo\"."
   ],
-  "1413.1": [
+  "1347.0": [
+   "outro",
+   [
+    "Bate-boca"
+   ],
+   "Diz que Flávio não vai responder."
+  ],
+  "1348.4": [
+   "outro",
+   [
+    "Bate-boca"
+   ],
+   "Diz \"Eu não estou te respondendo\"."
+  ],
+  "1348.9": [
    "ataque",
    [
     "Segurança e armas",
     "Família Bolsonaro"
    ],
-   "Diz que Jair Bolsonaro liberou um milhão de armas e 1,1 bilhão de balas e pergunta para onde foram."
+   "Repete perguntas sobre voto e marcação de balas, diz que o governo Bolsonaro liberou mais de 1 milhão de armas e pergunta quantas Flávio tem."
   ],
-  "1429.9": [
+  "1389.0": [
+   "ataque",
+   [
+    "Segurança e armas"
+   ],
+   "Diz que Lula liberou as armas para traficantes."
+  ],
+  "1390.6": [
+   "ataque",
+   [
+    "Segurança e armas"
+   ],
+   "Pergunta quantas armas Flávio tem em casa."
+  ],
+  "1391.4": [
+   "ataque",
+   [
+    "Segurança e armas"
+   ],
+   "Diz que o problema são armas ilegais que Lula deixa entrar e que dão domínio de território a criminosos."
+  ],
+  "1403.2": [
+   "ataque",
+   [
+    "Segurança e armas",
+    "Família Bolsonaro"
+   ],
+   "Diz que Bolsonaro anunciou compra de 1 bilhão e 100 milhões de balas e 1 milhão de armas e pergunta para onde foram."
+  ],
+  "1431.7": [
    "defesa",
    [
     "Mentira e credibilidade",
     "Segurança e armas"
    ],
-   "Diz que o número não existe e acusa Lula de inventá-lo."
+   "Diz que o número não existe e que Lula o inventou."
   ],
-  "1435.3": [
+  "1437.4": [
    "outro",
    [
     "Mentira e credibilidade"
    ],
-   "Pede ao público que procure no Google tudo o que ele disser."
+   "Pede que o público pesquise no Google o que cada lado fala e diz que o que os adversários falam é mentira."
   ],
-  "1440.8": [
+  "1445.3": [
    "ataque",
    [
     "Lulinha e Luchsinger",
-    "Mentira e credibilidade"
+    "Mulheres"
    ],
-   "Diz que vai checar no Google o que Lula fala e sugere pesquisar se o filho de Lula agrediu a mulher."
+   "Sugere pesquisar no Google se o filho de Lula bateu na própria mulher."
   ],
-  "1447.4": [
+  "1449.3": [
    "ataque",
    [
     "Mentira e credibilidade"
    ],
-   "Diz que, se Flávio mentiu 43 vezes, imagina quantas vezes mentiu no debate."
+   "Começa a dizer que, se Flávio mentiu 43 vezes, ele imagina outras mentiras."
   ],
-  "1460.4": [
+  "1453.4": [
+   "outro",
+   [
+    "Bate-boca"
+   ],
+   "Diz \"estou bovocado\"."
+  ],
+  "1454.3": [
+   "ataque",
+   [
+    "Mentira e credibilidade"
+   ],
+   "Pergunta-se quantas vezes Flávio já mentiu durante o debate."
+  ],
+  "1462.3": [
    "ataque",
    [
     "Economia e dívidas",
     "Mentira e credibilidade"
    ],
-   "Acusa Lula de enganar a população há quatro anos e de manter pessoas endividadas apesar das edições do Desenrola."
+   "Diz que Lula engana a população há quatro anos, mantém pessoas endividadas e critica as edições do Desenrola."
   ],
-  "1485.3": [
+  "1487.2": [
    "ataque",
    [
     "Escala 6x1",
     "Mentira e credibilidade",
     "Caso Vorcaro"
    ],
-   "Lista perguntas que diz não respondidas e pergunta se Flávio fará proposta para acabar com a escala 6x1, pedindo que olhe para a câmera."
+   "Lista perguntas que diz não respondidas e pede que Flávio diga, olhando para a câmera, se fará proposta sobre o fim da escala 6x1."
   ],
-  "1529.7": [
+  "1530.1": [
    "outro",
    [
     "Bate-boca"
    ],
-   "Começa a responder com crítica a Lula, interrompido."
+   "Começa uma frase sobre Lula e é interrompido."
   ],
-  "1532.8": [
+  "1534.5": [
    "outro",
    [
     "Bate-boca"
    ],
    "Pede que Flávio olhe para a câmera."
   ],
-  "1536.0": [
+  "1537.8": [
    "ataque",
    [
     "Mentira e credibilidade",
     "Eleição e votos"
    ],
-   "Diz que gestos de Lula indicam mentira, pergunta ao eleitor se a vida melhorou e fala no fim da “era Lula”."
+   "Diz que gestos de Lula indicam mentira e pergunta ao eleitor se a vida melhorou, falando no fim da \"era Lula\"."
   ],
-  "1565.8": [
+  "1567.8": [
    "ataque",
    [
     "Escala 6x1",
     "Mentira e credibilidade"
    ],
-   "Diz que a mentira está nos olhos, que Flávio treinou para mentir e repete a pergunta sobre a escala 6x1."
+   "Diz que Flávio treinou para mentir e pergunta se ele fará ou não proposta sobre o fim da escala 6x1."
   ],
-  "1596.6": [
+  "1598.5": [
    "defesa",
    [
     "Escala 6x1",
     "Mentira e credibilidade"
    ],
-   "Diz que obviamente não e que é mais uma mentira de Lula."
+   "Responde \"É óbvio que não\" e diz que é mais uma mentira de Lula."
   ],
-  "1598.4": [
+  "1600.1": [
    "ataque",
    [
     "Escala 6x1"
    ],
-   "Pergunta por que Flávio era contra."
+   "Pergunta \"Por que você era contra?\"."
   ],
-  "1598.9": [
+  "1600.6": [
    "defesa",
    [
-    "Mentira e credibilidade",
-    "Escala 6x1"
+    "Mentira e credibilidade"
    ],
    "Diz que é mais uma mentira de Lula."
   ],
-  "1599.8": [
+  "1601.3": [
    "ataque",
    [
     "Escala 6x1"
    ],
-   "Pergunta por que Flávio era contra se o PL diz que vai propor mudança já."
+   "Repete por que Flávio era contra e diz que o PL afirma que vai mudar desde já."
   ],
-  "1605.5": [
+  "1607.4": [
    "ataque",
    [
     "Mentira e credibilidade",
-    "Mulheres",
-    "Economia e dívidas"
+    "Economia e dívidas",
+    "Mulheres"
    ],
-   "Diz que o trabalhador está garantido com ele, lista recordes negativos do governo e diz que Lula foi condenado pelo TSE por fake news."
+   "Diz que Lula faz fake news, promete prosperidade, cita recordes negativos e diz que Lula foi condenado pelo TSE por fake news."
   ],
-  "1641.1": [
+  "1642.8": [
    "ataque",
    [
     "Política externa",
     "Economia e dívidas"
    ],
-   "Pergunta se Flávio, amigo de Milei, continua dizendo que seu modelo é o de Milei."
+   "Pergunta se Flávio, a quem chama de amigo de Milei, mantém o modelo de Milei como referência."
   ],
-  "1652.6": [
+  "1654.4": [
    "ataque",
    [
     "Política externa"
    ],
-   "Cita Ortega e Maduro como amigos de Lula, diz que o vice foi à posse no Irã e que o Brasil acabou internacionalmente."
+   "Cita Ortega, Maduro e envio do vice à posse no Irã como amizades de Lula e diz que o Brasil perdeu espaço internacional."
   ],
-  "1674.2": [
-   "ataque",
-   [
-    "Política externa",
-    "Economia e dívidas"
-   ],
-   "Pergunta se Flávio seguirá o modelo de Milei e se sabe os índices de pobreza e desemprego na Argentina."
-  ],
-  "1695.6": [
-   "defesa",
-   [
-    "Política externa",
-    "Economia e dívidas"
-   ],
-   "Diz que um governo de esquerda deixou a Argentina na miséria, que a direita conserta e que ele vai consertar o Brasil."
-  ],
-  "1720.0": [
-   "ataque",
-   [
-    "Política externa"
-   ],
-   "Pergunta mais uma vez: “Milei ou não?”"
-  ],
-  "1723.8": [
-   "outro",
-   [
-    "Política externa"
-   ],
-   "Diz “Milei” e uma palavra ininteligível na transcrição."
-  ],
-  "1726.1": [
-   "ataque",
-   [
-    "Política externa"
-   ],
-   "Repete a pergunta sobre seguir o modelo de Milei."
-  ],
-  "1732.4": [
+  "1676.1": [
    "ataque",
    [
     "Economia e dívidas",
     "Política externa"
    ],
-   "Pergunta a Lula qual modelo ele vai escolher."
+   "Pergunta se Flávio seguirá o modelo de Milei e se conhece os índices de pobreza e desemprego na Argentina."
   ],
-  "1735.1": [
-   "defesa",
+  "1697.1": [
+   "proposta",
    [
     "Economia e dívidas"
    ],
-   "Responde: “o modelo do Lula”."
+   "Diz que governos de esquerda deixam miséria e que a direita vai consertar o país endividado."
   ],
-  "1736.9": [
+  "1721.6": [
+   "ataque",
+   [
+    "Política externa",
+    "Economia e dívidas"
+   ],
+   "Pergunta \"Milei ou não?\"."
+  ],
+  "1726.9": [
+   "outro",
+   [
+    "Bate-boca"
+   ],
+   "Diz \"Arma ginejada\"."
+  ],
+  "1727.8": [
+   "ataque",
+   [
+    "Política externa",
+    "Economia e dívidas"
+   ],
+   "Repete a pergunta se Flávio vai escolher o modelo de Milei."
+  ],
+  "1734.0": [
+   "ataque",
+   [
+    "Economia e dívidas"
+   ],
+   "Pergunta qual modelo Lula vai escolher."
+  ],
+  "1736.8": [
+   "proposta",
+   [
+    "Economia e dívidas"
+   ],
+   "Responde \"O modelo do Lula\"."
+  ],
+  "1738.7": [
    "outro",
    [
     "Lulinha e Luchsinger"
    ],
-   "Diz: “Ou da Roberta.”"
+   "Pergunta, em tom de ironia, se não é o modelo de Roberta Luchsinger."
   ],
-  "1737.6": [
-   "defesa",
-   [
-    "Economia e dívidas"
-   ],
-   "Repete: “O modelo do Lula.”"
-  ],
-  "1738.0": [
-   "outro",
-   [
-    "Lulinha e Luchsinger"
-   ],
-   "Ironiza que não seria o modelo da Roberta."
-  ],
-  "1739.6": [
+  "1741.7": [
    "proposta",
    [
     "Economia e dívidas",
     "Inclusão e educação"
    ],
-   "Diz que seu modelo faz a economia crescer, gera emprego e é o maior programa de inclusão social da história."
+   "Diz que seu modelo faz a economia crescer, gera emprego e é o maior programa de inclusão social do país."
   ],
-  "1749.6": [
+  "1751.5": [
    "ataque",
    [
     "Bolsa Família"
    ],
    "Pergunta se Lula esqueceu dos mais pobres."
   ],
-  "1754.6": [
+  "1756.4": [
    "outro",
    [
-    "Política externa",
-    "Bate-boca"
+    "Política externa"
    ],
-   "Fala em “20 segundos, Milei” e faz comentário pouco claro na transcrição."
+   "Pede 20 segundos sobre Milei para dar \"uma colher de chá\" a Flávio."
   ],
-  "1758.7": [
+  "1760.6": [
    "ataque",
    [
     "Bolsa Família"
    ],
-   "Pergunta se Lula quer explicar por que esqueceu."
+   "Pede que Lula diga à câmera por que esqueceu dos mais pobres, lembrando deles só na campanha."
   ],
-  "1760.0": [
-   "outro",
-   [
-    "Bate-boca"
-   ],
-   "Diz: “Ele vai te emprestar.”"
-  ],
-  "1761.1": [
+  "1766.3": [
    "ataque",
    [
-    "Bolsa Família",
-    "Eleição e votos"
-   ],
-   "Pede que Lula diga à câmera por que esqueceu dos mais pobres e só lembrou na campanha."
-  ],
-  "1766.1": [
-   "ataque",
-   [
-    "Política externa",
-    "Economia e dívidas"
-   ],
-   "Pergunta se Flávio vai pedir a motosserra emprestada a Milei."
-  ],
-  "1772.5": [
-   "outro",
-   [
-    "Bate-boca"
-   ],
-   "Oferece sua câmera para Lula usar."
-  ],
-  "1774.3": [
-   "ataque",
-   [
+    "Economia e dívidas",
     "Política externa"
    ],
-   "Pergunta se Flávio já pegou emprestada a motosserra de Milei."
+   "Pergunta se Flávio vai pegar emprestada a motosserra de Milei."
   ],
-  "1782.3": [
+  "1774.4": [
+   "outro",
+   [
+    "Bate-boca"
+   ],
+   "Oferece sua câmera a Lula."
+  ],
+  "1776.7": [
+   "ataque",
+   [
+    "Economia e dívidas",
+    "Política externa"
+   ],
+   "Pede que Flávio diga se já pegou emprestada a motosserra de Milei."
+  ],
+  "1784.0": [
    "proposta",
    [
     "Corrupção em geral"
    ],
-   "Diz que fará um “tesouraço” na corrupção do governo Lula."
+   "Diz que vai \"tesourar\" Lula na corrupção do governo."
   ],
-  "1793.8": [
+  "1795.7": [
    "ataque",
    [
-    "Economia e dívidas",
     "Mentira e credibilidade"
    ],
-   "Diz que Flávio se preparou para não responder e pergunta sobre quem recairá o “tesouraço”."
+   "Diz que Flávio se preparou para não responder nenhuma pergunta."
   ],
-  "1806.6": [
+  "1800.7": [
+   "outro",
+   [
+    "Bate-boca"
+   ],
+   "Rebate dizendo \"Você somente? Nenhuma pergunta\"."
+  ],
+  "1802.0": [
    "ataque",
    [
     "Economia e dívidas"
    ],
-   "Diz que 7 bilhões foram gastos com viagens de Janja e que vai tirar esse gasto para destinar ao eleitor."
+   "Pergunta nas costas de quem cairá o \"tesouraço\"."
   ],
-  "1815.9": [
+  "1808.5": [
+   "ataque",
+   [
+    "Economia e dívidas",
+    "Corrupção em geral"
+   ],
+   "Diz que cortará privilégios de Lula e cita gasto de 7 bilhões em viagens com Janja."
+  ],
+  "1818.1": [
    "defesa",
    [
     "Mentira e credibilidade"
    ],
-   "Diz que o valor é mentira, pede que pesquisem no Google e chama Flávio de mentiroso contumaz."
+   "Diz que o número é mentira, pede que pesquisem no Google e afirma que Flávio se preparou para mentir."
   ],
-  "1835.3": [
+  "1822.5": [
+   "ataque",
+   [
+    "Economia e dívidas"
+   ],
+   "Pergunta quanto foi então o gasto."
+  ],
+  "1823.3": [
+   "ataque",
+   [
+    "Mentira e credibilidade"
+   ],
+   "Compara Flávio a um personagem e o chama de malandro carioca que mente."
+  ],
+  "1835.0": [
    "proposta",
    [
     "Corrupção em geral",
     "Economia e dívidas",
     "Eleição e votos"
    ],
-   "Diz que o Brasil mudará em poucos dias e promete acabar com a corrupção e os gastos do governo."
+   "Diz que faltam poucos dias para o Brasil mudar e promete acabar com a corrupção e com gastos de Lula."
   ],
-  "1853.1": [
+  "1854.7": [
    null,
    [],
    "Fala da mediação."
   ],
-  "1864.5": [
+  "1867.2": [
    "proposta",
    [
     "Inclusão e educação",
     "Mentira e credibilidade"
    ],
-   "Cita demarcação de terras indígenas, quilombos, universidade e Pé-de-Meia, promete Pé-de-Meia para professores e diz que Flávio gosta de mentir."
+   "Lista inclusão, terras indígenas, quilombos, universidades e Pé-de-Meia, promete Pé-de-Meia para professores e diz que Flávio se preparou para mentir."
   ],
-  "1933.3": [
+  "1935.2": [
    null,
    [],
    "Fala da mediação."
@@ -1092,516 +1151,476 @@
  },
  "afirmacoes": [
   {
-   "t": 0.0,
+   "t": 1.6,
    "quem": "Lula",
-   "texto": "Flávio, deputado estadual em 2009, foi o único de 49 deputados a votar contra ampliar a licença-maternidade em dois meses.",
-   "trecho": "E de 49 deputados, você foi o único que votou contra a mulher ter dois meses mais para cuidar da criança."
+   "texto": "Flávio, deputado estadual em 2009, foi o único de 49 deputados a votar contra ampliar em dois meses a licença-maternidade de servidoras.",
+   "trecho": "E de 49 deputados, você foi o único que votou contra a mulher ter dois meses mais para cuidar da criança"
   },
   {
-   "t": 24.6,
+   "t": 63.0,
    "quem": "Flávio",
-   "texto": "Flávio é casado com Fernanda e pai de duas filhas, Luísa e Carol.",
-   "trecho": "Eu sou casado com a Fernanda, uma mulher maravilhosa, sou pai de duas meninas lindas, a Luísa e a Carol."
+   "texto": "Roberta Luchsinger fez acusações contra Lula no dia anterior.",
+   "trecho": "ela fez acusações muito graves contra você ontem"
   },
   {
-   "t": 61.2,
+   "t": 63.0,
    "quem": "Flávio",
-   "texto": "Lula disse anteriormente que não conhecia Roberta Luchsinger.",
-   "trecho": "E você, dizendo que não a conhecia"
+   "texto": "Lula disse que não conhecia Roberta Luchsinger.",
+   "trecho": "E você dizendo que não a conhecia."
   },
   {
-   "t": 89.6,
+   "t": 91.5,
    "quem": "Lula",
-   "texto": "Roberta Luchsinger é parceira do chamado “careca” do INSS.",
-   "trecho": "ela é parceira do seu sótio careca"
+   "texto": "Roberta Luchsinger é parceira de um sócio de Flávio, chamado de \"careca\".",
+   "trecho": "Aliás, ela é parceira do seu sócio, careca."
   },
   {
-   "t": 92.4,
+   "t": 94.3,
    "quem": "Flávio",
    "texto": "Roberta Luchsinger disse ser sócia do filho de Lula.",
-   "trecho": "Você está criticando a Roberta e ela é sócia do seu filho. Ela falou que é sócia."
+   "trecho": "Ela falou que é sócia."
   },
   {
-   "t": 125.3,
+   "t": 127.2,
    "quem": "Flávio",
-   "texto": "Flávio não mantém escritório com o “careca” do INSS.",
-   "trecho": "Eu não mantei o escritório com careca"
-  },
-  {
-   "t": 125.3,
-   "quem": "Flávio",
-   "texto": "O “careca do INSS” atuou no governo Lula.",
+   "texto": "O \"careca do INSS\" atuou no governo Lula.",
    "trecho": "O careca do INSS foi do seu governo."
   },
   {
-   "t": 125.3,
+   "t": 127.2,
    "quem": "Flávio",
-   "texto": "O “careca do INSS” fez pagamentos ao filho de Lula.",
+   "texto": "O \"careca do INSS\" fez pagamentos ao filho de Lula.",
    "trecho": "Inclusive, ele pagou coisa para o seu filho."
   },
   {
-   "t": 125.3,
+   "t": 127.2,
    "quem": "Flávio",
-   "texto": "O filho de Lula mora em bairro nobre na Espanha, vizinho de Vini Júnior.",
-   "trecho": "o filho do Lula mora num bairro muito rico, do lado do Vini Júnior"
+   "texto": "O filho de Lula mora em bairro rico na Espanha, vizinho de Vini Júnior.",
+   "trecho": "Vocês sabem que o filho do Lula mora num bairro muito rico, do lado do Vini Júnior."
   },
   {
-   "t": 147.6,
+   "t": 127.2,
+   "quem": "Flávio",
+   "texto": "Roberta Luchsinger disse saber quem sustenta o filho de Lula.",
+   "trecho": "Inclusive, a Luchsinger falou que sabe quem está sustentando o seu filho."
+  },
+  {
+   "t": 148.9,
    "quem": "Lula",
-   "texto": "O filho de Lula abriu sigilo bancário e telefônico à investigação.",
+   "texto": "O filho de Lula abriu seus sigilos bancário e telefônico à investigação.",
    "trecho": "O meu filho abriu a sua conta bancária e abriu o seu telefone para ser investigado."
   },
   {
-   "t": 147.6,
+   "t": 148.9,
    "quem": "Lula",
-   "texto": "O governo Lula desmontou e prendeu a quadrilha do INSS e ressarciu aposentados.",
+   "texto": "O governo Lula desmontou a quadrilha do INSS, prendeu integrantes e ressarciu aposentados.",
    "trecho": "Nós destruímos a quadrilha, prendemos a quadrilha e já pagamos os aposentados."
   },
   {
-   "t": 191.2,
+   "t": 188.7,
    "quem": "Flávio",
    "texto": "A Polícia Federal não fez diligências contra o filho de Lula.",
    "trecho": "a Polícia Federal até agora não foi atrás do seu filho"
   },
   {
-   "t": 203.2,
+   "t": 205.1,
    "quem": "Lula",
-   "texto": "O irmão de Flávio, nos EUA, pede intervenção de Trump no Brasil.",
+   "texto": "O irmão de Flávio está nos Estados Unidos atuando contra o Brasil.",
+   "trecho": "O seu irmão está fugindo nos Estados Unidos, tramando contra o Brasil."
+  },
+  {
+   "t": 205.1,
+   "quem": "Lula",
+   "texto": "O irmão de Flávio pediu intervenção de Trump no Brasil.",
    "trecho": "pedindo intervenção do Trump no Brasil"
   },
   {
-   "t": 203.2,
+   "t": 205.1,
    "quem": "Lula",
-   "texto": "Em manifestação bolsonarista no dia havia um torpedo americano com mensagem de ataque ao Brasil.",
-   "trecho": "Vocês viram que hoje na manifestação de vocês tinha um torpedo americano que mandava atacar um torpedo no Brasil?"
+   "texto": "Na manifestação bolsonarista do dia havia um torpedo americano.",
+   "trecho": "hoje na manifestação de vocês tinha um torpedo americano"
   },
   {
-   "t": 254.6,
+   "t": 256.5,
    "quem": "Lula",
    "texto": "O filho de Lula é alvo de três inquéritos.",
-   "trecho": "E ele tem três inquéritos"
+   "trecho": "E ele tem três inquéritos."
   },
   {
-   "t": 254.6,
+   "t": 256.5,
    "quem": "Lula",
-   "texto": "O processo do filho de Lula está com o ministro André Mendonça.",
+   "texto": "O processo envolvendo o filho de Lula está com o ministro André Mendonça.",
    "trecho": "O juiz que está com o processo, que é o seu amigo, que é o André Mendonça"
   },
   {
-   "t": 279.6,
+   "t": 281.5,
    "quem": "Lula",
-   "texto": "A quadrilha do INSS foi montada no governo Jair Bolsonaro.",
-   "trecho": "que foi montada no seu governo, no governo do seu pai"
+   "texto": "O esquema de fraude no INSS foi montado durante o governo Bolsonaro.",
+   "trecho": "a quadrilha do INSS, que foi montada no seu governo, no governo do seu pai"
   },
   {
-   "t": 279.6,
+   "t": 281.5,
    "quem": "Lula",
-   "texto": "Em dois anos, o governo desmontou a quadrilha do INSS e houve muitas prisões.",
-   "trecho": "Com dois anos de trabalho, nós conseguimos debelar essa quadrilha e prendemos muita gente."
+   "texto": "O governo recuperou 100 bilhões do esquema e pagou 3,5 bilhões aos aposentados.",
+   "trecho": "já arrecadamos 100 bilhões da quadrilha e já pagamos 3 bilhões e meio aos aposentados"
   },
   {
-   "t": 279.6,
-   "quem": "Lula",
-   "texto": "Foram recuperados R$ 100 bilhões da quadrilha do INSS.",
-   "trecho": "E já arrecadamos R$ 100 bilhões da quadrilha."
-  },
-  {
-   "t": 279.6,
-   "quem": "Lula",
-   "texto": "Foram pagos R$ 3,5 bilhões aos aposentados.",
-   "trecho": "E já pagamos R$ 3,5 bilhões aos aposentados."
-  },
-  {
-   "t": 301.4,
+   "t": 303.3,
    "quem": "Flávio",
    "texto": "Roberta Luchsinger disse que o filho de Lula é seu sócio.",
-   "trecho": "Porque ela falou que o seu filho é sócio dela."
+   "trecho": "ela falou que o seu filho é sócio dela"
   },
   {
-   "t": 301.4,
+   "t": 303.3,
    "quem": "Flávio",
-   "texto": "Alguém chamado “Marcola” (como transcrito) abria portas de ministérios para negociações.",
+   "texto": "\"Marcola\" abria portas de ministérios para o filho de Lula negociar.",
    "trecho": "E o Marcola abria as portas dos ministérios para ele negociar."
   },
   {
-   "t": 329.7,
+   "t": 331.3,
    "quem": "Flávio",
    "texto": "Aliados de Lula comemoraram o fim da CPI do INSS.",
-   "trecho": "Se foram os seus aliados que estavam lá comemorando o fim da CPI do INSS"
+   "trecho": "foram os seus aliados que estavam lá comemorando o fim da CPI do INSS"
   },
   {
-   "t": 329.7,
+   "t": 331.3,
    "quem": "Flávio",
-   "texto": "Frei Chico, irmão de Lula, é vice-presidente de sindicato envolvido nos descontos de aposentados.",
-   "trecho": "o seu irmão, o Frei Chico, que é vice-presidente de um sindicato que roubou os aposentados"
+   "texto": "Frei Chico, irmão de Lula, é vice-presidente de sindicato envolvido nos descontos do INSS.",
+   "trecho": "o Frei Chico, que é vice-presidente de um sindicato que roubou os aposentados"
   },
   {
-   "t": 329.7,
-   "quem": "Flávio",
-   "texto": "Flávio teve 56 milhões de votos.",
-   "trecho": "eu tive 56 milhões de votos"
-  },
-  {
-   "t": 388.9,
-   "quem": "Flávio",
-   "texto": "Cerca de 5 milhões de aposentados foram lesados pelos descontos.",
-   "trecho": "tanta gente envolvida em roubar 5 milhões de aposentados"
-  },
-  {
-   "t": 388.9,
-   "quem": "Flávio",
-   "texto": "A avó de Flávio é professora estadual aposentada.",
-   "trecho": "A minha avó é professora aposentada do Estado."
-  },
-  {
-   "t": 446.9,
+   "t": 378.0,
    "quem": "Lula",
-   "texto": "Flávio deu 43 declarações falsas no caso Vorcaro.",
-   "trecho": "só no caso do Vorcaro ele contou 43 mentiras"
+   "texto": "Lula teve 56 milhões de votos.",
+   "trecho": "Você me respeita que eu tive 56 milhões de votos."
   },
   {
-   "t": 446.9,
+   "t": 387.1,
+   "quem": "Flávio",
+   "texto": "5 milhões de aposentados foram lesados no esquema do INSS.",
+   "trecho": "roubar 5 milhões de aposentados roubados"
+  },
+  {
+   "t": 446.2,
    "quem": "Lula",
-   "texto": "Jair Bolsonaro fazia em média 11 declarações falsas por dia.",
-   "trecho": "O pai dele mentia 11 vezes por dia"
+   "texto": "Flávio fez 43 afirmações falsas sobre o caso Vorcaro.",
+   "trecho": "só no caso do Vorcaro, ele contou 43 mentiras"
   },
   {
-   "t": 480.7,
+   "t": 446.2,
+   "quem": "Lula",
+   "texto": "Jair Bolsonaro fazia 11 afirmações falsas por dia.",
+   "trecho": "o pai dele mentia 11 vezes por dia"
+  },
+  {
+   "t": 482.5,
    "quem": "Flávio",
-   "texto": "Lula é o único no auditório já condenado ou preso por corrupção e lavagem de dinheiro.",
-   "trecho": "Sabe quantas pessoas aqui já foram condenadas Ou presas por corrupção e lavagem de dinheiro Só você"
+   "texto": "Lula é o único presente no auditório já condenado ou preso por corrupção e lavagem de dinheiro.",
+   "trecho": "Sabe quantas pessoas aqui já foram condenadas ou presas por corrupção e lavagem de dinheiro? Só você."
   },
   {
-   "t": 480.7,
+   "t": 482.5,
    "quem": "Flávio",
-   "texto": "Logo após eleito, Jair Bolsonaro enviou MP ao Congresso para combater fraudes no INSS.",
-   "trecho": "a primeira coisa que o presidente Bolsonaro fez, quando se elegeu, foi mandar uma MP para o Congresso Nacional para, entre outras coisas, combater a corrupção no INSS"
+   "texto": "Bolsonaro enviou, no início do governo, MP que incluía combate a fraudes no INSS.",
+   "trecho": "a primeira coisa que o presidente Bolsonaro fez quando se elegeu foi mandar uma MP para o Congresso Nacional para, entre outras coisas, combater a corrupção no INSS"
   },
   {
-   "t": 480.7,
+   "t": 482.5,
    "quem": "Flávio",
    "texto": "A bancada do PT propôs emenda à MP que favoreceu descontos de sindicatos no INSS.",
-   "trecho": "Vocês sabem qual foi a bancada que insistiu ali para fazer uma emendinha para favorecer os sindicatos e conseguir fazer esses descontos de forma totalmente desenfriada, sem controle? Foi a bancada do PT."
+   "trecho": "Foi a bancada do PT."
   },
   {
-   "t": 480.7,
+   "t": 482.5,
    "quem": "Flávio",
-   "texto": "O Congresso eleito em 2026 é mais à direita.",
+   "texto": "O Congresso eleito em 2026 é mais à direita que o anterior.",
    "trecho": "o Brasil elegeu agora um Congresso Nacional muito mais à direita"
   },
   {
-   "t": 557.4,
+   "t": 559.7,
    "quem": "Lula",
    "texto": "Flávio é alvo de vários inquéritos.",
    "trecho": "a sua vida tem muito inquérito"
   },
   {
-   "t": 579.0,
+   "t": 581.5,
    "quem": "Flávio",
-   "texto": "Áudio de Vorcaro menciona 30 milhões por fora para o Instituto Lula.",
-   "trecho": "30 milhões para o Instituto Lula por fora."
+   "texto": "Um áudio de Vorcaro menciona 30 milhões por fora para o Instituto Lula.",
+   "trecho": "O áudio do Vorcaro falou que o teu dinheiro ia por 30 contos, 30 milhões para o Instituto Lula por fora."
   },
   {
-   "t": 609.6,
+   "t": 611.4,
    "quem": "Lula",
-   "texto": "Flávio negou e depois admitiu ter recebido 134 milhões de Vorcaro.",
-   "trecho": "Você tem que explicar 134 milhões do Vorcaro que você disse que não pegou e pegou."
+   "texto": "Flávio recebeu 134 milhões ligados a Vorcaro após dizer que não recebeu e que o valor foi para um fundo.",
+   "trecho": "134 milhões do Vorcaro, que você disse que não pegou e pegou, disse que foi para o fundo e não foi"
   },
   {
-   "t": 609.6,
-   "quem": "Lula",
-   "texto": "Flávio diz que o dinheiro foi para um fundo, o que Lula nega.",
-   "trecho": "Diz que foi para o fundo e não foi."
-  },
-  {
-   "t": 664.9,
+   "t": 665.5,
    "quem": "Flávio",
-   "texto": "Lula fez reunião fechada com Haddad, Galípolo e Daniel Vorcaro.",
-   "trecho": "O que é que você está fazendo naquela reuniãozinha fechadinha, lá junto com o seu Haddad, junto com o Galípolo"
+   "texto": "Lula participou de reunião fechada com Haddad, Galípolo e Vorcaro.",
+   "trecho": "naquela reuniãozinha fechadinha lá junto com o seu Haddad, junto com o Galípolo"
   },
   {
-   "t": 693.0,
+   "t": 694.9,
    "quem": "Lula",
-   "texto": "Vorcaro se tornou banqueiro durante o governo Bolsonaro.",
-   "trecho": "você foi feito banqueiro. No governo Bolsonaro"
+   "texto": "Vorcaro tornou-se banqueiro durante o governo Bolsonaro.",
+   "trecho": "Você foi feito banqueiro no governo Bolsonaro"
   },
   {
-   "t": 693.0,
+   "t": 694.9,
    "quem": "Lula",
    "texto": "Vorcaro está preso.",
-   "trecho": "E ele está preso"
+   "trecho": "E ele está preso."
   },
   {
-   "t": 702.4,
+   "t": 704.4,
    "quem": "Lula",
-   "texto": "Vorcaro aplicou golpe de R$ 60 bilhões.",
-   "trecho": "Dado um golpe de 60 bilhões de reais"
+   "texto": "Vorcaro deu um golpe de 60 bilhões de reais.",
+   "trecho": "dado um golpe de 60 bilhões de reais"
   },
   {
-   "t": 702.4,
-   "quem": "Lula",
-   "texto": "Houve festas pagas com dinheiro de Vorcaro com participação de senadores e ministros.",
-   "trecho": "Mas os bacanais que havia nesse país Com o dinheiro do Vorcaro"
-  },
-  {
-   "t": 743.4,
+   "t": 745.3,
    "quem": "Flávio",
-   "texto": "A prisão de Vorcaro foi decidida pelo ministro André Mendonça.",
-   "trecho": "não foi você que prendeu Vorcaro, foi o Ministro André Mendonça"
+   "texto": "A prisão de Vorcaro foi determinada pelo ministro André Mendonça.",
+   "trecho": "não foi você que prendeu o Vorcaro, foi o ministro André Mendonça"
   },
   {
-   "t": 743.4,
+   "t": 745.3,
    "quem": "Flávio",
-   "texto": "Há acusações envolvendo Jaques Wagner e Rui Costa ligadas a Vorcaro.",
-   "trecho": "colocar as pessoas para livrar os seus amigos que estão enrolados lá com o Vorcaro da Bahia, é seu Jaques Wagner, é acusações sobre o seu Rui Costa"
+   "texto": "Jaques Wagner e Rui Costa são citados em acusações ligadas a Vorcaro.",
+   "trecho": "é seu Jaques Wagner, é acusações sobre o seu Rui Costa"
   },
   {
-   "t": 831.5,
+   "t": 834.3,
    "quem": "Flávio",
-   "texto": "O dinheiro de Vorcaro foi destinado ao filme sobre Jair Bolsonaro.",
+   "texto": "Os 134 milhões foram destinados ao filme sobre Jair Bolsonaro.",
    "trecho": "Esse dinheiro foi para o filme do melhor presidente do Brasil"
   },
   {
-   "t": 859.3,
+   "t": 834.3,
+   "quem": "Flávio",
+   "texto": "Lula reclamou recentemente que ninguém o chama de mito.",
+   "trecho": "Você reclamou outro dia que ninguém te chama de mito."
+  },
+  {
+   "t": 863.2,
    "quem": "Lula",
-   "texto": "A diretora do filme sobre Bolsonaro disse não ter recebido o dinheiro.",
+   "texto": "A diretora do filme sobre Bolsonaro disse não ter recebido nada.",
    "trecho": "A diretora do filme disse que não recebeu nada."
   },
   {
-   "t": 859.3,
+   "t": 890.0,
    "quem": "Lula",
-   "texto": "Flávio comprou uma casa de R$ 10 milhões.",
-   "trecho": "Me explica como é que você comprou uma casa de 10 milhões"
-  },
-  {
-   "t": 888.2,
-   "quem": "Lula",
-   "texto": "Lula, presidente por 12 anos, tem apartamento de 190 m² avaliado em R$ 1,5 milhão.",
+   "texto": "Lula, presidente por 12 anos, tem apartamento de 190 m² avaliado em 1,5 milhão.",
    "trecho": "Eu sou presidente há 12 anos e tenho um apartamento de 190 metros quadrados de 1 milhão e meio."
   },
   {
-   "t": 888.2,
+   "t": 890.0,
    "quem": "Lula",
-   "texto": "Flávio pagou parte da casa de R$ 10 milhões com recursos do BRB, banco ligado ao caso Vorcaro.",
-   "trecho": "comprou a casa de 10 milhões e pagou a vista uma parte dela com o dinheiro do BRB, que está metido no caso do Banco do Vorcaro."
+   "texto": "Flávio comprou casa de 10 milhões e pagou parte à vista com dinheiro do BRB, ligado ao caso Vorcaro.",
+   "trecho": "comprou uma casa de 10 milhões e pagou à vista uma parte dela com o dinheiro do BRB que está metido no caso do Banco do Vorcaro"
   },
   {
-   "t": 908.9,
+   "t": 910.7,
    "quem": "Flávio",
-   "texto": "O governo Lula está gastando mais de R$ 350 bilhões com vistas à reeleição.",
-   "trecho": "esse cara está gastando mais de 350 bilhões pra tentar se reeleger"
+   "texto": "O governo Lula gasta mais de 350 bilhões visando à reeleição.",
+   "trecho": "esse cara está gastando mais de 350 bilhões para tentar se reeleger"
   },
   {
-   "t": 908.9,
+   "t": 910.7,
    "quem": "Flávio",
-   "texto": "Esta é a sétima eleição presidencial disputada por Lula.",
-   "trecho": "a sétima eleição presidencial que ele está disputando"
+   "texto": "Lula disputa sua sétima eleição presidencial.",
+   "trecho": "A sétima eleição presidencial que ele está disputando"
   },
   {
-   "t": 908.9,
+   "t": 910.7,
    "quem": "Flávio",
-   "texto": "O reajuste recente do Bolsa Família equivale a três reais por dia.",
-   "trecho": "Foi dar um reajustezinho agora de três reais por dia"
+   "texto": "O Bolsa Família ficou sem reajuste durante os quatro anos do governo Lula.",
+   "trecho": "Passou quatro anos no governo e ele esqueceu de você que recebe o Bolsa Família."
   },
   {
-   "t": 996.9,
+   "t": 910.7,
+   "quem": "Flávio",
+   "texto": "O reajuste recente do Bolsa Família equivale a R$ 3 por dia.",
+   "trecho": "Foi dar um reajustezinho agora de R$ 3,00 por dia"
+  },
+  {
+   "t": 998.8,
    "quem": "Lula",
    "texto": "A reposição inflacionária do benefício é obrigação legal.",
-   "trecho": "pagar a reposição inflacionária é obrigação, é lei"
+   "trecho": "no meu governo, pagar a reposição inflacionária é obrigação, é lei"
   },
   {
-   "t": 996.9,
+   "t": 998.8,
    "quem": "Lula",
-   "texto": "Lula anistiou R$ 12,7 bilhões em dívidas (“dos meios”, como transcrito).",
-   "trecho": "Da mesma forma que eu anistiei 12 bilhões e 700 de dívidas dos meios."
+   "texto": "O governo Lula anistiou 12,7 bilhões em dívidas de MEIs.",
+   "trecho": "eu anistiei 12,7 bilhões de dívidas dos MEI"
   },
   {
-   "t": 1038.3,
+   "t": 1041.3,
    "quem": "Flávio",
-   "texto": "Jair Bolsonaro elevou o benefício mínimo do Bolsa Família para 600 reais.",
-   "trecho": "foi o presidente Bolsonaro que passou para no mínimo 600 reais o Bolsa Família"
+   "texto": "Bolsonaro elevou o benefício mínimo do Bolsa Família para 600 reais.",
+   "trecho": "Foi o presidente Bolsonaro que passou para, no mínimo, 600 reais do Bolsa Família."
   },
   {
-   "t": 1038.3,
+   "t": 1041.3,
    "quem": "Flávio",
-   "texto": "Nos governos Lula anteriores o benefício médio era de 190 reais, e Bolsonaro triplicou o valor.",
-   "trecho": "era 75 reais para um, 100 para outro, era em média 190, o presidente Bolsonaro triplicou esse valor"
+   "texto": "Nos governos Lula anteriores, o benefício médio era de 190 reais; Bolsonaro triplicou o valor.",
+   "trecho": "Era 75 reais para um, 100 para o outro. Era, em média, 190. O presidente Bolsonaro triplicou esse valor."
   },
   {
-   "t": 1078.8,
+   "t": 1088.2,
    "quem": "Lula",
-   "texto": "Não há registro de pagamento no Banco Central relativo ao filme.",
+   "texto": "Não há registro no Banco Central de pagamento ao filme.",
    "trecho": "Não tem, não tem, no Banco Central, nada de pagamento."
   },
   {
-   "t": 1097.7,
-   "quem": "Flávio",
-   "texto": "Em áudio, Vorcaro diz que houve 30 milhões por fora para o Instituto Lula.",
-   "trecho": "O filme do Lula teve 30 milhões de reais por fora no Instituto Lula."
-  },
-  {
-   "t": 1126.7,
+   "t": 1128.5,
    "quem": "Lula",
-   "texto": "Flávio, como senador, atuou para que policial que matou criança de 5 anos com tiro de fuzil não fosse preso.",
-   "trecho": "Você era senador da República e foi interferir para que um policial que matou uma criança de 5 anos com uma bala de fuzil não fosse preso."
+   "texto": "Flávio, como senador, interferiu para que policial que matou criança de cinco anos com tiro de fuzil não fosse preso.",
+   "trecho": "Você era senador da República e foi interferir para que um policial que matou uma criança de cinco anos com uma bala de fuzil não fosse preso."
   },
   {
-   "t": 1152.6,
-   "quem": "Flávio",
-   "texto": "A criminalidade aumentou muito no governo Lula.",
-   "trecho": "com você, a criminalidade explodiu no Brasil"
-  },
-  {
-   "t": 1152.6,
+   "t": 1154.3,
    "quem": "Flávio",
    "texto": "73% dos presos que votaram escolheram Lula.",
    "trecho": "73% dos presidiários votaram em você"
   },
   {
-   "t": 1175.8,
+   "t": 1177.7,
    "quem": "Flávio",
    "texto": "Jair Bolsonaro não pode votar para presidente.",
    "trecho": "Nem em mim ele pode votar em presidente"
   },
   {
-   "t": 1213.9,
-   "quem": "Flávio",
-   "texto": "O policial citado por Lula ainda não foi julgado.",
-   "trecho": "Nem teve julgamento, você já condenou o cara"
-  },
-  {
-   "t": 1213.9,
+   "t": 1222.6,
    "quem": "Flávio",
    "texto": "Lula foi condenado em primeira e segunda instâncias, no STJ e no STF.",
-   "trecho": "Você foi condenado em primeira instância Você foi condenado em segunda instância Você foi condenado no STJ Você foi condenado no STF"
+   "trecho": "Você foi condenado em todas as instâncias, Lula."
   },
   {
-   "t": 1276.8,
+   "t": 1277.9,
    "quem": "Lula",
-   "texto": "Flávio quis retirar a marcação de identificação das munições.",
-   "trecho": "Por que você queria tirar a marca das balas, o número da bala para que não fosse identificada."
+   "texto": "Flávio defendeu retirar a marcação de identificação das munições.",
+   "trecho": "você queria tirar a marca das balas, o número da bala"
   },
   {
-   "t": 1297.9,
-   "quem": "Flávio",
-   "texto": "Flávio nunca propôs retirar a marcação das munições.",
-   "trecho": "Nunca quis tirar nada disso"
-  },
-  {
-   "t": 1314.6,
+   "t": 1318.2,
    "quem": "Lula",
-   "texto": "Flávio empregou a irmã e a mulher de integrante do Escritório do Crime, associado por Lula à morte de Marielle.",
-   "trecho": "você deu emprego para a irmã e para a mulher do cara que é o escritório do crime que mandou matar a Marielle"
+   "texto": "Flávio empregou a irmã e a mulher de homem ligado ao Escritório do Crime.",
+   "trecho": "você deu emprego para a irmã e para a mulher do cara que é o escritório do crime"
   },
   {
-   "t": 1325.8,
+   "t": 1327.6,
    "quem": "Flávio",
-   "texto": "Condenados no Mensalão e no Petrolão ocupam cargos no governo Lula.",
-   "trecho": "Você está dando emprego para um monte de cara que foi condenado por corrupção no Mensalão, no Petrolão"
+   "texto": "O governo Lula emprega condenados no Mensalão e no caso Petrobras.",
+   "trecho": "Você está dando emprego para um monte de cara que foi condenado por corrupção no Mensalão, no Petrobras"
   },
   {
-   "t": 1363.9,
+   "t": 1348.9,
    "quem": "Lula",
-   "texto": "O governo Bolsonaro liberou mais de um milhão de armas, parte desviada ao crime organizado, e 1,1 bilhão de balas.",
-   "trecho": "No governo deles, eles liberaram mais de um milhão de armas, mais de um milhão de armas, que uma parte dela foi para o crime organizado e um bilhão e cem milhões de balas."
+   "texto": "O governo Bolsonaro liberou mais de um milhão de armas, parte delas desviada ao crime organizado.",
+   "trecho": "No governo deles, eles liberaram mais de um milhão de armas"
   },
   {
-   "t": 1429.9,
-   "quem": "Flávio",
-   "texto": "Não existe registro do número de armas e balas citado por Lula.",
-   "trecho": "Olha, esse número não existe"
-  },
-  {
-   "t": 1599.8,
+   "t": 1348.9,
    "quem": "Lula",
-   "texto": "O PL anunciou que vai propor mudança na escala 6x1.",
-   "trecho": "o PL está dizendo que vai propor mudar desde já"
+   "texto": "O governo Bolsonaro liberou 1,1 bilhão de munições.",
+   "trecho": "e um bilhão e cem milhões de balas"
   },
   {
-   "t": 1605.5,
+   "t": 1431.7,
    "quem": "Flávio",
-   "texto": "O governo Lula registra recordes de feminicídio, agressões a mulheres, fechamento de empresas, saída de indústrias e criminalidade.",
-   "trecho": "É recorde de mulher assassinada, recorde de mulher espancada, recorde de empresa fechada, recorde de indústrias deixando o Brasil, é recorde de criminalidade."
+   "texto": "O número de armas e munições citado por Lula não existe.",
+   "trecho": "esse número não existe"
   },
   {
-   "t": 1605.5,
+   "t": 1445.3,
    "quem": "Flávio",
-   "texto": "Lula foi condenado várias vezes pelo TSE por desinformação.",
-   "trecho": "que já foi condenado várias vezes pelo TSE por fake news"
+   "texto": "O filho de Lula agrediu a própria mulher.",
+   "trecho": "Se o filho do Lula bateu na própria mulher."
   },
   {
-   "t": 1641.1,
+   "t": 1601.3,
    "quem": "Lula",
-   "texto": "Flávio já disse que seu modelo é o de Milei.",
-   "trecho": "você continua dizendo que o teu modelo é o modelo do Milei?"
+   "texto": "O PL afirma que vai mudar desde já sua posição sobre o tema.",
+   "trecho": "E o PL está dizendo que vai mudar desde já."
   },
   {
-   "t": 1652.6,
+   "t": 1607.4,
+   "quem": "Flávio",
+   "texto": "O governo Lula registra recordes de assassinatos e agressões de mulheres, fechamento de empresas e criminalidade.",
+   "trecho": "recorde de mulher assassinada, recorde de mulher espancada"
+  },
+  {
+   "t": 1607.4,
+   "quem": "Flávio",
+   "texto": "A campanha de Lula foi condenada várias vezes pelo TSE por desinformação e teve propagandas retiradas.",
+   "trecho": "já foi condenado várias vezes pelo TSE por fake news"
+  },
+  {
+   "t": 1654.4,
    "quem": "Flávio",
    "texto": "Nicolás Maduro está preso.",
    "trecho": "o seu amigo que é o Maduro, que está preso"
   },
   {
-   "t": 1652.6,
+   "t": 1654.4,
    "quem": "Flávio",
    "texto": "Lula enviou o vice-presidente à posse do presidente do Irã.",
-   "trecho": "Você mandou o seu vice-presidente para visitar a posse do ditador do Irã."
+   "trecho": "você mandou o seu vice-presidente para visitar a posse do ditador do Irã"
   },
   {
-   "t": 1806.6,
+   "t": 1808.5,
    "quem": "Flávio",
-   "texto": "Foram gastos R$ 7 bilhões com viagens de Janja.",
-   "trecho": "de 7 bilhões já se gastou com a janja"
+   "texto": "Lula gastou 7 bilhões de reais em viagens com Janja.",
+   "trecho": "na sua viagem com a Janja, de 7 bilhões de reais que você gastou com a Janja"
   },
   {
-   "t": 1864.5,
+   "t": 1867.2,
    "quem": "Lula",
    "texto": "O governo Lula fez a maior demarcação de terras indígenas do país.",
    "trecho": "a gente fez essa maior demorcação de terras indígenas desse país"
   },
   {
-   "t": 1864.5,
+   "t": 1867.2,
    "quem": "Lula",
    "texto": "O governo Lula criou o Pé-de-Meia para reduzir a evasão escolar.",
-   "trecho": "o direito que fez o pé de meia para garantir que as crianças não desistissem da escola"
+   "trecho": "O direito que fez o pé de meia para garantir que as crianças não desistissem da escola."
   }
  ],
  "fios_perguntas": [
   {
    "quem": "Lula",
-   "tema": "Voto contra licença-maternidade",
+   "tema": "Voto sobre licença-maternidade",
    "instancias": [
     [
-     0.0,
-     "O que você tem contra as mulheres?"
+     1.6,
+     "E de 49 deputados, você foi o único que votou contra a mulher ter dois meses mais para cuidar da criança. O que é que você tem contra as mulheres?"
     ],
     [
-     48.3,
+     50.1,
      "Por que você votou contra?"
     ]
    ]
   },
   {
    "quem": "Lula",
-   "tema": "Escritório com o careca do INSS",
+   "tema": "Escritório com o \"careca\"",
    "instancias": [
     [
-     105.8,
-     "E você é que tem que responder, por que você mantém o escritório com careca?"
+     107.6,
+     "Por que você mantém o escritório com careca?"
     ]
    ]
   },
   {
    "quem": "Lula",
-   "tema": "Quadrilha do INSS",
+   "tema": "Origem da quadrilha do INSS",
    "instancias": [
     [
-     279.6,
-     "Eu quero que você explique a quadrilha do INSS"
-    ],
-    [
-     388.0,
-     "Explique."
+     281.5,
+     "Eu quero que você explique a quadrilha do INSS, que foi montada no seu governo, no governo do seu pai"
     ]
    ]
   },
@@ -1610,86 +1629,88 @@
    "tema": "Relação com Vorcaro",
    "instancias": [
     [
-     446.9,
-     "Explica a sua relação de amizade com o Vorcaro"
-    ],
-    [
-     479.6,
-     "Explica, explica"
+     446.2,
+     "explica a sua relação da amizade com o Vorcaro"
     ]
    ]
   },
   {
    "quem": "Lula",
-   "tema": "Destino dos 134 milhões",
+   "tema": "Destino dos R$ 134 milhões",
    "instancias": [
     [
-     557.4,
-     "Conta os 134"
+     559.7,
+     "E eu queria que você me explicasse, no Vorcaro, os 134 milhões."
     ],
     [
-     609.6,
-     "E eu queria que você explicasse o que você fez com os 134 milhões. Foi para ajudar o seu irmão Vinho a ficar traído do Brasil?"
+     580.3,
+     "Conta, conta, conta os 134 milhões."
     ],
     [
-     811.3,
-     "o que você fez com esse dinheiro? O que você fez?"
+     611.4,
+     "eu queria que você explicasse o que você fez com os 134 milhões, foi para ajudar o seu irmão Vinho a ficar traído do Brasil?"
     ],
     [
-     830.0,
-     "Onde você colocou esse dinheiro?"
+     812.9,
+     "digo, o que você fez com esse dinheiro? O que você fez?"
     ],
     [
-     853.3,
-     "Explica os 174 milhões."
+     832.0,
+     "Aonde você colocou esse dinheiro, R$ 134 milhões?"
     ],
     [
-     859.3,
-     "Você botou para o seu bolso ou para o seu filme?"
+     855.2,
+     "Explica os R$ 134 milhões."
     ],
     [
-     888.2,
-     "Explica, pelo amor de Deus, 134 milhões."
+     860.2,
+     "O que está no filme? Não foi pago no filme?"
     ],
     [
-     977.9,
-     "Explica para o Renegue aí, os 134 milhões."
+     890.0,
+     "Explica, pelo amor de Deus, R$ 134 milhões."
     ],
     [
-     996.9,
-     "Agora, eu quero que você me fale dos 34, 134 milhões."
+     979.6,
+     "Explica, por sério, para a Renegue aí, os R$ 134 milhões."
     ],
     [
-     1031.4,
-     "Como é que alguém pode pegar 134 milhões e não ver onde foi?"
-    ],
-    [
-     1078.8,
-     "Se você não falar onde você pôs os 134 milhões, eu vou parar de perguntar."
+     998.8,
+     "Como é que alguém pode pegar 134 milhões e não dizer onde foi?"
     ]
    ]
   },
   {
    "quem": "Lula",
-   "tema": "Compra de casa de 10 milhões",
+   "tema": "Expectativa de vitória",
    "instancias": [
     [
-     859.3,
-     "Me explica como é que você comprou uma casa de 10 milhões de salários, senador."
+     548.0,
+     "Você acha que já ganhou as eleições?"
     ]
    ]
   },
   {
    "quem": "Lula",
-   "tema": "Atuação no caso do policial",
+   "tema": "Compra de casa de R$ 10 milhões",
    "instancias": [
     [
-     1126.7,
-     "Você era senador da República e foi interferir para que um policial que matou uma criança de 5 anos com uma bala de fuzil não fosse preso. Me explica por que você fez isso."
+     867.2,
+     "Me explica como é que você comprou uma casa de 10 milhões de salário, senador?"
+    ]
+   ]
+  },
+  {
+   "quem": "Lula",
+   "tema": "Caso de policial e morte de criança",
+   "instancias": [
+    [
+     1128.5,
+     "Você era senador da República e foi interferir para que um policial que matou uma criança de cinco anos com uma bala de fuzil não fosse preso. Me explica por que você fez isso."
     ],
     [
-     1276.8,
-     "Por que você trabalhou para que o assassino de uma criança de 5 anos fosse resolvida?"
+     1277.9,
+     "porque que você trabalhou para que o assassino de uma criança de 5 anos fosse resolvida"
     ]
    ]
   },
@@ -1698,49 +1719,57 @@
    "tema": "Voto do policial em Flávio",
    "instancias": [
     [
-     1207.9,
-     "Esse assassino que você não deixou ser preso Que matou a criança de 5 anos Botou em você?"
+     1210.1,
+     "Esse assassino que você não deixou ser preso, que matou a criança de 5 anos, votou em você?"
     ],
     [
-     1237.6,
+     1217.1,
+     "Votou em você?"
+    ],
+    [
+     1239.5,
      "Me conta se você recebeu o voto do cara que matou uma criança de 5 anos que você não deixou ele ser preso."
     ],
     [
-     1345.1,
-     "Eu só quero saber se você aceitou o voto do cara que matou uma criança de 5 anos."
+     1348.9,
+     "Eu só quero saber se você aceitou o voto do cara que matou uma criança de cinco anos."
     ]
    ]
   },
   {
    "quem": "Lula",
-   "tema": "Marcação de munições",
+   "tema": "Marcação de munição",
    "instancias": [
     [
-     1276.8,
-     "Por que você queria tirar a marca das balas, o número da bala para que não fosse identificada."
+     1277.9,
+     "porque que você queria tirar a marca das balas, o número da bala, para que não fosse identificada. Me conta."
     ],
     [
-     1345.1,
-     "E depois eu perguntei se você queria tirar a marca da bala para que ninguém soubesse quem é o açafino ou de onde vem aquela bala. É isso que você quer?"
+     1348.9,
+     "E depois eu perguntei se você queria tirar a marca da bala para que ninguém soubesse quem é o assassino ou de onde vem aquela bala. É isso que você quer?"
     ]
    ]
   },
   {
    "quem": "Lula",
-   "tema": "Contratação de parentes de investigado",
+   "tema": "Empregos a parentes no gabinete",
    "instancias": [
     [
-     1314.6,
+     1318.2,
      "Me conta por que você deu emprego para a irmã e para a mulher do cara que é o escritório do crime que mandou matar a Marielle."
     ]
    ]
   },
   {
    "quem": "Lula",
-   "tema": "Armas na casa de Flávio",
+   "tema": "Armas em casa",
    "instancias": [
     [
-     1363.9,
+     1348.9,
+     "Quantas armas você tem em casa?"
+    ],
+    [
+     1390.6,
      "Quantas armas você tem em casa?"
     ]
    ]
@@ -1750,22 +1779,22 @@
    "tema": "Destino de armas e munições",
    "instancias": [
     [
-     1413.1,
-     "Eu queria saber para onde foram essas armas. Um bilhão e cem milhões de balas e um milhão de armas. Para onde foi essa bala?"
+     1403.2,
+     "Eu queria saber para onde foram essas armas, 1 bilhão e 100 milhões de balas e 1 milhão de armas, para onde foi essa bala?"
     ]
    ]
   },
   {
    "quem": "Lula",
-   "tema": "Proposta sobre escala 6x1",
+   "tema": "Proposta sobre a escala 6x1",
    "instancias": [
     [
-     1485.3,
-     "O mundo pode acreditar na sua palavra que você não vai fazer nenhuma proposta para acabar com o fim da escala 6x1?"
+     1487.2,
+     "O mundo pode acreditar na sua palavra que você não vai fazer nenhuma proposta para acabar com o fim da escala 6x1."
     ],
     [
-     1565.8,
-     "Você vai ou não vai fazer uma proposta para acabar com o fim das escala 6x1?"
+     1567.8,
+     "Você vai ou não vai fazer uma proposta para acabar com o fim da escala 6x1?"
     ]
    ]
   },
@@ -1774,12 +1803,12 @@
    "tema": "Posição anterior sobre escala 6x1",
    "instancias": [
     [
-     1598.4,
+     1600.1,
      "Por que você era contra?"
     ],
     [
-     1599.8,
-     "Por que você era contra e o PL está dizendo que vai propor mudar desde já?"
+     1601.3,
+     "Por que você era contra?"
     ]
    ]
   },
@@ -1788,54 +1817,48 @@
    "tema": "Adoção do modelo de Milei",
    "instancias": [
     [
-     1641.1,
-     "você continua dizendo que o teu modelo é o modelo do Milei?"
+     1642.8,
+     "Já que você é amigo do Milei, você tem acompanhado como é que está a Argentina, você continua dizendo que o teu modelo é o modelo do Milei?"
     ],
     [
-     1674.2,
+     1676.1,
      "Eu só quero saber se você vai seguir o modelo que a tua mulher da economia fala."
     ],
     [
-     1720.0,
+     1721.6,
      "Milei ou não?"
     ],
     [
-     1726.1,
+     1727.8,
      "Pergunta se você vai escolher o modelo do Milei."
-    ]
-   ]
-  },
-  {
-   "quem": "Lula",
-   "tema": "Motosserra de Milei",
-   "instancias": [
-    [
-     1766.1,
-     "Você vai pedir o motosserra emprestada do Milei?"
     ],
     [
-     1774.3,
-     "eu quero que você me diga se você já pegou emprestada a motosserra do Milei."
+     1766.3,
+     "Você vai pedir o motosserra emprestada do Milei"
+    ],
+    [
+     1776.7,
+     "Eu quero que você me diga se você já pegou emprestada a motosserra do Milei"
     ]
    ]
   },
   {
    "quem": "Lula",
-   "tema": "Alvo do tesouraço",
+   "tema": "Indicadores econômicos da Argentina",
    "instancias": [
     [
-     1793.8,
-     "E o tesouraço? Vai cair nas costas de quem?"
+     1676.1,
+     "Você sabe quanto é que está a pobreza na Argentina? Você sabe quanto é que está o desemprego?"
     ]
    ]
   },
   {
    "quem": "Lula",
-   "tema": "Valor gasto com viagens de Janja",
+   "tema": "Alvo dos cortes de gastos",
    "instancias": [
     [
-     1815.9,
-     "Quanto é que foi, então?"
+     1802.0,
+     "Em 17 segundos, o tesouraço vai cair nas costas de quem?"
     ]
    ]
   },
@@ -1844,12 +1867,16 @@
    "tema": "Relação com Roberta Luchsinger",
    "instancias": [
     [
-     24.6,
-     "Agora, Lula, você conhece Roberta Lussinger?"
+     26.7,
+     "Agora, Lula, você conhece Roberta Luchsinger?"
     ],
     [
-     61.2,
-     "Você conhece Roberta Lussinger?"
+     63.0,
+     "Você tem a oportunidade agora de corrigir a sua resposta? Você conhece Roberta Luchsinger?"
+    ],
+    [
+     231.9,
+     "Você já não conhece o Roberta Luchsinger?"
     ]
    ]
   },
@@ -1858,25 +1885,21 @@
    "tema": "Investigação da PF sobre Roberta",
    "instancias": [
     [
-     87.5,
-     "Por que a sua Polícia Federal está investigando a Roberta?"
-    ],
-    [
-     92.4,
-     "Por que a sua Polícia Federal só vai na casa dela e não vai na casa do seu filho?"
+     89.0,
+     "E por que a sua Polícia Federal está investigando a Roberta?"
     ]
    ]
   },
   {
    "quem": "Flávio",
-   "tema": "Paradeiro do filho de Lula",
+   "tema": "Investigação e paradeiro de Lulinha",
    "instancias": [
     [
-     92.4,
-     "Cadê o Lulinha?"
+     94.3,
+     "Por que a sua Polícia Federal só vai na casa dela e não vai na casa do seu filho? Cadê o Lulinha?"
     ],
     [
-     191.2,
+     188.7,
      "Por que ele está fugido lá na Espanha? Por que ele não está aqui?"
     ]
    ]
@@ -1886,18 +1909,18 @@
    "tema": "Sustento do filho de Lula",
    "instancias": [
     [
-     125.3,
+     127.2,
      "Quem é que está sustentando o seu filho?"
     ]
    ]
   },
   {
    "quem": "Flávio",
-   "tema": "Negociações em ministérios",
+   "tema": "Negócios nos ministérios",
    "instancias": [
     [
-     301.4,
-     "E o Marcola abria as portas dos ministérios para ele negociar. O seu governo virou um balcão de negócios?"
+     303.3,
+     "O seu governo virou um balcão de negócios?"
     ]
    ]
   },
@@ -1906,8 +1929,8 @@
    "tema": "Origem da fraude no INSS",
    "instancias": [
     [
-     329.7,
-     "Como é que você acusa o Bolsonaro de ter iniciado alguma coisa contra o INSS?"
+     331.3,
+     "Como é que você acusa o Bolsonaro de ter iniciado alguma coisa contra o INSS se foram os seus aliados que estavam lá comemorando o fim da CPI do INSS?"
     ]
    ]
   },
@@ -1916,17 +1939,21 @@
    "tema": "Reunião com Vorcaro",
    "instancias": [
     [
-     664.9,
-     "Me conta, conta agora o que aconteceu naquela reunião fechadinha. O que é que você prometeu para o Vorcaro?"
+     665.5,
+     "Me conta agora o que aconteceu naquela reunião fechadinha. O que você prometeu para o Vorcaro?"
     ]
    ]
   },
   {
    "quem": "Flávio",
-   "tema": "Repasse ao Instituto Lula",
+   "tema": "R$ 30 milhões ao Instituto Lula",
    "instancias": [
     [
-     1097.7,
+     865.1,
+     "Os R$ 30 milhões por fora você botou no seu bolso ou foi para o seu filme?"
+    ],
+    [
+     1113.0,
      "É o Vorcaro que está falando. Você quer explicar?"
     ]
    ]
@@ -1936,38 +1963,44 @@
    "tema": "Bolsa Família e mais pobres",
    "instancias": [
     [
-     908.9,
+     910.7,
      "Não tem vergonha não, Lula, de você tratar os pobres dessa forma, achando que você pode comprar o voto deles?"
     ],
     [
-     994.7,
-     "Explica ali porque você esqueceu do Bolsa Família."
+     996.8,
+     "Explica ali por que você esqueceu do Bolsa Família."
     ],
     [
-     1749.6,
+     1751.5,
      "Você esqueceu dos mais pobres desse país, Lula?"
     ],
     [
-     1758.7,
-     "Você quer falar por que você esqueceu?"
-    ],
-    [
-     1761.1,
-     "Fala para essa câmera aqui por que você esqueceu dos mais pobres."
+     1760.6,
+     "Você quer falar por que você esqueceu fala pra essa câmera aqui por que você esqueceu dos mais pobres só lembrando da época da campanha"
     ]
    ]
   },
   {
    "quem": "Flávio",
-   "tema": "Votos de presos em Lula",
+   "tema": "Votos de presidiários",
    "instancias": [
     [
-     1152.6,
+     1154.3,
      "Inclusive, você pode explicar por que 73% dos presidiários votaram em você?"
     ],
     [
-     1244.1,
-     "Ô Lula, você recebeu o voto de 73% dos presidiados desse país. Me conta."
+     1245.7,
+     "Ô Lula, você recebeu o voto de 73% dos presidiários desse país? Me conta."
+    ]
+   ]
+  },
+  {
+   "quem": "Flávio",
+   "tema": "Medidas contra o endividamento",
+   "instancias": [
+    [
+     1462.3,
+     "Fala o que você pode fazer para tirar as pessoas do endividamento."
     ]
    ]
   },
@@ -1976,8 +2009,18 @@
    "tema": "Modelo econômico de Lula",
    "instancias": [
     [
-     1732.4,
+     1734.0,
      "Você vai escolher o modelo de quem?"
+    ]
+   ]
+  },
+  {
+   "quem": "Flávio",
+   "tema": "Gasto com viagens",
+   "instancias": [
+    [
+     1822.5,
+     "Quanto é que foi então? Fala aí."
     ]
    ]
   }

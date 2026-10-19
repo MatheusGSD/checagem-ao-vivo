@@ -2,157 +2,157 @@
  "fonte": "agente (prompts/rotulos.md)",
  "agente": {
   "etapa": "rotulos",
-  "data": "2026-10-19T01:56:50+00:00",
+  "data": "2026-10-19T17:33:44+00:00",
   "modelo_pedido": "claude-opus-5-5",
   "modelo_respondeu": "claude-opus-5-5",
   "esforco": "high",
   "prompt": "prompts/rotulos.md",
   "prompt_sha256": "3d2a4967198e90050741f4e84bc2b24b9e1f6e7a1cb8dcb1526e34d226816af5",
-  "entrada_sha256": "87380645c93f695fe475e65f7f308bd16d961eb5bea720b386ddd7ed41763bdc",
+  "entrada_sha256": "6dc614599d177309bd2088e614541b4d05eada990609933a3a13a7570de51379",
   "tokens": {
-   "entrada": 23729,
-   "saida": 9243
+   "entrada": 22902,
+   "saida": 11022
   }
  },
  "rotulos_manuais": {
-  "51": "L",
-  "71": "L",
-  "72": "F",
-  "76": "F",
-  "121": "L",
-  "123": "L",
-  "193": "L",
-  "203": "F",
-  "204": "F",
-  "208": "F",
-  "209": "F",
-  "215": "L",
-  "240": "M",
-  "241": "M",
-  "310": "F",
-  "311": "F",
-  "312": "F",
-  "316": "L",
-  "382": "L",
-  "416": "L",
-  "490": "F",
-  "497": "F",
-  "512": "F",
-  "538": "L",
-  "539": "L",
-  "540": "L",
+  "0": "M",
+  "65": "L",
+  "66": "F",
+  "70": "F",
+  "98": "F",
+  "104": "L",
+  "105": "L",
+  "106": "L",
+  "107": "L",
+  "129": "L",
+  "177": "L",
+  "184": "M",
+  "185": "M",
+  "250": "F",
+  "251": "F",
+  "257": "L",
+  "296": "L",
+  "308": "L",
+  "309": "L",
+  "324": "L",
+  "329": "F",
+  "355": "F",
+  "370": "L",
+  "425": "L",
+  "428": "F",
+  "440": "L",
+  "450": "L",
+  "472": "L",
+  "517": "L",
+  "519": "L",
+  "559": "L",
+  "573": "L",
   "586": "L",
-  "631": "L",
-  "636": "L",
-  "638": "L",
-  "675": "F",
-  "679": "M",
-  "680": "M",
-  "681": "M",
-  "682": "M",
-  "699": "M"
+  "593": "F",
+  "595": "L",
+  "601": "F",
+  "602": "F",
+  "608": "M",
+  "609": "M",
+  "610": "M",
+  "611": "M",
+  "627": "M"
  },
  "motivos": {
-  "51": "Aparte que devolve a acusação de quadrilhas ao 'governo do seu pai', resposta de Lula a Flávio.",
-  "71": "'Quem?' responde à pergunta de Flávio sobre se Lula conhece o Lulinha.",
-  "72": "Flávio repete 'Lulinha' em resposta ao 'Quem?' de Lula.",
-  "76": "'Esse você conhece?' repete a provocação de Flávio no seg 74.",
-  "121": "Repete a fala de Lula do seg 120 sobre quem montou a quadrilha.",
-  "123": "'Explique.' é cobrança de Lula, e Flávio responde em seguida 'Tenha calma'.",
-  "193": "'milhões' completa 'Os 134' de Lula, que cobra explicação sobre o valor.",
-  "203": "Flávio está ditando a palavra que o espectador deve escrever no papel.",
-  "204": "Continuação da demonstração de Flávio com a palavra 'corrupto'.",
-  "208": "Flávio responde à própria pergunta sobre a palavra 'corrupto' e segue com 'PT'.",
-  "209": "Continua a demonstração de Flávio antes de 'Partido dos Trabalhadores'.",
-  "215": "Lula havia pedido a palavra e segue atacando Flávio ('pior do que o pai').",
-  "240": "Pedido à plateia para não se manifestar, típico da mediação.",
-  "241": "Continuação do pedido à plateia pela mediação.",
-  "310": "'Está no filme' é a justificativa de Flávio para os 134 milhões, contestada por Lula logo depois.",
-  "311": "Repetição de Flávio: o dinheiro está no filme.",
-  "312": "Flávio diz que está explicando, e Lula rebate 'Não foi parte do filme'.",
-  "316": "Pergunta sobre botar o dinheiro no bolso ou no filme é cobrança de Lula a Flávio.",
-  "382": "É Lula quem ameaça parar de perguntar sobre os 134 milhões (ver seg 384).",
-  "416": "Lula se dirige a Jair Bolsonaro pedindo o voto dele, em linha com os segs 412-417.",
-  "490": "'Eu estou te respondendo' é a réplica de Flávio à cobrança de Lula.",
-  "497": "Pergunta dirigida a 'Lula' com vocativo, feita por Flávio.",
-  "512": "A tese de 'arma ilegal' é de Flávio, que continua nela no seg 513.",
-  "538": "Início da fala de Lula que segue em 'eu fico sabendo... quantas vezes ele já mentiu'.",
-  "539": "Faz parte da frase de Lula sobre as mentiras de Flávio.",
-  "540": "'Se ele mentiu 43 vezes' retoma a acusação de Lula sobre as 43 mentiras.",
-  "586": "'Por que você era contra?' é a pergunta de Lula, repetida por ele no seg 588.",
-  "631": "Início da pergunta de Lula 'se você vai escolher o modelo do Milei', que continua no seg 632.",
-  "636": "Lula responde que escolhe o modelo do Lula e desenvolve isso no seg 640.",
-  "638": "Lula repete 'O modelo do Lula' antes de explicá-lo.",
-  "675": "Fala de campanha ('faltam poucos dias para o Brasil mudar') de Flávio, não da mediação.",
-  "679": "Aviso de que o tempo de Flávio se encerrou, feito pela mediação.",
-  "680": "Continuação do aviso de tempo da mediação.",
-  "681": "A mediação concede o tempo restante a Lula.",
-  "682": "A mediação pede que Flávio não se manifeste mais.",
-  "699": "'Obrigado, candidato' encerra o confronto, fala da mediação."
+  "0": "Saudação de abertura 'um bom debate aos dois' é fala da mediação.",
+  "65": "Lula reage com 'Quem?' à pergunta de Flávio sobre se conhece o Lulinha.",
+  "66": "Flávio repete 'Lulinha' em resposta ao 'Quem?' de Lula.",
+  "70": "'Esse você conhece?' repete a provocação de Flávio no seg. 68.",
+  "98": "'É esse' continua a acusação de Flávio sobre o irmão de Lula; não há motivo para a mediação intervir.",
+  "104": "Lula interrompe depois do 'Calma, Lula' e chama Flávio de 'esse jovem', como faz no seg. 123.",
+  "105": "Lula exige respeito em resposta à acusação; Flávio em seguida pede 'Tenha calma'.",
+  "106": "Continua o 'Você me respeita' de Lula.",
+  "107": "Repete a fala de Lula do segmento anterior.",
+  "129": "'Explica, explica' é Lula insistindo na explicação que pedira sobre o Vorcaro.",
+  "177": "Completa a frase de Lula ('ficar traído do Brasil?') e cobra explicação, como Lula vinha fazendo.",
+  "184": "Pedido à plateia para não se manifestar é fala da mediação.",
+  "185": "Continuação do pedido da mediação à plateia.",
+  "250": "'Está no filme' responde ao pedido de Lula; Lula retruca 'O que está no filme?'.",
+  "251": "Repete a resposta de Flávio de que o dinheiro foi para o filme.",
+  "257": "'Deixa eu lhe contar' é bordão de Lula, que segue falando no seg. 258.",
+  "296": "Bordão 'Deixa eu lhe contar uma coisa', seguido da fala de Lula sobre seu governo.",
+  "308": "'Diga, pelo amor de Deus' continua a cobrança de Lula sobre os 134 milhões.",
+  "309": "'Não foi no filme' é a posição de Lula, repetida nos seg. 327-331.",
+  "324": "Ameaça de parar de perguntar sobre os 134 milhões é de Lula, repetida no seg. 326.",
+  "329": "'Foi no filme' contradiz Lula; é o aparte de Flávio.",
+  "355": "'Ô Lula' é Flávio se dirigindo a Lula.",
+  "370": "'Votou em você?' repete a pergunta de Lula do seg. 368.",
+  "425": "A ameaça de mudar de assunto é de Lula, como no seg. 347.",
+  "428": "Flávio insiste que está respondendo, como no seg. 426.",
+  "440": "Bordão de Lula, seguido da fala dele sobre as armas.",
+  "450": "'Quantas armas você tem em casa?' repete a pergunta de Lula dos seg. 447-448.",
+  "472": "As '43 mentiras' são acusação recorrente de Lula, que segue falando no seg. 474.",
+  "517": "Lula pergunta 'por que você era contra' a Flávio, que nega.",
+  "519": "Lula repete a pergunta do seg. 517.",
+  "559": "'Eu?' é Lula reagindo à pergunta de Flávio sobre qual modelo vai escolher.",
+  "573": "A pergunta sobre pegar emprestada a motosserra do Milei é de Lula, repetida nos seg. 577-579.",
+  "586": "'Me diga uma coisa' introduz a pergunta de Lula no seg. 587.",
+  "593": "'Conta' é Flávio cobrando Lula, como em 'Quanto é que foi então? Fala aí'.",
+  "595": "Acusar o outro de ser 'preparado para mentir' é fala recorrente de Lula sobre Flávio.",
+  "601": "Aparte de Flávio cobrando Lula durante a fala dele.",
+  "602": "Aparte de Flávio cobrando Lula durante a fala dele.",
+  "608": "Aviso de que o tempo de Flávio se encerrou é fala da mediação.",
+  "609": "Continuação do aviso de tempo da mediação.",
+  "610": "Mediação concede a Lula o tempo para concluir.",
+  "611": "Fim da instrução da mediação ('por favor').",
+  "627": "'Obrigado, candidato' encerra o confronto; é fala da mediação."
  },
  "normalizacao": [
-  [
-   "\\bdeputado\\ atual\\b",
-   "deputado estadual"
-  ],
-  [
-   "\\bAlucinga\\b",
-   "Lussinger"
-  ],
-  [
-   "\\bPolítica\\ Federal\\b",
-   "Polícia Federal"
-  ],
   [
    "\\bLuan\\b",
    "Lula"
   ],
   [
-   "\\bRoberto\\ Lucinga\\b",
-   "Roberta Lussinger"
+   "\\bRoberto\\ Lucíngia\\b",
+   "Roberta Luchsinger"
   ],
   [
-   "\\bAndré\\ Medonça\\b",
-   "André Mendonça"
+   "\\bRoberta\\ Lussing\\b",
+   "Roberta Luchsinger"
   ],
   [
-   "\\bquadrilha\\ do\\ NSF\\b",
-   "quadrilha do INSS"
+   "\\bRoberta\\ Lussinger\\b",
+   "Roberta Luchsinger"
   ],
   [
-   "\\bRoberta\\ Lussinga\\b",
-   "Roberta Lussinger"
+   "\\ba\\ Lucinha\\b",
+   "a Luchsinger"
   ],
   [
-   "\\bFreixito\\b",
+   "\\bRoberta\\ Lucinha\\b",
+   "Roberta Luchsinger"
+  ],
+  [
+   "\\bMedonça\\b",
+   "Mendonça"
+  ],
+  [
+   "\\buma\\ política\\ federal\\b",
+   "a Polícia Federal"
+  ],
+  [
+   "\\bdo\\ NSF\\b",
+   "do INSS"
+  ],
+  [
+   "\\bFreixinho\\b",
    "Frei Chico"
   ],
   [
-   "\\bBocaro\\b",
+   "\\bVolcaro\\b",
    "Vorcaro"
   ],
   [
-   "\\bconvocada\\b",
-   "com o Vorcaro"
-  ],
-  [
-   "\\bDelanhol\\b",
-   "Dallagnol"
-  ],
-  [
-   "\\bNão\\ vou\\ caro\\b",
-   "Do Vorcaro"
-  ],
-  [
-   "\\bPartido\\ dos\\ Trabalhos\\b",
-   "Partido dos Trabalhadores"
-  ],
-  [
-   "\\bvocário\\b",
+   "\\bVolcano\\b",
    "Vorcaro"
   ],
   [
-   "\\bvocáculo\\b",
+   "\\bBorcara\\b",
    "Vorcaro"
   ],
   [
@@ -160,59 +160,19 @@
    "Vorcaro"
   ],
   [
-   "\\bVocaro\\b",
-   "Vorcaro"
+   "\\bDelanhol\\b",
+   "Dallagnol"
   ],
   [
    "\\bJax\\ Wagner\\b",
    "Jaques Wagner"
   ],
   [
-   "\\bbandeira\\b",
-   "Band"
+   "\\bna\\ bandeira\\b",
+   "na Band"
   ],
   [
-   "\\bVocalo\\b",
-   "Vorcaro"
-  ],
-  [
-   "\\bFlávio\\ Bolsa\\ na\\b",
-   "Flávio Bolsonaro na"
-  ],
-  [
-   "\\bno\\ Petro\\b",
-   "no Petrolão"
-  ],
-  [
-   "\\bcasas\\ fechadas\\b",
-   "escala 6x1"
-  ],
-  [
-   "\\bMelei\\b",
-   "Milei"
-  ],
-  [
-   "\\bMeleim\\b",
-   "Milei"
-  ],
-  [
-   "\\bLua\\b",
-   "Lula"
-  ],
-  [
-   "\\bMilley\\b",
-   "Milei"
-  ],
-  [
-   "\\bMe\\ lei\\b",
-   "Milei"
-  ],
-  [
-   "\\bme\\ lei\\b",
-   "Milei"
-  ],
-  [
-   "\\bme\\ leio\\b",
+   "\\bMilenio\\b",
    "Milei"
   ],
   [
@@ -220,43 +180,50 @@
    "Milei"
   ],
   [
-   "\\bmitirô\\ do\\ Coutumaz\\b",
-   "mentiroso contumaz"
+   "\\bMilley\\b",
+   "Milei"
+  ],
+  [
+   "\\bmilênio\\b",
+   "Milei"
+  ],
+  [
+   "\\bMe\\ leia\\b",
+   "Milei"
+  ],
+  [
+   "\\bmototerra\\b",
+   "motosserra"
+  ],
+  [
+   "\\bdas\\ calas\\ fechadas\\b",
+   "da escala 6x1"
   ]
  ],
  "motivos_nomes": {
-  "deputado atual": "A votação ocorreu na Assembleia, então era mandato estadual.",
-  "Alucinga": "Refere-se a Roberta Lussinger, nome citado várias vezes.",
-  "Política Federal": "Contexto de diretor da Polícia Federal.",
-  "Luan": "Flávio se dirige ao adversário Lula.",
-  "Roberto Lucinga": "Mesma pessoa citada como Roberta Lussinger.",
-  "André Medonça": "Escrito corretamente no seg 278.",
-  "quadrilha do NSF": "A discussão é sobre a fraude no INSS.",
-  "Roberta Lussinga": "Mesma pessoa citada nos segs 9, 13 e 16.",
-  "Freixito": "Irmão de Lula ligado a sindicato de aposentados.",
-  "Bocaro": "Daniel Vorcaro, escrito certo nos segs 248 e 254.",
-  "convocada": "Lula cobra a relação de amizade de Flávio com Vorcaro.",
-  "Delanhol": "Citado junto com Moro como combatente da corrupção.",
-  "Não vou caro": "Lula cobra os 134 milhões do Vorcaro.",
-  "Partido dos Trabalhos": "Seguido de 'PT'.",
-  "vocário": "Os 134 milhões do Vorcaro.",
-  "vocáculo": "Festas pagas com o dinheiro do Vorcaro.",
-  "Borcaro": "Quem foi preso foi Daniel Vorcaro.",
-  "Vocaro": "Mesmo nome, escrito certo em outros segmentos.",
+  "Luan": "Flávio se dirige a Lula, chamado pelo nome em todo o trecho.",
+  "Roberto Lucíngia": "É a mesma Roberta citada nos seg. 11 e 19.",
+  "Roberta Lussing": "Mesma pessoa citada nos seg. 11 e 19.",
+  "Roberta Lussinger": "Grafia correta do sobrenome da lobista citada no caso do INSS.",
+  "a Lucinha": "Refere-se à Roberta, que 'falou' sobre o filho de Lula.",
+  "Roberta Lucinha": "Mesma Roberta citada ao longo do debate.",
+  "Medonça": "'André Mendonça' aparece escrito certo no seg. 217.",
+  "uma política federal": "O contexto é a Polícia Federal trazer o filho para depor.",
+  "do NSF": "Fala da quadrilha da Previdência, chamada 'INSS' em outros pontos.",
+  "Freixinho": "Irmão de Lula ligado a sindicato de aposentados.",
+  "Volcaro": "'Daniel Vorcaro' aparece escrito certo nos seg. 192 e 198.",
+  "Volcano": "Mesmo banqueiro, Daniel Vorcaro.",
+  "Borcara": "Quem foi preso por ordem de André Mendonça é o Vorcaro.",
+  "Borcaro": "Áudio do Vorcaro, citado no seg. 162.",
+  "Delanhol": "Deltan Dallagnol, citado ao lado de Moro.",
   "Jax Wagner": "Político da Bahia citado junto com Rui Costa.",
-  "bandeira": "O debate é na Band.",
-  "Vocalo": "Banco do Vorcaro.",
-  "Flávio Bolsa na": "Nome do candidato, número 22.",
-  "no Petro": "Escândalo citado junto com o Mensalão.",
-  "casas fechadas": "Lula repete a pergunta sobre o fim da escala 6x1 do seg 559.",
-  "Melei": "Presidente da Argentina.",
-  "Meleim": "Presidente da Argentina.",
-  "Lua": "Flávio se dirige a Lula.",
-  "Milley": "Presidente da Argentina, citado com a motosserra.",
-  "Me lei": "Pergunta sobre o modelo do Milei.",
-  "me lei": "Modelo do Milei.",
-  "me leio": "Lula insiste na pergunta sobre o Milei.",
-  "Milen": "Motosserra do Milei.",
-  "mitirô do Coutumaz": "Lula explica em seguida que é quem mente descaradamente."
+  "na bandeira": "O debate é na Band.",
+  "Milenio": "Referência ao presidente da Argentina e ao modelo econômico dele.",
+  "Milen": "Mesmo contexto da Argentina e de Milei.",
+  "Milley": "Modelo econômico de Milei.",
+  "milênio": "'Motosserra do Milei'.",
+  "Me leia": "Lula pergunta se Flávio seguirá o Milei.",
+  "mototerra": "'Motosserra' aparece nos seg. 573 e 579.",
+  "das calas fechadas": "Mesma pergunta do seg. 491 sobre o fim da escala 6x1."
  }
 }

@@ -79,7 +79,8 @@ def mattr(tokens, w=100):
 
 
 t0 = min(t["start"] for t in turns)
-res = {"meta": src.get("meta", {}), "inicio_bloco_s": t0,
+# o áudio gravado bate segundo a segundo com o vídeo da live no YouTube: inicio_bloco_s + ini abre a fala no vídeo
+res = {"meta": src.get("meta", {}), "video_youtube": "Gqc1rQtzWUk", "inicio_bloco_s": t0,
        "duracao_bloco_s": round(max(t["end"] for t in turns) - t0), "candidatos": {}}
 lem, proprio = {}, Counter()
 for c in CANDS:
@@ -157,7 +158,7 @@ def trecho(text, n=180):
 
 res["turnos"] = [{"ini": round(t["start"] - t0, 1), "fim": round(t["end"] - t0, 1), "quem": t["speaker"],
                   "palavras": len(t["text"].split()), "tipo": t.get("tipo"), "temas": t.get("temas", []),
-                  "resumo": t.get("resumo"), "trecho": trecho(t["text"])} for t in turns]
+                  "resumo": t.get("resumo"), "trecho": trecho(t["text"]), "texto": t["text"]} for t in turns]
 res["afirmacoes"] = src.get("afirmacoes", [])
 res["perguntas"] = src.get("perguntas", [])
 res["pipeline"] = {**src.get("pipeline", {}), "turnos": len(turns)}

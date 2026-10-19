@@ -8,7 +8,8 @@ import re
 import sys
 from pathlib import Path
 
-trans = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))["segments"]
+trans_doc = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+trans = trans_doc["segments"]
 auto = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
 corr = json.loads(Path(sys.argv[3]).read_text(encoding="utf-8"))
 NOME = {"L": "Lula", "F": "Flávio", "M": "Mediação"}
@@ -51,7 +52,13 @@ def resolve_pergunta(turns, quem, rel, literal, aparte_max=12):
     i = min(range(len(turns)), key=lambda j: abs(turns[j]["start"] - t0 - rel))
     if turns[i]["speaker"] != quem or abs(turns[i]["start"] - t0 - rel) > 1.5:
         raise SystemExit(f"pergunta de {quem} em {rel}s não bate com o turno {turns[i]['start'] - t0:.0f}s")
-    if literal not in turns[i]["text"]:
+    # o agente lê o texto já com a caixa corrigida; a correção não muda o comprimento, então a posição vale
+    # para as duas formas
+    for txt in (turns[i]["text"], caixa(turns[i])):
+        if literal in txt:
+            off = txt.index(literal)
+            break
+    else:
         raise SystemExit(f"trecho não é literal no turno {rel}s: {literal!r}")
     resp = []
     for t in turns[i + 1:]:
@@ -62,7 +69,7 @@ def resolve_pergunta(turns, quem, rel, literal, aparte_max=12):
     return {"t": rel, "pergunta": literal,
             "t_resposta": round(resp[0]["start"] - t0) if resp else None,
             "resposta": " ".join(t["text"] for t in resp) or None,
-            "_i": i, "_off": turns[i]["text"].index(literal), "_resp": [turns.index(t) for t in resp]}
+            "_i": i, "_off": off, "_resp": [turns.index(t) for t in resp]}
 
 
 turns = []
@@ -100,7 +107,7 @@ def caixa(t):
     return "".join(txt)
 
 out = {"turns": turns,
-       "pipeline": {"segmentos": len(trans), "rotulos_corrigidos": len(corr["rotulos_manuais"]),
+       "pipeline": {"modelo_transcricao": trans_doc.get("model") or "large-v3-turbo", "segmentos": len(trans), "rotulos_corrigidos": len(corr["rotulos_manuais"]),
                     "regras_nomes": len(corr["normalizacao"]), "glossario": len(gloss), "rotulos_por": corr.get("agente") or "conversa"}}
 if len(sys.argv) > 5:
     # classificação manual/IA, indexada pelo segundo de início do turno dentro do bloco

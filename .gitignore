@@ -2,9 +2,15 @@
 data/*
 !data/bloco*_correcoes.json
 !data/bloco*_classificacao.json
-!data/bloco*_conversa.json
 !data/glossario.json
+!data/vocabulario.json
 __pycache__/
 
 # chave da API do Claude (nunca vai para o git)
 .env
+
+# avaliação contra transcrição de terceiros: uso local, não publicar
+scripts/avaliar.py
+
+# rascunhos de divulgação (fio do X etc.), só locais
+publicacao/

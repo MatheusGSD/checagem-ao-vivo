@@ -17,9 +17,10 @@ d = json.loads((site / "data" / "dados.json").read_text(encoding="utf-8"))
 L, F = d["candidatos"]["Lula"], d["candidatos"]["Flávio"]
 
 W, H = 1200, 630
-BG, INK, INK2, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#e1e0d9"
+BG, INK, INK2, GRID = "#ffffff", "#121212", "#4f4f4f", "#e2e2e2"
 COR = {"Lula": "#e34948", "Flávio": "#2a78d6"}
-FONT, BOLD = "C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/segoeuib.ttf"
+# mesma linguagem da página: título em serifada (Georgia), números e rótulos em Franklin Gothic
+FONT, BOLD, SERIF = "C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/framd.ttf", "C:/Windows/Fonts/georgiab.ttf"
 
 
 def f(size, bold=False):
@@ -37,8 +38,9 @@ def mmss(s):
 
 img = Image.new("RGB", (W, H), BG)
 dr = ImageDraw.Draw(img)
-dr.text((60, 44), "Debate do 2º turno · Band · 18/10/2026 · confronto livre", font=f(26), fill=INK2)
-dr.text((60, 82), "Lula × Flávio: o confronto livre em números", font=f(52, True), fill=INK)
+dr.line((60, 34, W - 60, 34), fill=INK, width=3)
+dr.text((60, 48), "DEBATE DO 2º TURNO · BAND · 18/10/2026 · CONFRONTO LIVRE", font=f(22, True), fill=INK2)
+dr.text((60, 84), "Lula × Flávio: o confronto livre em números", font=ImageFont.truetype(SERIF, 46), fill=INK)
 
 linhas = [("Tempo de fala (medido no áudio)", mmss(L["segundos_fala"]), mmss(F["segundos_fala"])),
           ("Palavras por minuto", str(arred(L["palavras_por_minuto"])), str(arred(F["palavras_por_minuto"]))),
@@ -61,7 +63,7 @@ for rot, a, b in linhas:
         dr.rounded_rectangle((x_sw, y + 72, x_sw + 20, y + 92), radius=4, fill=COR[quem])
         dr.text((x_nome, y + 66), quem, font=nome, fill=INK, anchor="rt" if anc == "rt" else "lt")
     y += 134
-dr.text((meio, H - 34), "Perguntas, palavras, temas e mapa do debate no painel", font=f(24), fill=INK2, anchor="mb")
+dr.text((meio, H - 34), "Perguntas, temas, palavras e a transcrição completa no painel", font=f(24), fill=INK2, anchor="mb")
 
 img.save(site / "og.png", optimize=True)
 print("ok ->", site / "og.png")

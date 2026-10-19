@@ -1,0 +1,10 @@
+{
+ "descricao": "Nomes, siglas e termos do debate que o Whisper erra sem contexto. Vão no prompt da transcrição e servem de lista de conferência na avaliação. Grafias conferidas em fontes públicas (ver glossario.json).",
+ "termos": [
+  "Lula", "Flávio Bolsonaro", "Jair Messias Bolsonaro", "Janja", "Lulinha",
+  "Vorcaro", "Daniel Vorcaro", "Banco Master", "BRB", "Roberta Luchsinger",
+  "Careca do INSS", "INSS", "Polícia Federal", "CGU", "André Mendonça", "Dallagnol",
+  "Milei", "Jaques Wagner", "Frei Chico", "Petrolão", "Mensalão", "Instituto Lula",
+  "escala 6x1", "Desenrola", "Bolsa Família", "MEI", "Banco Central", "Oinegue", "Band"
+ ]
+}
