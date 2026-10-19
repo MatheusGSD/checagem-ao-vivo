@@ -1,0 +1,5 @@
+# áudio/vídeo da transmissão e transcrições brutas ficam só na máquina local
+data/*
+!data/bloco*_correcoes.json
+!data/bloco*_classificacao.json
+__pycache__/

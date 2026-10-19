@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lula × Flávio: confronto livre</title>
+<meta name="description" content="O que cada candidato falou nos 30 minutos de confronto livre do debate do 2º turno na Band: tempo de fala, palavras mais usadas, temas e ataques.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Lula × Flávio: o confronto livre em números">
+<meta property="og:description" content="Tempo de fala, palavras mais usadas, temas e ataques nos 30 minutos com relógio de xadrez do debate da Band.">
+<meta property="og:image" content="__SITE_URL__/og.png">
+<meta property="og:url" content="__SITE_URL__/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Lula × Flávio: o confronto livre em números">
+<meta name="twitter:description" content="Tempo de fala, palavras mais usadas, temas e ataques nos 30 minutos com relógio de xadrez.">
+<meta name="twitter:image" content="__SITE_URL__/og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='9' width='12' height='14' rx='3' fill='%23e34948'/%3E%3Crect x='17' y='9' width='12' height='14' rx='3' fill='%232a78d6'/%3E%3C/svg%3E">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --lula: #e34948;
+  --flavio: #2a78d6;
+  --med: #b5b3ab;
+  --tip-bg: #0b0b0b;
+  --tip-ink: #f0efec;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #f0efec;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --lula: #e66767;
+    --flavio: #3987e5;
+    --med: #5c5b57;
+    --tip-bg: #f0efec;
+    --tip-ink: #0b0b0b;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --ink: #f0efec;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+  --lula: #e66767;
+  --flavio: #3987e5;
+  --med: #5c5b57;
+  --tip-bg: #f0efec;
+  --tip-ink: #0b0b0b;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+main { max-width: 1080px; margin: 0 auto; padding: 32px 16px 64px; }
+header { margin-bottom: 28px; }
+.kicker { color: var(--ink-2); font-size: 14px; margin: 0 0 6px; }
+h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.02em; }
+h1 .l { color: var(--ink); }
+.lede { color: var(--ink-2); max-width: 680px; margin: 0; }
+h2 { font-size: 20px; margin: 0 0 4px; letter-spacing: -0.01em; }
+.sub { color: var(--ink-2); font-size: 14px; margin: 0 0 18px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 18px;
+}
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } .card { padding: 18px 16px; } }
+.legend { display: flex; gap: 18px; font-size: 14px; color: var(--ink-2); margin-bottom: 14px; flex-wrap: wrap; }
+.key { display: inline-flex; align-items: center; gap: 7px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
+.sw.lula { background: var(--lula); } .sw.flavio { background: var(--flavio); } .sw.med { background: var(--med); }
+
+/* comparação lado a lado */
+.cmp { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; row-gap: 12px; column-gap: 14px; }
+.cmp .hd { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.cmp .hd.r { justify-content: flex-start; } .cmp .hd.l { justify-content: flex-end; }
+.cmp .lab { color: var(--ink-2); font-size: 13px; text-align: center; min-width: 110px; }
+.bar { display: flex; align-items: center; gap: 8px; height: 22px; }
+.bar.l { flex-direction: row-reverse; }
+.bar i { display: block; height: 18px; min-width: 3px; }
+.bar.l i { background: var(--lula); border-radius: 4px 0 0 4px; }
+.bar.r i { background: var(--flavio); border-radius: 0 4px 4px 0; }
+.bar b { font-weight: 600; font-size: 15px; white-space: nowrap; }
+@media (max-width: 520px) { .cmp .lab { min-width: 78px; font-size: 12px; } .bar b { font-size: 14px; } }
+
+/* linha do tempo */
+.track { position: relative; height: 44px; border-radius: 6px; background: var(--grid); overflow: hidden; }
+.track .seg { position: absolute; top: 0; bottom: 0; border-right: 2px solid var(--surface); cursor: pointer; }
+.track .seg:hover { filter: brightness(1.12); }
+.ticks { position: relative; height: 18px; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.ticks span { position: absolute; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+
+svg text { font-family: inherit; }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+
+/* nuvens */
+.cloud { text-align: center; }
+.cloud img { width: 100%; height: auto; display: block; }
+.cloud h3 { margin: 0 0 8px; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+/* barras horizontais agrupadas */
+.hb { display: grid; grid-template-columns: minmax(90px, 160px) 1fr; column-gap: 12px; row-gap: 2px; align-items: center; }
+.hb .nm { font-size: 14px; color: var(--ink); text-align: right; grid-row: span 2; align-self: center; }
+.hb .row { display: flex; align-items: center; gap: 8px; height: 16px; }
+.hb .row i { height: 12px; border-radius: 0 4px 4px 0; min-width: 2px; display: block; }
+.hb .row.lula i { background: var(--lula); } .hb .row.flavio i { background: var(--flavio); }
+.hb .row b { font-size: 12px; font-weight: 500; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.hb .gap { grid-column: 1 / -1; height: 10px; }
+
+/* palavras distintivas */
+.dist { display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; }
+.dist .col h3 { font-size: 15px; margin: 0 0 10px; display: flex; gap: 8px; align-items: center; }
+.dist .col.l h3 { justify-content: flex-end; }
+.dw { display: flex; align-items: center; gap: 8px; height: 26px; font-size: 14px; }
+.col.l .dw { flex-direction: row-reverse; }
+.dw .w { width: 108px; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col.l .dw .w { text-align: left; } .col.r .dw .w { text-align: right; }
+.dw .t { flex: 1; display: flex; } .col.l .dw .t { justify-content: flex-end; }
+.dw .t i { height: 12px; display: block; min-width: 2px; }
+.col.l .dw .t i { background: var(--lula); border-radius: 4px 0 0 4px; }
+.col.r .dw .t i { background: var(--flavio); border-radius: 0 4px 4px 0; }
+.dw .n { font-size: 12px; color: var(--muted); width: 54px; flex: none; font-variant-numeric: tabular-nums; }
+.col.l .dw .n { text-align: right; }
+@media (max-width: 520px) { .dw .w { width: 84px; } .dw .n { display: none; } .dist { gap: 0 10px; } }
+
+/* afirmações */
+.claims { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.claims li { display: grid; grid-template-columns: 54px 1fr; gap: 10px; padding: 12px 0; border-top: 1px solid var(--grid); }
+.claims li:first-child { border-top: 0; padding-top: 0; }
+.claims .tm { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.claims .who { font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; margin-right: 6px; }
+.claims .ctx { color: var(--ink-2); font-size: 13px; margin-top: 2px; }
+
+details { margin-top: 14px; font-size: 14px; color: var(--ink-2); }
+summary { cursor: pointer; color: var(--ink-2); }
+table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.tbl-wrap { overflow-x: auto; }
+
+#tip {
+  position: fixed; pointer-events: none; z-index: 10; max-width: 320px;
+  background: var(--tip-bg); color: var(--tip-ink); border-radius: 8px; padding: 9px 11px;
+  font-size: 13px; line-height: 1.4; opacity: 0; transition: opacity .08s; box-shadow: 0 4px 18px rgba(0,0,0,.18);
+}
+#tip .h { font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+footer { color: var(--ink-2); font-size: 14px; margin-top: 32px; }
+footer p { margin: 0 0 10px; max-width: 760px; }
+a { color: inherit; text-underline-offset: 2px; }
+.empty { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="kicker" id="kicker">Debate presidencial do 2º turno · Band · 18/10/2026</p>
+    <h1>Lula × Flávio Bolsonaro: o confronto livre em números</h1>
+    <p class="lede" id="lede">Trinta minutos sem perguntas de jornalistas, quinze no relógio de xadrez para cada um. Aqui está quem falou mais, o quê, sobre quais temas e em que tom.</p>
+  </header>
+
+  <section class="card" aria-labelledby="h-resumo">
+    <h2 id="h-resumo">Quem ocupou o confronto</h2>
+    <p class="sub">Medido no áudio, só durante o bloco livre.</p>
+    <div class="cmp" id="cmp"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-relogio">
+    <h2 id="h-relogio">O relógio de xadrez</h2>
+    <p class="sub">Tempo restante de cada um (eixo vertical) ao longo dos minutos do bloco (eixo horizontal). A linha só desce enquanto o candidato fala. Estimado a partir do áudio.</p>
+    <div class="legend"><span class="key"><span class="sw lula"></span>Lula</span><span class="key"><span class="sw flavio"></span>Flávio</span></div>
+    <div id="clock"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-turnos">
+    <h2 id="h-turnos">Cada vez que alguém falou</h2>
+    <p class="sub">Toque ou passe o mouse num trecho para ler o começo da fala.</p>
+    <div class="legend"><span class="key"><span class="sw lula"></span>Lula</span><span class="key"><span class="sw flavio"></span>Flávio</span><span class="key"><span class="sw med"></span>Mediação</span></div>
+    <div class="track" id="track" role="img" aria-label="Linha do tempo dos turnos de fala"></div>
+    <div class="ticks" id="ticks"></div>
+    <details><summary>Ver todos os turnos em tabela</summary><div class="tbl-wrap"><table id="tbl-turnos"></table></div></details>
+  </section>
+
+  <section aria-labelledby="h-nuvem">
+    <div class="card">
+      <h2 id="h-nuvem">Mapa de palavras</h2>
+      <p class="sub">Substantivos, verbos e adjetivos na forma de dicionário ("propostas" conta como "proposta"), sem palavras vazias nem muletas de fala. Quanto maior, mais vezes foi dita.</p>
+      <div class="grid2">
+        <figure class="cloud" style="margin:0"><h3><span class="sw lula"></span>Lula</h3><img src="img/nuvem_lula.png" alt="Nuvem de palavras das falas de Lula" id="img-lula"></figure>
+        <figure class="cloud" style="margin:0"><h3><span class="sw flavio"></span>Flávio</h3><img src="img/nuvem_flavio.png" alt="Nuvem de palavras das falas de Flávio Bolsonaro" id="img-flavio"></figure>
+      </div>
+      <details><summary>Ver as 25 palavras mais ditas por cada um</summary><div class="tbl-wrap"><table id="tbl-lemas"></table></div></details>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="h-dist">
+    <h2 id="h-dist">O que é típico de cada um</h2>
+    <p class="sub">Frequência pura engana: os dois dizem muito "Brasil" e "governo". Aqui estão as palavras que um usou muito mais que o outro (log-odds com prior informativo). Ao lado, quantas vezes cada um disse (Lula × Flávio).</p>
+    <div class="dist" id="dist"></div>
+  </section>
+
+  <div class="grid2">
+    <section class="card" aria-labelledby="h-tipo">
+      <h2 id="h-tipo">Atacando, defendendo ou propondo</h2>
+      <p class="sub">Parcela do tempo de fala de cada um.</p>
+      <div class="legend"><span class="key"><span class="sw lula"></span>Lula</span><span class="key"><span class="sw flavio"></span>Flávio</span></div>
+      <div class="hb" id="tipo"></div>
+    </section>
+    <section class="card" aria-labelledby="h-pron">
+      <h2 id="h-pron">Eu, nós ou você</h2>
+      <p class="sub">Ocorrências a cada mil palavras ditas.</p>
+      <div class="legend"><span class="key"><span class="sw lula"></span>Lula</span><span class="key"><span class="sw flavio"></span>Flávio</span></div>
+      <div class="hb" id="pron"></div>
+    </section>
+  </div>
+
+  <section class="card" aria-labelledby="h-temas">
+    <h2 id="h-temas">Sobre o que falaram</h2>
+    <p class="sub">Parcela do tempo de fala de cada um dedicada a cada tema. Um turno com dois temas divide o tempo entre eles.</p>
+    <div class="legend"><span class="key"><span class="sw lula"></span>Lula</span><span class="key"><span class="sw flavio"></span>Flávio</span></div>
+    <div class="hb" id="temas"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-big">
+    <h2 id="h-big">Expressões que se repetiram</h2>
+    <p class="sub">Sequências de duas a quatro palavras que o candidato repetiu.</p>
+    <div class="grid2" id="big"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-af">
+    <h2 id="h-af">Afirmações para checar</h2>
+    <p class="sub">Números e fatos citados no confronto. A lista diz o que foi afirmado, não se é verdade.</p>
+    <ul class="claims" id="claims"></ul>
+  </section>
+
+  <footer>
+    <p><strong>Como foi feito.</strong> O áudio da transmissão foi transcrito com Whisper (large-v3-turbo). As vozes foram separadas por impressão vocal (ECAPA) e conferidas manualmente. A classificação de tipo de fala, temas e afirmações foi feita por IA (Claude) e revisada. Erros de transcrição são possíveis. Na dúvida, vale o vídeo original.</p>
+    <p id="fonte"></p>
+    <p><a href="data/dados.json">Baixar os dados (JSON)</a> · <a href="__REPO_URL__">Código no GitHub</a></p>
+  </footer>
+</main>
+<div id="tip" role="tooltip"></div>
+
+<script>
+const C = { "Lula": "lula", "Flávio": "flavio", "Mediação": "med" };
+const NOME = { "Lula": "Lula", "Flávio": "Flávio", "Mediação": "Mediação" };
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const mmss = s => { s = Math.max(0, Math.round(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+const fmt = n => n.toLocaleString("pt-BR");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const sw = who => `<span class="sw ${C[who]}"></span>`;
+
+const tip = document.getElementById("tip");
+function showTip(e, html) {
+  tip.innerHTML = html; tip.style.opacity = 1;
+  const r = tip.getBoundingClientRect(), pad = 14;
+  let x = e.clientX + pad, y = e.clientY + pad;
+  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - pad;
+  if (y + r.height > innerHeight - 8) y = e.clientY - r.height - pad;
+  tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px";
+}
+const hideTip = () => { tip.style.opacity = 0; };
+addEventListener("scroll", hideTip, { passive: true });
+
+fetch("data/dados.json").then(r => r.json()).then(render).catch(err => {
+  document.querySelector("main").insertAdjacentHTML("afterbegin", `<p class="empty">Não foi possível carregar os dados (${esc(err.message)}).</p>`);
+});
+
+function render(d) {
+  const L = d.candidatos["Lula"], F = d.candidatos["Flávio"];
+  if (d.meta?.fonte) document.getElementById("fonte").innerHTML = `Fonte: ${d.meta.fonte}`;
+
+  // comparação lado a lado
+  const rows = [
+    ["Tempo de fala", L.segundos_fala, F.segundos_fala, mmss],
+    ["Palavras ditas", L.palavras, F.palavras, fmt],
+    ["Palavras por minuto", L.palavras_por_minuto, F.palavras_por_minuto, v => fmt(Math.round(v))],
+    ["Vezes com a palavra", L.turnos, F.turnos, fmt],
+    ["Duração média da fala", L.turno_medio_s, F.turno_medio_s, v => `${Math.round(v)} s`],
+    ["Citou o adversário", L.mencoes_adversario, F.mencoes_adversario, fmt],
+  ];
+  let h = `<div class="hd l">Lula ${sw("Lula")}</div><div></div><div class="hd r">${sw("Flávio")} Flávio</div>`;
+  for (const [lab, a, b, f] of rows) {
+    const m = Math.max(a, b) || 1;
+    h += `<div class="bar l"><i style="width:${(a / m) * 78}%"></i><b>${f(a)}</b></div>
+          <div class="lab">${lab}</div>
+          <div class="bar r"><i style="width:${(b / m) * 78}%"></i><b>${f(b)}</b></div>`;
+  }
+  document.getElementById("cmp").innerHTML = h;
+
+  renderClock(d);
+  renderTrack(d);
+
+  // tabela de lemas
+  const tl = L.top_lemas.slice(0, 25), tf = F.top_lemas.slice(0, 25);
+  let t = `<thead><tr><th>#</th><th>Lula</th><th class="num">vezes</th><th>Flávio</th><th class="num">vezes</th></tr></thead><tbody>`;
+  for (let i = 0; i < Math.max(tl.length, tf.length); i++)
+    t += `<tr><td>${i + 1}</td><td>${esc(tl[i]?.[0])}</td><td class="num">${tl[i]?.[1] ?? ""}</td><td>${esc(tf[i]?.[0])}</td><td class="num">${tf[i]?.[1] ?? ""}</td></tr>`;
+  document.getElementById("tbl-lemas").innerHTML = t + "</tbody>";
+
+  // distintivas
+  const maxZ = Math.max(...d.distintivas.Lula.map(s => Math.abs(s.z)), ...d.distintivas["Flávio"].map(s => Math.abs(s.z)), 1);
+  const col = (who, side) => `<div class="col ${side}"><h3>${side === "l" ? `${NOME[who]} ${sw(who)}` : `${sw(who)} ${NOME[who]}`}</h3>` +
+    d.distintivas[who].slice(0, 12).map(s => `<div class="dw" data-w="${esc(s.palavra)}" data-a="${s.Lula}" data-b="${s["Flávio"]}">
+      <span class="w">${esc(s.palavra)}</span><span class="t"><i style="width:${Math.abs(s.z) / maxZ * 100}%"></i></span>
+      <span class="n">${s.Lula} × ${s["Flávio"]}</span></div>`).join("") + "</div>";
+  const dist = document.getElementById("dist");
+  dist.innerHTML = col("Lula", "l") + col("Flávio", "r");
+  dist.querySelectorAll(".dw").forEach(el => {
+    el.addEventListener("pointermove", e => showTip(e, `<div class="h">“${esc(el.dataset.w)}”</div>Lula: ${el.dataset.a} vezes<br>Flávio: ${el.dataset.b} vezes`));
+    el.addEventListener("pointerleave", hideTip);
+  });
+
+  // tipo de fala
+  const TIPOS = [["ataque", "Ataque ao adversário"], ["defesa", "Defesa / resposta"], ["proposta", "Proposta"], ["outro", "Outro"]];
+  const share = (c, k) => c.segundos_fala ? (c.segundos_por_tipo[k] || 0) / c.segundos_fala * 100 : 0;
+  hbars("tipo", TIPOS.filter(([k]) => (L.segundos_por_tipo[k] || F.segundos_por_tipo[k])).map(([k, nm]) => [nm, share(L, k), share(F, k)]),
+        v => `${Math.round(v)}%`, 100);
+
+  // pronomes por mil palavras
+  hbars("pron", Object.keys(L.pronomes).map(k => [k === "você/senhor" ? "você / o senhor" : k,
+        L.pronomes[k] / L.palavras * 1000, F.pronomes[k] / F.palavras * 1000]), v => v.toFixed(1));
+
+  // temas
+  const temas = [...new Set([...Object.keys(L.segundos_por_tema), ...Object.keys(F.segundos_por_tema)])];
+  const tshare = (c, k) => c.segundos_fala ? (c.segundos_por_tema[k] || 0) / c.segundos_fala * 100 : 0;
+  hbars("temas", temas.map(k => [k, tshare(L, k), tshare(F, k)]).sort((a, b) => (b[1] + b[2]) - (a[1] + a[2])), v => `${Math.round(v)}%`);
+
+  // bigramas
+  const bl = (who, c) => `<div><h3 style="font-size:15px;margin:0 0 10px;display:flex;gap:8px;align-items:center">${sw(who)} ${NOME[who]}</h3>` +
+    (c.top_bigramas.length ? `<div class="hb" style="grid-template-columns:minmax(90px,170px) 1fr">` + c.top_bigramas.slice(0, 8).map(([b, n]) =>
+      `<div class="nm" style="grid-row:auto">${esc(b)}</div><div class="row ${C[who]}"><i style="width:${n / c.top_bigramas[0][1] * 80}%"></i><b>${n}</b></div>`).join("") + "</div>"
+      : `<p class="empty">Nenhuma expressão se repetiu.</p>`) + "</div>";
+  document.getElementById("big").innerHTML = bl("Lula", L) + bl("Flávio", F);
+
+  // afirmações
+  const cl = document.getElementById("claims");
+  cl.innerHTML = d.afirmacoes.length ? d.afirmacoes.map(a => `<li><span class="tm">${mmss(a.t)}</span><div>
+      <span class="who">${sw(a.quem)}${NOME[a.quem]}</span>${esc(a.texto)}${a.contexto ? `<div class="ctx">${esc(a.contexto)}</div>` : ""}</div></li>`).join("")
+    : `<li class="empty">Em revisão.</li>`;
+}
+
+function hbars(id, rows, f, fixedMax) {
+  const m = fixedMax || Math.max(...rows.flatMap(r => [r[1], r[2]]), 1);
+  document.getElementById(id).innerHTML = rows.map(([nm, a, b], i) =>
+    `${i ? '<div class="gap"></div>' : ""}<div class="nm">${esc(nm)}</div>
+     <div class="row lula" data-tip="${esc(nm)}|Lula|${f(a)}"><i style="width:${a / m * 82}%"></i><b>${f(a)}</b></div>
+     <div class="row flavio" data-tip="${esc(nm)}|Flávio|${f(b)}"><i style="width:${b / m * 82}%"></i><b>${f(b)}</b></div>`).join("");
+}
+
+function renderTrack(d) {
+  const T = d.duracao_bloco_s, track = document.getElementById("track");
+  track.innerHTML = d.turnos.map((t, i) => `<div class="seg" data-i="${i}" style="left:${t.ini / T * 100}%;width:${Math.max(0.25, (t.fim - t.ini) / T * 100)}%;background:var(--${C[t.quem]})"></div>`).join("");
+  track.querySelectorAll(".seg").forEach(el => {
+    const t = d.turnos[+el.dataset.i];
+    const html = `<div class="h">${sw(t.quem)}${NOME[t.quem]} · ${mmss(t.ini)}–${mmss(t.fim)}</div>${esc(t.resumo || t.trecho)}`;
+    el.addEventListener("pointermove", e => showTip(e, html));
+    el.addEventListener("pointerleave", hideTip);
+  });
+  const step = T > 1500 ? 300 : 120;
+  let tk = "";
+  for (let s = 0; s <= T; s += step) tk += `<span style="left:${s / T * 100}%">${Math.round(s / 60)} min</span>`;
+  document.getElementById("ticks").innerHTML = tk;
+  document.getElementById("tbl-turnos").innerHTML = `<thead><tr><th>Início</th><th>Quem</th><th class="num">Duração</th><th>Tipo</th><th>Começo da fala</th></tr></thead><tbody>` +
+    d.turnos.map(t => `<tr><td>${mmss(t.ini)}</td><td>${NOME[t.quem]}</td><td class="num">${Math.round(t.fim - t.ini)} s</td><td>${esc(t.tipo || "")}</td><td>${esc(t.trecho)}</td></tr>`).join("") + "</tbody>";
+}
+
+function renderClock(d) {
+  const T = d.duracao_bloco_s, CAP = (d.meta?.relogio_min || 15) * 60;
+  // série em degraus: tempo restante só cai durante as falas do próprio candidato.
+  // O áudio mede a fala com pausas e apartes; cada um gastou os 15 min inteiros, então a fala
+  // medida é escalonada para fechar em 15 min (bate com o 1min08 que a mediação anunciou para Lula).
+  const serie = who => {
+    const ts = d.turnos.filter(t => t.quem === who);
+    const total = ts.reduce((s, t) => s + t.fim - t.ini, 0);
+    const k = total ? CAP / total : 1;
+    const pts = [[0, CAP]]; let rest = CAP;
+    for (const t of ts) {
+      pts.push([t.ini, rest]); rest -= (t.fim - t.ini) * k; pts.push([t.fim, rest]);
+    }
+    pts.push([T, rest]); return pts;
+  };
+  const S = { "Lula": serie("Lula"), "Flávio": serie("Flávio") };
+  const W = 1000, H = 300, m = { l: 44, r: 16, t: 10, b: 30 };
+  const x = s => m.l + s / T * (W - m.l - m.r), y = s => m.t + (1 - Math.max(s, 0) / CAP) * (H - m.t - m.b);
+  const minY = Math.min(0, ...Object.values(S).flat().map(p => p[1]));
+  let g = "";
+  for (let v = 0; v <= CAP; v += 300) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/><text x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end" font-size="13" fill="var(--muted)">${v / 60} min</text>`;
+  for (let s = 0; s <= T; s += 300) g += `<text x="${x(s)}" y="${H - 8}" text-anchor="middle" font-size="13" fill="var(--muted)">${s / 60}</text>`;
+  const path = pts => pts.map((p, i) => `${i ? "L" : "M"}${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join("");
+  const end = who => { const p = S[who].at(-1); return `<circle cx="${x(p[0])}" cy="${y(p[1])}" r="5" fill="var(--${C[who]})" stroke="var(--surface)" stroke-width="2"/>`; };
+  document.getElementById("clock").innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Tempo restante no relógio de cada candidato">
+    ${g}<line x1="${m.l}" x2="${W - m.r}" y1="${y(0)}" y2="${y(0)}" stroke="var(--axis)"/>
+    <path d="${path(S["Lula"])}" fill="none" stroke="var(--lula)" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="${path(S["Flávio"])}" fill="none" stroke="var(--flavio)" stroke-width="2.5" stroke-linejoin="round"/>
+    ${end("Lula")}${end("Flávio")}
+    <line id="xh" y1="${m.t}" y2="${H - m.b}" stroke="var(--axis)" opacity="0"/>
+    <rect x="${m.l}" y="0" width="${W - m.l - m.r}" height="${H - m.b}" fill="transparent" id="hit"/>
+  </svg>`;
+  const svg = document.querySelector("#clock svg"), xh = svg.querySelector("#xh");
+  const at = (pts, s) => { let v = pts[0][1]; for (const p of pts) { if (p[0] <= s) v = p[1]; else { const prev = pts[pts.indexOf(p) - 1]; if (prev && prev[1] !== p[1]) v = prev[1] + (p[1] - prev[1]) * (s - prev[0]) / (p[0] - prev[0]); break; } } return v; };
+  svg.querySelector("#hit").addEventListener("pointermove", e => {
+    const r = svg.getBoundingClientRect(), sx = (e.clientX - r.left) / r.width * W;
+    const s = Math.min(T, Math.max(0, (sx - m.l) / (W - m.l - m.r) * T));
+    xh.setAttribute("x1", x(s)); xh.setAttribute("x2", x(s)); xh.setAttribute("opacity", 1);
+    showTip(e, `<div class="h">Minuto ${mmss(s)} do bloco</div>${sw("Lula")} Lula: ${mmss(at(S["Lula"], s))} restantes<br>${sw("Flávio")} Flávio: ${mmss(at(S["Flávio"], s))} restantes`);
+  });
+  svg.querySelector("#hit").addEventListener("pointerleave", () => { xh.setAttribute("opacity", 0); hideTip(); });
+}
+
+document.addEventListener("pointermove", e => {
+  const el = e.target.closest?.("[data-tip]");
+  if (!el) return;
+  const [nm, who, v] = el.dataset.tip.split("|");
+  showTip(e, `<div class="h">${sw(who)}${who}</div>${nm}: ${v}`);
+});
+document.addEventListener("pointerout", e => { if (e.target.closest?.("[data-tip]")) hideTip(); });
+</script>
+</body>
+</html>
