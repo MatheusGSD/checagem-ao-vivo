@@ -31,6 +31,11 @@
   --med: #b5b3ab;
   --tip-bg: #0b0b0b;
   --tip-ink: #f0efec;
+  /* status: fixos nos dois temas, sempre com ícone + rótulo */
+  --st-good: #0ca30c;
+  --st-warn: #fab219;
+  --st-serious: #ec835a;
+  --st-crit: #d03b3b;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -170,6 +175,26 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   font-size: 13px; line-height: 1.4; opacity: 0; transition: opacity .08s; box-shadow: 0 4px 18px rgba(0,0,0,.18);
 }
 #tip .h { font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+/* perguntas e respostas */
+.pb { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; gap: 10px 14px; align-items: center; margin-bottom: 10px; }
+.pb .nm { font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.stack { display: flex; height: 28px; gap: 2px; }
+.stack i { display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 13px; font-weight: 600; color: #0b0b0b; min-width: 0; }
+.stack i:first-child { border-radius: 4px 0 0 4px; } .stack i:last-child { border-radius: 0 4px 4px 0; }
+.stack i:only-child { border-radius: 4px; }
+.st-respondeu { background: var(--st-good); } .st-em-parte { background: var(--st-warn); }
+.st-desviou { background: var(--st-serious); } .st-nao-respondeu { background: var(--st-crit); }
+.stack i.st-nao-respondeu, .stack i.st-respondeu { color: #fff; }
+.qcol h3 { font-size: 15px; margin: 0 0 6px; display: flex; gap: 8px; align-items: center; }
+.q { padding: 12px 0; border-top: 1px solid var(--grid); font-size: 14px; }
+.q .pq { font-weight: 600; margin-bottom: 4px; }
+.q .rs { color: var(--ink-2); }
+.q .nt { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.q .tm { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; margin-right: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 2px 8px 2px 6px; border-radius: 999px; border: 1px solid var(--border); color: var(--ink); white-space: nowrap; margin-bottom: 6px; }
+.chip b { width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: #0b0b0b; }
+.chip b.st-respondeu, .chip b.st-nao-respondeu { color: #fff; }
+@media (max-width: 520px) { .pb { grid-template-columns: 1fr; gap: 4px; } }
 footer { color: var(--ink-2); font-size: 14px; margin-top: 32px; }
 footer p { margin: 0 0 10px; max-width: 760px; }
 a { color: inherit; text-underline-offset: 2px; }
@@ -188,6 +213,16 @@ a { color: inherit; text-underline-offset: 2px; }
     <h2 id="h-resumo">Quem ocupou o confronto</h2>
     <p class="sub">Medido no áudio, só durante o bloco livre.</p>
     <div class="cmp" id="cmp"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-perg">
+    <h2 id="h-perg">Perguntou, respondeu?</h2>
+    <p class="sub">Cada pergunta direta feita ao adversário e o que veio em seguida. Perguntas repetidas contam uma vez. Retóricas e as dirigidas ao eleitor ficaram de fora.</p>
+    <div class="legend" id="perg-legend"></div>
+    <div id="perg-bars"></div>
+    <div class="grid2" id="perg-list" style="margin-top:18px"></div>
+    <details><summary>Critérios</summary><ul id="perg-crit" style="margin:8px 0 0;padding-left:18px"></ul>
+      <p style="margin:8px 0 0">A avaliação foi feita por IA (Claude) a partir da transcrição e é um julgamento. A resposta resumida e o minuto estão ao lado de cada pergunta para você conferir.</p></details>
   </section>
 
   <section class="card" aria-labelledby="h-relogio">
@@ -313,6 +348,7 @@ function render(d) {
   }
   document.getElementById("cmp").innerHTML = h;
 
+  renderPerguntas(d);
   renderClock(d);
   renderTrack(d);
 
@@ -363,6 +399,31 @@ function render(d) {
   cl.innerHTML = d.afirmacoes.length ? d.afirmacoes.map(a => `<li><span class="tm">${mmss(a.t)}</span><div>
       <span class="who">${sw(a.quem)}${NOME[a.quem]}</span>${esc(a.texto)}${a.contexto ? `<div class="ctx">${esc(a.contexto)}</div>` : ""}</div></li>`).join("")
     : `<li class="empty">Em revisão.</li>`;
+}
+
+const STATUS = [["respondeu", "Respondeu", "✓"], ["em parte", "Em parte", "◐"], ["desviou", "Desviou", "↪"], ["não respondeu", "Não respondeu", "✕"]];
+const stCls = s => "st-" + s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ /g, "-");
+const chip = s => { const [k, lab, ic] = STATUS.find(x => x[0] === s); return `<span class="chip"><b class="${stCls(k)}" aria-hidden="true">${ic}</b>${lab}</span>`; };
+
+function renderPerguntas(d) {
+  const P = d.perguntas || [];
+  if (!P.length) { document.getElementById("h-perg").closest("section").hidden = true; return; }
+  document.getElementById("perg-legend").innerHTML = STATUS.map(([k, lab, ic]) =>
+    `<span class="key"><span class="sw ${stCls(k)}" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:10px;border-radius:50%;color:${k === "respondeu" || k === "não respondeu" ? "#fff" : "#0b0b0b"}">${ic}</span>${lab}</span>`).join("");
+  const outro = q => q === "Lula" ? "Flávio" : "Lula";
+  document.getElementById("perg-bars").innerHTML = ["Lula", "Flávio"].map(q => {
+    const qs = P.filter(p => p.quem === q), n = qs.length;
+    const segs = STATUS.map(([k, lab]) => [k, lab, qs.filter(p => p.status === k).length]).filter(s => s[2]);
+    return `<div class="pb"><div class="nm">${sw(q)}<span>${n} perguntas de ${NOME[q]}<br><span style="color:var(--ink-2);font-size:13px">como ${NOME[outro(q)]} reagiu</span></span></div>
+      <div class="stack" role="img" aria-label="${segs.map(s => `${s[1]}: ${s[2]}`).join(", ")}">${segs.map(([k, lab, c]) =>
+        `<i class="${stCls(k)}" style="flex:${c}" data-tip="${esc(lab)}|${NOME[outro(q)]}|${c} de ${n}">${c}</i>`).join("")}</div></div>`;
+  }).join("");
+  document.getElementById("perg-list").innerHTML = ["Lula", "Flávio"].map(q =>
+    `<div class="qcol"><h3>${sw(q)} ${NOME[q]} perguntou</h3>` + P.filter(p => p.quem === q).sort((a, b) => a.t - b.t).map(p =>
+      `<div class="q">${chip(p.status)}<div class="pq"><span class="tm">${mmss(p.t)}</span>${esc(p.pergunta)}</div>
+        <div class="rs"><span class="tm">${mmss(p.t_resposta)}</span>${NOME[outro(q)]}: ${esc(p.resposta)}</div>
+        ${p.nota ? `<div class="nt">${esc(p.nota)}</div>` : ""}</div>`).join("") + "</div>").join("");
+  document.getElementById("perg-crit").innerHTML = Object.entries(d.criterios_resposta || {}).map(([k, v]) => `<li>${chip(k)} ${esc(v)}</li>`).join("");
 }
 
 function hbars(id, rows, f, fixedMax) {

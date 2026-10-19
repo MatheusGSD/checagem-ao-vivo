@@ -2414,5 +2414,187 @@
    "quem": "Flávio",
    "texto": "O governo gastou R$ 7 bilhões com viagens de Janja."
   }
- ]
+ ],
+ "perguntas": [
+  {
+   "t": 0,
+   "quem": "Lula",
+   "pergunta": "Por que votou contra ampliar a licença-maternidade em 2009?",
+   "t_resposta": 25,
+   "resposta": "Disse não ter nada contra as mulheres, citou a esposa e as filhas e passou ao caso Luchsinger.",
+   "status": "desviou",
+   "nota": "Lula repetiu a pergunta aos 0:48 e aos 24:45."
+  },
+  {
+   "t": 106,
+   "quem": "Lula",
+   "pergunta": "Por que mantém escritório com o \"Careca do INSS\"?",
+   "t_resposta": 125,
+   "resposta": "Negou: disse que não mantém escritório com o Careca.",
+   "status": "respondeu"
+  },
+  {
+   "t": 447,
+   "quem": "Lula",
+   "pergunta": "Qual a sua relação de amizade com Vorcaro?",
+   "t_resposta": 481,
+   "resposta": "Falou de condenados por corrupção, saudou Moro e Dallagnol e culpou a bancada do PT pela brecha no INSS.",
+   "status": "desviou"
+  },
+  {
+   "t": 557,
+   "quem": "Lula",
+   "pergunta": "Onde estão os R$ 134 milhões de Vorcaro?",
+   "t_resposta": 832,
+   "resposta": "Disse que o dinheiro foi para o filme sobre Jair Bolsonaro.",
+   "status": "respondeu",
+   "nota": "Resposta contestada: Lula disse que a diretora do filme nega ter recebido. Ele repetiu a pergunta mais de dez vezes."
+  },
+  {
+   "t": 859,
+   "quem": "Lula",
+   "pergunta": "Como comprou uma casa de R$ 10 milhões?",
+   "t_resposta": 886,
+   "resposta": "Disse que comprou com trabalho, \"diferente do seu filho\", sem detalhar.",
+   "status": "em parte"
+  },
+  {
+   "t": 1127,
+   "quem": "Lula",
+   "pergunta": "Por que interferiu para que um policial que matou uma criança de 5 anos não fosse preso?",
+   "t_resposta": 1153,
+   "resposta": "Primeiro falou do voto dos presos em Lula; depois (20:14) disse que não houve julgamento e que Lula criminaliza a advocacia.",
+   "status": "em parte"
+  },
+  {
+   "t": 1277,
+   "quem": "Lula",
+   "pergunta": "Por que quis acabar com a marcação das munições?",
+   "t_resposta": 1298,
+   "resposta": "Negou: disse que nunca quis tirar a marcação.",
+   "status": "respondeu"
+  },
+  {
+   "t": 1315,
+   "quem": "Lula",
+   "pergunta": "Por que empregou parentes de um chefe do Escritório do Crime (caso Marielle)?",
+   "t_resposta": 1326,
+   "resposta": "Disse que o governo Lula emprega condenados do Mensalão e do Petrolão.",
+   "status": "desviou"
+  },
+  {
+   "t": 1485,
+   "quem": "Lula",
+   "pergunta": "Vai propor o fim da escala 6x1?",
+   "t_resposta": 1597,
+   "resposta": "\"É óbvio que não, é só mais uma mentira sua.\" Depois disse que o trabalhador \"está garantido\".",
+   "status": "em parte",
+   "nota": "Resposta ambígua: não fica claro se o \"não\" é sobre a proposta ou sobre a acusação."
+  },
+  {
+   "t": 1641,
+   "quem": "Lula",
+   "pergunta": "O seu modelo econômico é o de Milei?",
+   "t_resposta": 1653,
+   "resposta": "Citou Ortega, Maduro e o Irã; depois disse que a direita vai \"consertar\" o país e prometeu um \"tesouraço\" na corrupção.",
+   "status": "desviou",
+   "nota": "Lula repetiu a pergunta cinco vezes."
+  },
+  {
+   "t": 1794,
+   "quem": "Lula",
+   "pergunta": "O \"tesouraço\" vai cair nas costas de quem?",
+   "t_resposta": 1807,
+   "resposta": "Disse que vai cortar gastos como as viagens com Janja.",
+   "status": "respondeu"
+  },
+  {
+   "t": 25,
+   "quem": "Flávio",
+   "pergunta": "Você conhece Roberta Luchsinger?",
+   "t_resposta": 77,
+   "resposta": "Disse que o caso é da Polícia Federal.",
+   "status": "desviou",
+   "nota": "Flávio repetiu a pergunta aos 1:01 e aos 3:50."
+  },
+  {
+   "t": 88,
+   "quem": "Flávio",
+   "pergunta": "Por que a PF não vai à casa do seu filho? Cadê o Lulinha?",
+   "t_resposta": 148,
+   "resposta": "Disse que o filho abriu os sigilos bancário e telefônico e será investigado se houver problema.",
+   "status": "respondeu"
+  },
+  {
+   "t": 125,
+   "quem": "Flávio",
+   "pergunta": "Quem está sustentando o seu filho na Espanha?",
+   "t_resposta": 148,
+   "resposta": "Falou da abertura dos sigilos, sem dizer quem o sustenta.",
+   "status": "desviou"
+  },
+  {
+   "t": 187,
+   "quem": "Flávio",
+   "pergunta": "Por que o seu filho está na Espanha e não aqui?",
+   "t_resposta": 203,
+   "resposta": "Acusou Eduardo Bolsonaro de conspirar nos EUA; depois (4:16) disse que o filho virá depor e não vai se esconder.",
+   "status": "em parte"
+  },
+  {
+   "t": 330,
+   "quem": "Flávio",
+   "pergunta": "Como acusar Bolsonaro pelo INSS se o seu irmão é vice de um sindicato envolvido?",
+   "t_resposta": 382,
+   "resposta": "\"Quem montou a quadrilha tem que explicar.\"",
+   "status": "desviou"
+  },
+  {
+   "t": 665,
+   "quem": "Flávio",
+   "pergunta": "O que prometeu a Vorcaro na reunião com Haddad e Galípolo?",
+   "t_resposta": 693,
+   "resposta": "Disse que falou que Vorcaro virou banqueiro no governo Bolsonaro e seria preso no dele.",
+   "status": "respondeu"
+  },
+  {
+   "t": 909,
+   "quem": "Flávio",
+   "pergunta": "Por que só lembrou do Bolsa Família agora, com um reajuste de \"três reais por dia\"?",
+   "t_resposta": 997,
+   "resposta": "Disse que a reposição da inflação é obrigação legal e que mandou pagar quando soube.",
+   "status": "respondeu"
+  },
+  {
+   "t": 1098,
+   "quem": "Flávio",
+   "pergunta": "Explica os R$ 30 milhões \"por fora\" ao Instituto Lula citados no áudio de Vorcaro?",
+   "t_resposta": 1127,
+   "resposta": "Falou da \"desfaçatez dos milicianos\" e mudou de assunto para o caso do policial.",
+   "status": "desviou"
+  },
+  {
+   "t": 1153,
+   "quem": "Flávio",
+   "pergunta": "Por que 73% dos presidiários votaram em você?",
+   "t_resposta": 1164,
+   "resposta": "\"Eu quero que vote 100%. Até teu pai.\"",
+   "status": "desviou",
+   "nota": "Flávio repetiu a pergunta aos 20:44."
+  },
+  {
+   "t": 1460,
+   "quem": "Flávio",
+   "pergunta": "O que vai fazer para tirar as pessoas do endividamento?",
+   "t_resposta": 1485,
+   "resposta": "Listou as perguntas que Flávio não respondeu e perguntou sobre a escala 6x1.",
+   "status": "não respondeu"
+  }
+ ],
+ "criterios_resposta": {
+  "respondeu": "tratou diretamente do que foi perguntado, mesmo que a resposta seja contestada",
+  "em parte": "tocou no assunto, mas sem responder ao ponto central",
+  "desviou": "respondeu com outro assunto ou com um contra-ataque",
+  "não respondeu": "ignorou a pergunta"
+ }
 }

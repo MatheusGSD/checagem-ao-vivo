@@ -53,7 +53,8 @@ if len(sys.argv) > 5:
     if faltando or keys:
         raise SystemExit("turnos sem classificação:\n" + "\n".join(faltando) +
                          (f"\nchaves sem turno: {sorted(keys)}" if keys else ""))
-    out.update(meta=cls["meta"], afirmacoes=cls["afirmacoes"])
+    out.update(meta=cls["meta"], afirmacoes=cls["afirmacoes"], perguntas=cls.get("perguntas", []),
+               criterios_resposta=cls.get("criterios_resposta", {}))
 
 Path(sys.argv[4]).write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
 for who in NOME.values():

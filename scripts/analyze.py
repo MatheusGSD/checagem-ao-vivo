@@ -136,6 +136,8 @@ res["turnos"] = [{"ini": round(t["start"] - t0, 1), "fim": round(t["end"] - t0, 
                   "palavras": len(t["text"].split()), "tipo": t.get("tipo"), "temas": t.get("temas", []),
                   "resumo": t.get("resumo"), "trecho": trecho(t["text"])} for t in turns]
 res["afirmacoes"] = src.get("afirmacoes", [])
+res["perguntas"] = src.get("perguntas", [])
+res["criterios_resposta"] = src.get("criterios_resposta", {})
 
 for c in CANDS:
     freq = dict(Counter(lem[c]).most_common(120))
