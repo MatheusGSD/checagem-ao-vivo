@@ -57,7 +57,9 @@ for seg, lab in zip(trans, labels):
     else:
         turns.append({"start": seg["start"], "end": seg["end"], "speaker": who, "text": text})
 
-out = {"turns": turns}
+out = {"turns": turns,
+       "pipeline": {"segmentos": len(trans), "rotulos_corrigidos": len(corr["rotulos_manuais"]),
+                    "regras_nomes": len(corr["normalizacao"]), "rotulos_por": corr.get("agente") or "conversa"}}
 if len(sys.argv) > 5:
     # classificação manual/IA, indexada pelo segundo de início do turno dentro do bloco
     cls = json.loads(Path(sys.argv[5]).read_text(encoding="utf-8"))
@@ -74,6 +76,7 @@ if len(sys.argv) > 5:
     if faltando or keys:
         raise SystemExit("turnos sem classificação:\n" + "\n".join(faltando) +
                          (f"\nchaves sem turno: {sorted(keys)}" if keys else ""))
+    out["pipeline"]["classificacao_por"] = cls.get("agente") or "conversa"
     out.update(meta=cls["meta"], afirmacoes=cls["afirmacoes"],
                perguntas=[{"quem": f["quem"], "tema": f["tema"],
                            "instancias": [resolve_pergunta(turns, f["quem"], t, lit) for t, lit in f["instancias"]]}

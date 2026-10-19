@@ -187,6 +187,43 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .bolha button.mais { font: inherit; font-size: 13px; background: none; border: 0; padding: 0; color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; margin-left: 4px; }
 .fio details { margin: 0 0 12px; }
 @media (max-width: 520px) { .bolha { max-width: 92%; } }
+.ctl-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 16px 0 6px; }
+.ctl-row .seg-ctl { margin: 0; }
+.ctl { font-size: 14px; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+.ctl select, .ctl-row input[type=search] { font: inherit; font-size: 14px; color: var(--ink); background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+.ctl-row input[type=search] { flex: 1 1 200px; min-width: 0; }
+
+/* palavras típicas agrupadas por tema */
+.dw-tema { font-size: 12px; color: var(--muted); margin: 10px 0 2px; }
+.col.l .dw-tema { text-align: right; }
+.col .dw-tema:first-of-type { margin-top: 0; }
+
+/* mapa semântico */
+#mapa svg circle { transition: opacity .15s; }
+
+/* como fizemos */
+.kind { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); }
+.kind i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 2px solid var(--k); background: var(--k); }
+.kind.codigo i { --k: var(--ink-2); background: transparent; }
+.kind.local i { --k: #1baf7a; }
+.kind.agente i { --k: #6250d6; }
+.kind.conversa i { --k: #6250d6; background: transparent; border-style: dashed; }
+.pipe { list-style: none; margin: 8px 0 0; padding: 0; position: relative; }
+.pipe::before { content: ""; position: absolute; left: 7px; top: 10px; bottom: 10px; width: 2px; background: var(--grid); }
+.pipe li { position: relative; padding: 0 0 18px 30px; }
+.pipe li > i { position: absolute; left: 0; top: 3px; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--k); background: var(--k); box-shadow: 0 0 0 3px var(--surface); }
+.pipe li.codigo > i { --k: var(--ink-2); background: var(--surface); }
+.pipe li.local > i { --k: #1baf7a; }
+.pipe li.agente > i { --k: #6250d6; }
+.pipe li.conversa > i { --k: #6250d6; background: var(--surface); border-style: dashed; }
+.pipe h3 { font-size: 15px; margin: 0 0 2px; }
+.pipe .who { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.pipe p { margin: 0; font-size: 14px; color: var(--ink-2); }
+.pipe .num { color: var(--ink); font-weight: 600; }
+.pipe a { font-size: 13px; color: var(--ink-2); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .kind.local i, :root:not([data-theme="light"]) .pipe li.local > i { --k: #199e70; } :root:not([data-theme="light"]) .kind.agente i, :root:not([data-theme="light"]) .kind.conversa i, :root:not([data-theme="light"]) .pipe li.agente > i, :root:not([data-theme="light"]) .pipe li.conversa > i { --k: #9085e9; } }
+:root[data-theme="dark"] .kind.local i, :root[data-theme="dark"] .pipe li.local > i { --k: #199e70; }
+:root[data-theme="dark"] .kind.agente i, :root[data-theme="dark"] .kind.conversa i, :root[data-theme="dark"] .pipe li.agente > i, :root[data-theme="dark"] .pipe li.conversa > i { --k: #9085e9; }
 footer { color: var(--ink-2); font-size: 14px; margin-top: 32px; }
 footer p { margin: 0 0 10px; max-width: 760px; }
 a { color: inherit; text-underline-offset: 2px; }
@@ -212,11 +249,17 @@ a { color: inherit; text-underline-offset: 2px; }
     <p class="sub">Toda pergunta direta que um fez ao outro, nas palavras de cada um, e a fala seguinte do adversário: tudo o que ele disse até quem perguntou retomar a palavra. Não avaliamos se houve resposta. Leia e tire suas conclusões.</p>
     <div class="legend"><span class="key"><span class="sw lula"></span>Lula perguntou</span><span class="key"><span class="sw flavio"></span>Flávio perguntou</span></div>
     <div id="perg-strip"></div>
-    <div class="seg-ctl" role="group" aria-label="Filtrar perguntas" id="perg-filtro">
-      <button type="button" data-f="todas" aria-pressed="true">Todas</button>
-      <button type="button" data-f="Lula" aria-pressed="false">Lula perguntou</button>
-      <button type="button" data-f="Flávio" aria-pressed="false">Flávio perguntou</button>
+    <div class="ctl-row">
+      <div class="seg-ctl" role="group" aria-label="Quem perguntou" id="perg-filtro">
+        <button type="button" data-f="todas" aria-pressed="true">Todas</button>
+        <button type="button" data-f="Lula" aria-pressed="false">Lula perguntou</button>
+        <button type="button" data-f="Flávio" aria-pressed="false">Flávio perguntou</button>
+      </div>
+      <label class="ctl">Tema <select id="perg-tema"><option value="">todos</option></select></label>
+      <label class="ctl">Ordem <select id="perg-ordem"><option value="t">do debate</option><option value="rep">mais repetidas primeiro</option></select></label>
+      <input type="search" id="perg-busca" placeholder="Buscar nas perguntas e falas…" aria-label="Buscar nas perguntas e falas">
     </div>
+    <p class="empty" id="perg-vazio" hidden>Nenhuma pergunta com esse filtro.</p>
     <div id="perg-list"></div>
   </section>
 
@@ -249,9 +292,21 @@ a { color: inherit; text-underline-offset: 2px; }
     </div>
   </section>
 
+  <section class="card" aria-labelledby="h-mapa">
+    <h2 id="h-mapa">O mapa do que foi dito</h2>
+    <p class="sub">Cada ponto é um trecho de fala de 25 a 60 palavras. Trechos com sentido parecido ficam perto uns dos outros. Os eixos não significam nada, só a distância importa. Passe o mouse ou toque num ponto para ler.</p>
+    <div class="ctl-row">
+      <div class="legend" style="margin:0"><span class="key"><span class="sw lula"></span>Lula</span><span class="key"><span class="sw flavio"></span>Flávio</span></div>
+      <label class="ctl">Destacar tema <select id="mapa-tema"><option value="">nenhum</option></select></label>
+    </div>
+    <div id="mapa"></div>
+    <details><summary>Como o mapa é feito</summary><p id="mapa-metodo" style="margin:8px 0 0"></p>
+      <p style="margin:8px 0 0">O modelo também capta o jeito de falar de cada um, então trechos do mesmo candidato tendem a ficar juntos mesmo quando o assunto muda. A proximidade é aproximada e não prova que dois trechos tratam do mesmo fato.</p></details>
+  </section>
+
   <section class="card" aria-labelledby="h-dist">
     <h2 id="h-dist">O que é típico de cada um</h2>
-    <p class="sub">Frequência pura engana: os dois dizem muito "Brasil" e "governo". Aqui estão as palavras que um usou muito mais que o outro (log-odds com prior informativo). Ao lado, quantas vezes cada um disse (Lula × Flávio).</p>
+    <p class="sub">Frequência pura engana: os dois dizem muito "Brasil" e "governo". Aqui estão as palavras que um usou muito mais que o outro (log-odds com prior informativo), agrupadas pelo tema das falas em que aparecem. Ao lado, quantas vezes cada um disse (Lula × Flávio).</p>
     <div class="dist" id="dist"></div>
   </section>
 
@@ -289,8 +344,25 @@ a { color: inherit; text-underline-offset: 2px; }
     <ul class="claims" id="claims"></ul>
   </section>
 
+  <section class="card" aria-labelledby="h-metodo">
+    <h2 id="h-metodo">Como fizemos</h2>
+    <p class="sub">Do áudio ao painel, etapa por etapa. A marca de cada etapa diz quem fez o trabalho.</p>
+    <div class="legend" style="gap:8px 18px">
+      <span class="kind codigo"><i></i>Código com regra fixa</span>
+      <span class="kind local"><i></i>Modelo de IA aberto, rodando localmente</span>
+      <span class="kind agente"><i></i>Agente Claude com prompt publicado</span>
+      <span class="kind conversa"><i></i>Claude em conversa, sem prompt fixo</span>
+    </div>
+    <ol class="pipe" id="pipe"></ol>
+    <details><summary>O que testamos e tiramos</summary><ul style="margin:8px 0 0;padding-left:18px">
+      <li style="margin-bottom:6px"><b>Dizer se cada pergunta foi respondida.</b> Saiu porque qualquer régua seria um julgamento nosso. Agora o painel mostra a fala seguinte por uma regra fixa e deixa a conclusão com você.</li>
+      <li style="margin-bottom:6px"><b>Agrupar as falas em assuntos automaticamente</b> (k-means sobre os embeddings). Saiu porque o resultado mudava conforme o número de grupos escolhido.</li>
+      <li><b>Ligar perguntas parecidas dos dois candidatos</b> por embeddings. Saiu porque, em 8 pares de controle, o par certo ficou em primeiro lugar só 2 ou 3 vezes: com perguntas curtas, o modelo agrupa pela forma ("Por que você…?") e não pelo assunto.</li>
+    </ul></details>
+  </section>
+
   <footer>
-    <p><strong>Como foi feito.</strong> O áudio da transmissão foi transcrito com Whisper (large-v3-turbo). As vozes foram separadas automaticamente por impressão vocal (ECAPA), e as trocas rápidas foram corrigidas por IA (Claude) lendo a transcrição. Tipo de fala, temas, resumos e a lista de afirmações também são interpretação de IA (Claude) e ainda não passaram por revisão humana. Contagens, nuvens e a fala seguinte de cada pergunta são calculadas por código, com regras fixas. Erros de transcrição são possíveis. Na dúvida, vale o vídeo original.</p>
+    <p>Erros de transcrição e de atribuição de falas curtas são possíveis. Na dúvida, vale o vídeo original.</p>
     <p id="fonte"></p>
     <p><a href="data/dados.json">Baixar os dados (JSON)</a> · <a href="https://github.com/MatheusGSD/debate-lula-flavio">Código no GitHub</a></p>
   </footer>
@@ -347,6 +419,8 @@ function render(d) {
   renderPerguntas(d);
   renderClock(d);
   renderTrack(d);
+  renderMapa(d);
+  renderMetodo(d);
 
   // tabela de lemas
   const tl = L.top_lemas.slice(0, 25), tf = F.top_lemas.slice(0, 25);
@@ -366,14 +440,25 @@ function render(d) {
 
   // distintivas
   const maxZ = Math.max(...d.distintivas.Lula.map(s => Math.abs(s.z)), ...d.distintivas["Flávio"].map(s => Math.abs(s.z)), 1);
-  const col = (who, side) => `<div class="col ${side}"><h3>${side === "l" ? `${NOME[who]} ${sw(who)}` : `${sw(who)} ${NOME[who]}`}</h3>` +
-    d.distintivas[who].slice(0, 12).map(s => `<div class="dw" data-w="${esc(s.palavra)}" data-a="${s.Lula}" data-b="${s["Flávio"]}">
+  // agrupadas pelo tema das falas em que aparecem; grupos na ordem da palavra mais forte de cada um
+  const linha = s => `<div class="dw" data-w="${esc(s.palavra)}" data-a="${s.Lula}" data-b="${s["Flávio"]}" data-tema="${esc(s.tema || "")}">
       <span class="w">${esc(s.palavra)}</span><span class="t"><i style="width:${Math.abs(s.z) / maxZ * 100}%"></i></span>
-      <span class="n">${s.Lula} × ${s["Flávio"]}</span></div>`).join("") + "</div>";
+      <span class="n">${s.Lula} × ${s["Flávio"]}</span></div>`;
+  const col = (who, side) => {
+    const grupos = new Map();
+    for (const s of d.distintivas[who].slice(0, 12)) {
+      const k = s.tema || "Sem tema";
+      if (!grupos.has(k)) grupos.set(k, []);
+      grupos.get(k).push(s);
+    }
+    return `<div class="col ${side}"><h3>${side === "l" ? `${NOME[who]} ${sw(who)}` : `${sw(who)} ${NOME[who]}`}</h3>` +
+      [...grupos].map(([tema, ws]) => `<div class="dw-tema">${esc(tema)}</div>` + ws.map(linha).join("")).join("") + "</div>";
+  };
   const dist = document.getElementById("dist");
   dist.innerHTML = col("Lula", "l") + col("Flávio", "r");
   dist.querySelectorAll(".dw").forEach(el => {
-    el.addEventListener("pointermove", e => showTip(e, `<div class="h">“${esc(el.dataset.w)}”</div>Lula: ${el.dataset.a} vezes<br>Flávio: ${el.dataset.b} vezes`));
+    el.addEventListener("pointermove", e => showTip(e, `<div class="h">“${esc(el.dataset.w)}”</div>Lula: ${el.dataset.a} vezes<br>Flávio: ${el.dataset.b} vezes` +
+      (el.dataset.tema ? `<br>Mais presente em falas sobre: ${esc(el.dataset.tema)}` : "")));
     el.addEventListener("pointerleave", hideTip);
   });
 
@@ -441,20 +526,40 @@ function renderPerguntas(d) {
     const [tema, tm, txt] = c.dataset.pt.split("|");
     c.addEventListener("pointermove", e => showTip(e, `<div class="h">${esc(tema)} · ${tm}</div>${esc(txt)}`));
     c.addEventListener("pointerleave", hideTip);
-    c.addEventListener("click", () => { filtra("todas"); document.getElementById("fio-" + c.dataset.fio).scrollIntoView({ behavior: "smooth", block: "start" }); });
+    c.addEventListener("click", () => {
+      Object.assign(estado, { quem: "todas", tema: "", busca: "" });
+      busca.value = ""; selTema.value = ""; aplica();
+      document.getElementById("fio-" + c.dataset.fio).scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   });
 
+  // tema de cada fio: o tema das falas em que a pergunta foi feita (o primeiro tema vale o dobro)
+  const temasDaFala = t => d.turnos.reduce((a, b) => Math.abs(b.ini - t) < Math.abs(a.ini - t) ? b : a).temas || [];
+  P.forEach(p => {
+    const c = {};
+    p.instancias.forEach(it => temasDaFala(it.t).forEach((tm, k) => { c[tm] = (c[tm] || 0) + (k === 0 ? 2 : 1); }));
+    p.temaGeral = Object.entries(c).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+  });
+  const selTema = document.getElementById("perg-tema");
+  const contTema = {};
+  P.forEach(p => { if (p.temaGeral) contTema[p.temaGeral] = (contTema[p.temaGeral] || 0) + 1; });
+  selTema.insertAdjacentHTML("beforeend", Object.entries(contTema).sort((a, b) => b[1] - a[1])
+    .map(([t, n]) => `<option value="${esc(t)}">${esc(t)} (${n})</option>`).join(""));
+
   // fios: pergunta do lado de quem perguntou, fala seguinte do lado do outro
+  const sem = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const troca = (p, it) => `<div class="troca">${bolha(p.quem, it.t, it.pergunta, true)}${bolha(outro(p.quem), it.t_resposta, it.resposta, false)}</div>`;
-  document.getElementById("perg-list").innerHTML = P.map((p, i) => {
+  const lista = document.getElementById("perg-list");
+  lista.innerHTML = P.map((p, i) => {
     const [first, ...rest] = p.instancias;
-    return `<div class="fio" id="fio-${i}" data-quem="${p.quem}"><h3>${sw(p.quem)}${esc(p.tema)}` +
+    const texto = sem([p.tema, ...p.instancias.flatMap(it => [it.pergunta, it.resposta])].join(" "));
+    return `<div class="fio" id="fio-${i}" data-quem="${p.quem}" data-tema="${esc(p.temaGeral)}" data-t="${first.t}" data-rep="${p.instancias.length}" data-busca="${esc(texto)}"><h3>${sw(p.quem)}${esc(p.tema)}` +
       (p.instancias.length > 1 ? ` <span class="rep">· ${NOME[p.quem]} perguntou ${p.instancias.length} vezes</span>` : "") + `</h3>` +
       troca(p, first) +
       (rest.length ? `<details><summary>${rest.length === 1 ? "Ver a outra vez" : `Ver as outras ${rest.length} vezes`}</summary><div style="margin-top:10px">${rest.map(it => troca(p, it)).join("")}</div></details>` : "") +
       `</div>`;
   }).join("");
-  document.getElementById("perg-list").addEventListener("click", e => {
+  lista.addEventListener("click", e => {
     const b = e.target.closest("button.mais");
     if (!b) return;
     const txt = b.previousElementSibling;
@@ -462,11 +567,83 @@ function renderPerguntas(d) {
     b.remove();
   });
 
-  const filtra = f => {
-    document.querySelectorAll("#perg-filtro button").forEach(b => b.setAttribute("aria-pressed", b.dataset.f === f));
-    document.querySelectorAll("#perg-list .fio").forEach(el => { el.hidden = f !== "todas" && el.dataset.quem !== f; });
+  // filtros combinados (quem, tema, busca) e ordem
+  const estado = { quem: "todas", tema: "", busca: "", ordem: "t" };
+  const busca = document.getElementById("perg-busca");
+  function aplica() {
+    document.querySelectorAll("#perg-filtro button").forEach(b => b.setAttribute("aria-pressed", b.dataset.f === estado.quem));
+    const q = sem(estado.busca).trim();
+    const fios = [...lista.querySelectorAll(".fio")];
+    let visiveis = 0;
+    fios.forEach(el => {
+      el.hidden = (estado.quem !== "todas" && el.dataset.quem !== estado.quem) ||
+        (estado.tema && el.dataset.tema !== estado.tema) || (q && !el.dataset.busca.includes(q));
+      if (!el.hidden) visiveis++;
+    });
+    fios.sort((a, b) => estado.ordem === "rep" ? (b.dataset.rep - a.dataset.rep) || (a.dataset.t - b.dataset.t) : a.dataset.t - b.dataset.t)
+      .forEach(el => lista.appendChild(el));
+    document.getElementById("perg-vazio").hidden = visiveis > 0;
+  }
+  document.getElementById("perg-filtro").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { estado.quem = b.dataset.f; aplica(); } });
+  selTema.addEventListener("change", () => { estado.tema = selTema.value; aplica(); });
+  document.getElementById("perg-ordem").addEventListener("change", e => { estado.ordem = e.target.value; aplica(); });
+  busca.addEventListener("input", () => { estado.busca = busca.value; aplica(); });
+}
+
+function renderMapa(d) {
+  const M = d.mapa, sec = document.getElementById("h-mapa").closest("section");
+  if (!M?.pontos?.length) { sec.hidden = true; return; }
+  document.getElementById("mapa-metodo").textContent = `Método: ${M.metodo}.`;
+  const W = 1000, H = 560, pad = 26;
+  const el = document.getElementById("mapa");
+  el.innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa semântico: cada ponto é um trecho de fala, trechos parecidos ficam perto">` +
+    M.pontos.map((p, i) => `<circle cx="${(pad + p.x * (W - 2 * pad)).toFixed(1)}" cy="${(pad + (1 - p.y) * (H - 2 * pad)).toFixed(1)}" r="8" fill="var(--${C[p.quem]})" stroke="var(--surface)" stroke-width="2" data-i="${i}" style="cursor:pointer"/>`).join("") +
+    `</svg>`;
+  const mostra = (e, c) => {
+    const p = M.pontos[+c.dataset.i];
+    const txt = p.texto.length > 260 ? p.texto.slice(0, 260).replace(/\s+\S*$/, "") + "…" : p.texto;
+    showTip(e, `<div class="h">${sw(p.quem)}${NOME[p.quem]} · ${mmss(p.ini)}</div>` +
+      (p.temas?.length ? `<div style="opacity:.75;margin-bottom:4px">${p.temas.map(esc).join(" · ")}</div>` : "") + esc(txt));
   };
-  document.getElementById("perg-filtro").addEventListener("click", e => { const b = e.target.closest("button"); if (b) filtra(b.dataset.f); });
+  el.querySelectorAll("circle").forEach(c => {
+    c.addEventListener("pointermove", e => mostra(e, c));
+    c.addEventListener("pointerdown", e => mostra(e, c));
+    c.addEventListener("pointerleave", hideTip);
+  });
+  const sel = document.getElementById("mapa-tema"), cont = {};
+  M.pontos.forEach(p => (p.temas || []).forEach(t => { cont[t] = (cont[t] || 0) + 1; }));
+  sel.insertAdjacentHTML("beforeend", Object.entries(cont).sort((a, b) => b[1] - a[1])
+    .map(([t, n]) => `<option value="${esc(t)}">${esc(t)} (${n})</option>`).join(""));
+  sel.addEventListener("change", () => el.querySelectorAll("circle").forEach(c => {
+    const p = M.pontos[+c.dataset.i];
+    c.style.opacity = !sel.value || (p.temas || []).includes(sel.value) ? 1 : 0.15;
+  }));
+}
+
+function renderMetodo(d) {
+  const P = d.pipeline || {}, gh = "https://github.com/MatheusGSD/debate-lula-flavio/blob/main/";
+  const n = v => `<span class="num">${fmt(v ?? 0)}</span>`;
+  // quem fez as etapas interpretativas: o agente (registro da chamada) ou a conversa
+  const autor = r => r && typeof r === "object"
+    ? ["agente", `Agente: ${r.modelo_respondeu}, esforço ${r.esforco}, ${r.data.slice(0, 10)}, ${fmt(r.tokens.entrada + r.tokens.saida)} tokens`]
+    : ["conversa", "Claude em conversa, sem prompt fixo; sem revisão humana"];
+  const [kRot, wRot] = autor(P.rotulos_por), [kCla, wCla] = autor(P.classificacao_por);
+  const passos = [
+    ["codigo", "Gravação", "yt-dlp", "Áudio da transmissão ao vivo da Band no YouTube, gravado desde o início da live.", null],
+    ["local", "Transcrição", "Whisper large-v3-turbo (faster-whisper)", `${n(P.segmentos)} trechos transcritos, com o tempo de cada palavra.`, "scripts/transcribe.py"],
+    ["local", "Quem fala", "ECAPA (SpeechBrain) + agrupamento", "Uma impressão vocal a cada ~3 s de fala, agrupadas em vozes. Erra nas trocas rápidas.", "scripts/diarize.py"],
+    [kRot, "Revisão de quem fala e de nomes", wRot, `${n(P.rotulos_corrigidos)} trechos com quem fala corrigido e ${n(P.regras_nomes)} nomes que o Whisper errou.`,
+      kRot === "agente" ? "prompts/rotulos.md" : "data/bloco1_correcoes.json"],
+    ["codigo", "Falas", "regra fixa", `Trechos seguidos da mesma pessoa viram uma fala: ${n(P.turnos)} no bloco.`, "scripts/build_turns.py"],
+    [kCla, "Classificação", wCla, "Tipo, temas e resumo de cada fala, afirmações checáveis e perguntas diretas. Todo trecho citado é conferido letra a letra na transcrição.",
+      kCla === "agente" ? "prompts/classificar.md" : "data/bloco1_classificacao.json"],
+    ["codigo", "Contagens e palavras", "spaCy pt_core_news_lg + regras fixas", "Tempo de fala, ritmo, nuvens, palavras típicas (log-odds), expressões, relógio e a fala seguinte a cada pergunta.", "scripts/analyze.py"],
+    ["local", "Mapa", `${d.mapa?.modelo || "embeddings"} + UMAP`, `${n(d.mapa?.pontos?.length)} trechos posicionados pela proximidade de sentido.`, "scripts/embeddings.py"],
+    ["codigo", "Painel", "HTML estático no GitHub Pages", "Esta página. Os dados completos estão no JSON abaixo.", "docs/index.html"],
+  ];
+  document.getElementById("pipe").innerHTML = passos.map(([k, tit, quem, txt, arq]) =>
+    `<li class="${k}"><i aria-hidden="true"></i><h3>${tit}</h3><div class="who">${esc(quem)}</div><p>${txt}</p>` +
+    (arq ? `<a href="${gh}${arq}">${arq}</a>` : "") + `</li>`).join("");
 }
 
 function hbars(id, rows, f, fixedMax) {
