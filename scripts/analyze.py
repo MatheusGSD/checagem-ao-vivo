@@ -60,10 +60,10 @@ def expressoes(words, n_max=4):
                    if not any(g != h and f" {g} " in f" {h} " and rep[h] == v for h in rep)),
                   key=lambda x: (-x[1], -len(x[0])))
 
-OPP_MENTIONS = {
-    "Lula": r"\b(fl[aá]vio|bolsonaro|bolsonarista|bolsonarismo|seu pai|sua fam[ií]lia)\b",
-    "Flávio": r"\b(lula|pt|petista|petismo|seu governo)\b",
-}
+# quantas vezes cada um disse o nome do adversário. Só o nome: "Bolsonaro" na boca de Lula quase sempre
+# é o pai, e "Instituto Lula" é o nome de uma instituição, então nenhum dos dois entra.
+NOME_ADV = {"Lula": r"\bfl[aá]vio\b", "Flávio": r"\blula\b"}
+NOME_ADV_FORA = {"Lula": None, "Flávio": r"\binstituto lula\b"}
 PRONOUNS = {"eu": r"\b(eu|meu|minha|meus|minhas|comigo)\b",
             "nós": r"\b(nós|nosso|nossa|nossos|nossas|vamos|fizemos)\b",
             "você/senhor": r"\b(você|o senhor|a senhora|seu|sua|seus|suas)\b"}
@@ -112,7 +112,7 @@ for c in CANDS:
         "palavras_por_minuto": round(len(words) / (secs / 60), 1) if secs else 0,
         "turno_medio_s": round(secs / len(ts), 1) if ts else 0,
         "diversidade_lexical": round(mattr(words), 3),
-        "mencoes_adversario": len(re.findall(OPP_MENTIONS[c], low)),
+        "nome_adversario": len(re.findall(NOME_ADV[c], low)) - (len(re.findall(NOME_ADV_FORA[c], low)) if NOME_ADV_FORA[c] else 0),
         "pronomes": {k: len(re.findall(p, low)) for k, p in PRONOUNS.items()},
         "perguntas": text.count("?"),
         "top_lemas": [(w, n) for w, n in lem[c].most_common(40) if n >= MIN_OCORR],
@@ -219,5 +219,5 @@ print(f"  nuvens: letra máxima {letra_max}px para {gmax} ocorrências; "
 for c in CANDS:
     r = res["candidatos"][c]
     print(f"{c}: {r['turnos']} turnos, {r['segundos_fala'] / 60:.1f} min, {r['palavras']} palavras, "
-          f"{r['palavras_por_minuto']} ppm, menções ao adversário {r['mencoes_adversario']}")
+          f"{r['palavras_por_minuto']} ppm, disse o nome do adversário {r['nome_adversario']} vezes")
     print("  distintivas:", ", ".join(s["palavra"] for s in res["distintivas"][c][:12]))

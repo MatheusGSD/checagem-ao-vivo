@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lula × Flávio: o confronto livre</title>
-<meta name="description" content="Transcrevemos e analisamos os 30 minutos de confronto livre do debate do 2º turno na Band: perguntas, ataques, temas e palavras de Lula e Flávio Bolsonaro.">
+<meta name="description" content="Transcrevemos e analisamos os 30 minutos de confronto livre do debate do 2º turno na Band: perguntas, como cada um tratou o adversário, tom (classificação por IA), temas e palavras de Lula e Flávio Bolsonaro.">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Lula × Flávio: o confronto livre em números">
-<meta property="og:description" content="Perguntas, ataques, temas e palavras nos 30 minutos com relógio de xadrez do debate da Band, com a transcrição completa.">
+<meta property="og:description" content="Perguntas, nomes, tom (classificação por IA), temas e palavras nos 30 minutos com relógio de xadrez do debate da Band, com a transcrição completa.">
 <meta property="og:image" content="https://matheusgsd.github.io/debate-lula-flavio/og.png">
 <meta property="og:url" content="https://matheusgsd.github.io/debate-lula-flavio/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Lula × Flávio: o confronto livre em números">
-<meta name="twitter:description" content="Perguntas, ataques, temas e palavras nos 30 minutos com relógio de xadrez, com a transcrição completa.">
+<meta name="twitter:description" content="Perguntas, nomes, tom (classificação por IA), temas e palavras nos 30 minutos com relógio de xadrez, com a transcrição completa.">
 <meta name="twitter:image" content="https://matheusgsd.github.io/debate-lula-flavio/og.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='9' width='12' height='14' rx='3' fill='%23e34948'/%3E%3Crect x='17' y='9' width='12' height='14' rx='3' fill='%232a78d6'/%3E%3C/svg%3E">
 <script>
@@ -79,7 +79,7 @@ h1 { font: 600 clamp(36px, 6.4vw, 60px)/1.04 var(--serif); letter-spacing: -0.01
 .byline b { color: var(--ink); font-weight: 700; }
 
 /* números principais */
-.stats { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 2px solid var(--ink); margin: 40px auto 8px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 2px solid var(--ink); margin: 40px auto 8px; }
 .stat { padding: 14px 16px 16px 0; border-right: 1px solid var(--rule); margin-right: 16px; text-decoration: none; color: inherit; }
 .stat:last-child { border-right: 0; margin-right: 0; }
 .stat:hover .lb { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
@@ -87,15 +87,18 @@ h1 { font: 600 clamp(36px, 6.4vw, 60px)/1.04 var(--serif); letter-spacing: -0.01
 .stat .v { display: flex; align-items: center; gap: 8px; font: 700 30px/1.15 var(--sans); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; margin-top: 6px; }
 .stat .v small { font: 500 13px/1 var(--sans); color: var(--ink-2); letter-spacing: 0; }
 .stat .v.txt { font-size: 22px; }
+.stat .lb .ia { display: inline-block; font: 600 10px/1 var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ia); border: 1px solid currentColor; border-radius: 3px; padding: 2px 4px; margin-left: 4px; vertical-align: 1px; }
 .stat .det { font: 400 13px/1.35 var(--sans); color: var(--ink-2); margin-top: 6px; }
 .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex: none; }
 .sw.lula { background: var(--lula); } .sw.flavio { background: var(--flavio); } .sw.med { background: var(--med); }
-@media (max-width: 860px) {
+@media (max-width: 640px) {
   .stats { grid-template-columns: 1fr 1fr; }
   .stat { border-right: 0; border-bottom: 1px solid var(--rule); margin-right: 0; padding-right: 8px; }
   .stat .lb { min-height: 0; }
   .stat:last-child { grid-column: 1 / -1; }
 }
+
+.aviso-topo { font: 400 13px/1.5 var(--sans); color: var(--ink-2); margin: 10px auto 0; }
 
 /* texto */
 .prose p { margin: 0 0 1.1em; }
@@ -194,19 +197,14 @@ svg text { font-family: var(--sans); }
 .dw .n { grid-column: 2; grid-row: 1 / span 2; font: 400 13px/1.2 var(--sans); color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 600px) { .dist { grid-template-columns: 1fr; gap: 24px; } }
 
-/* nuvens */
-.clouds { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
-.clouds figure { margin: 0; }
-.clouds h3 { display: flex; align-items: center; gap: 8px; }
-.clouds img { width: 100%; height: auto; display: block; }
-@media (max-width: 600px) { .clouds { grid-template-columns: 1fr; } }
-
 /* outros recortes */
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; }
 @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
 .claims { list-style: none; margin: 0; padding: 0; font-family: var(--sans); }
-.claims li { display: grid; grid-template-columns: 48px 1fr; gap: 10px; padding: 12px 0; border-top: 1px solid var(--rule); font-size: 15px; line-height: 1.45; }
-.claims .t { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.claims li { display: grid; grid-template-columns: 58px 1fr; gap: 10px; padding: 12px 0; border-top: 1px solid var(--rule); font-size: 15px; line-height: 1.45; }
+.claims .t { color: var(--ink-2); font-size: 13px; font-variant-numeric: tabular-nums; text-decoration: none; white-space: nowrap; }
+.claims .t:hover { color: var(--ink); text-decoration: underline; }
+.claims .res { font-size: 13px; color: var(--muted); margin-top: 3px; }
 .claims .who { font-weight: 700; display: inline-flex; align-items: center; gap: 6px; margin-right: 6px; }
 details.nota { font: 400 14px/1.5 var(--sans); color: var(--ink-2); margin-top: 12px; }
 details.nota summary { cursor: pointer; color: var(--ink); font-weight: 500; }
@@ -250,41 +248,34 @@ svg [tabindex]:focus-visible { outline: none; stroke: var(--ink); stroke-width: 
 </style>
 </head>
 <body>
-<div class="masthead"><span>Debate 2026 · Análise de dados</span><div class="acoes"><a href="#metodo">Método</a><button type="button" class="tema-btn" id="tema-btn" aria-pressed="false"></button></div></div>
+<div class="masthead"><span>Análise de debates · protótipo</span><div class="acoes"><a href="#metodo">Método</a><button type="button" class="tema-btn" id="tema-btn" aria-pressed="false"></button></div></div>
 <main>
   <header class="abre col">
     <p class="kicker">Debate do 2º turno · Band · Confronto livre</p>
-    <h1>Lula perguntou, Flávio citou Lula: o confronto livre em números</h1>
-    <p class="dek">Transcrevemos os 30 minutos em que os dois candidatos debateram sem perguntas de jornalistas, com 15 minutos no relógio de xadrez para cada um. Medimos quem perguntou, quem atacou, de que falaram e com que palavras.</p>
-    <p class="byline">Por <b>Matheus Dalmolin</b> · 19 de outubro de 2026 · Transcrição automática revisada por IA. <a href="#metodo">Veja o método</a>.</p>
+    <h1>Lula perguntou mais; Flávio disse “Lula” 51 vezes</h1>
+    <p class="dek">Transcrevemos os 30 minutos em que os dois debateram sem jornalistas, com 15 minutos de relógio de xadrez para cada um.</p>
+    <p class="byline">Por <b>Matheus Dalmolin</b> · 19 de outubro de 2026 · <a href="#metodo">Como fizemos</a></p>
   </header>
 
   <div class="stats wide" id="stats"></div>
 
-  <section class="col prose" style="margin-top:36px">
-    <p id="lead1"></p>
-    <p id="lead2"></p>
-  </section>
+  <p class="aviso-topo wide">Contagens feitas por código. Perguntas, tipo de fala e temas foram identificados por IA, sem revisão humana. Para a checagem dos fatos, veja o <a href="https://www.aosfatos.org/noticias/checamos-lula-flavio-bolsonaro-debate-band/">Aos Fatos</a>.</p>
 
-  <figure class="wide" id="fig-linha">
-    <div class="fig-h">Figura 1. Os 30 minutos, fala a fala</div>
-    <p class="fig-sub">Cada barra é uma fala, no minuto do bloco em que aconteceu. Os pontos marcam as perguntas diretas ao adversário. Passe o mouse ou toque numa fala para ver o resumo; clique para ler a fala inteira na transcrição.</p>
-    <div class="legend"><span><i class="sw lula"></i>Lula</span><span><i class="sw flavio"></i>Flávio</span></div>
-    <div id="linha"></div>
-    <p class="fig-src">Fonte: áudio da transmissão da Band no YouTube. Transcrição: Whisper large-v3. Quem fala: impressão vocal (ECAPA) revisada por IA.</p>
-  </figure>
+  <section class="col prose" style="margin-top:32px">
+    <p id="lead1"></p>
+  </section>
 
   <section class="sec col prose" aria-labelledby="h-perg">
     <p class="sec-n">1 · As perguntas</p>
-    <h2 id="h-perg">Lula insistiu nas mesmas perguntas do começo ao fim</h2>
+    <h2 id="h-perg">Lula fez quase o dobro de perguntas, em blocos de assunto</h2>
     <p id="p-perg"></p>
   </section>
 
   <figure class="wide">
-    <div class="fig-h">Figura 2. As perguntas diretas ao adversário, por assunto</div>
+    <div class="fig-h">Figura 1. As perguntas diretas ao adversário, por assunto</div>
     <p class="fig-sub">Cada quadrado é uma pergunta. Passe o mouse ou toque para ler a pergunta; clique para ir à fala na transcrição. Assuntos perguntados uma vez só aparecem juntos, vazados, em "outros assuntos".</p>
     <div id="fig-perg"></div>
-    <p class="fig-src">Perguntas identificadas por agente de IA (Claude) com instruções publicadas; cada trecho foi conferido letra a letra na transcrição.</p>
+    <p class="fig-src">Perguntas identificadas por agente de IA (Claude) com instruções publicadas. Um programa confere que cada pergunta citada existe, letra a letra, na transcrição; ninguém revisou a lista à mão.</p>
   </figure>
 
   <section class="col">
@@ -304,9 +295,29 @@ svg [tabindex]:focus-visible { outline: none; stroke: var(--ink); stroke-width: 
     <button type="button" class="mais-btn" id="perg-mais" hidden></button>
   </section>
 
+  <section class="sec col prose" aria-labelledby="h-nome">
+    <p class="sec-n">2 · O nome do adversário</p>
+    <h2 id="h-nome">Flávio repetiu o nome do adversário; Lula quase não disse o dele</h2>
+    <p id="p-nome"></p>
+  </section>
+
+  <section class="sec col prose" aria-labelledby="h-relogio">
+    <p class="sec-n">3 · O relógio</p>
+    <h2 id="h-relogio">Flávio esgotou o tempo primeiro; Lula fechou sozinho</h2>
+    <p id="p-relogio"></p>
+  </section>
+
+  <figure class="mid" id="fig-ritmo">
+    <div class="fig-h">Figura 2. Palavras somadas de cada candidato ao longo do bloco</div>
+    <p class="fig-sub">Cada linha soma as palavras de um candidato ao longo do bloco: sobe enquanto ele fala (quanto mais inclinada, mais rápido) e fica reta enquanto o outro fala. Os anéis marcam quando restavam 10, 5 e 1 minuto no relógio de cada um. Passe o mouse ou o dedo para ler os dois relógios em qualquer momento; clique para ler a fala.</p>
+    <div class="legend"><span><i class="sw lula"></i>Lula</span><span><i class="sw flavio"></i>Flávio</span><span>○ quando restavam 10, 5 e 1 min no relógio</span></div>
+    <div id="ritmo"></div>
+    <p class="fig-src">Tempos medidos no áudio do bloco; o relógio escalona a fala de cada um para os 15 minutos oficiais. Palavras distribuídas por igual dentro de cada fala; contagens por código com regras fixas.</p>
+  </figure>
+
   <section class="sec col prose" aria-labelledby="h-tom">
-    <p class="sec-n">2 · O tom</p>
-    <h2 id="h-tom">A maior parte do tempo dos dois foi gasta atacando</h2>
+    <p class="sec-n">4 · O tom</p>
+    <h2 id="h-tom">Pela classificação da IA, os dois passaram a maior parte do tempo atacando</h2>
     <p id="p-tom"></p>
   </section>
 
@@ -318,8 +329,8 @@ svg [tabindex]:focus-visible { outline: none; stroke: var(--ink); stroke-width: 
   </figure>
 
   <section class="sec col prose" aria-labelledby="h-temas">
-    <p class="sec-n">3 · Os temas</p>
-    <h2 id="h-temas">O caso Vorcaro dominou os dois lados</h2>
+    <p class="sec-n">5 · Temas e palavras</p>
+    <h2 id="h-temas">O caso Vorcaro foi o tema nº 1 dos dois</h2>
     <p id="p-temas"></p>
   </section>
 
@@ -331,31 +342,28 @@ svg [tabindex]:focus-visible { outline: none; stroke: var(--ink); stroke-width: 
     <p class="fig-src">Temas atribuídos por agente de IA (Claude) a partir de uma lista fixa.</p>
   </figure>
 
-  <section class="sec col prose" aria-labelledby="h-pal">
-    <p class="sec-n">4 · As palavras</p>
-    <h2 id="h-pal">“134 milhões” de um lado, “Lula” do outro</h2>
+  <section class="col prose" style="margin-top:8px">
+    <h3 style="font-size:20px">As palavras de cada um</h3>
     <p id="p-pal"></p>
   </section>
 
   <figure class="mid">
     <div class="fig-h">Figura 5. As palavras que cada um usou muito mais que o outro</div>
-    <p class="fig-sub">A barra mostra o quanto a palavra é típica do candidato. À direita, quantas vezes Lula × Flávio a disseram.</p>
+    <p class="fig-sub">A barra mostra o quanto a palavra é típica do candidato. À direita, quantas vezes Lula × Flávio a disseram. “Lula” lidera a lista de Flávio porque ele chamava o adversário pelo nome (seção 2).</p>
     <div class="dist" id="dist"></div>
     <p class="fig-src">Log-odds com prior de Dirichlet informativo (Monroe, Colaresi e Quinn, 2008), sobre lemas do spaCy pt_core_news_lg.</p>
   </figure>
 
-  <figure class="mid">
-    <div class="fig-h">Figura 6. Nuvens de palavras, na mesma escala</div>
-    <p class="fig-sub">Termos ditos pelo menos duas vezes. Palavras do mesmo tamanho foram ditas o mesmo número de vezes nas duas nuvens.</p>
-    <div class="clouds">
-      <figure><h3><i class="sw lula"></i>Lula</h3><picture><source srcset="img/nuvem_lula_escuro.png?v=5" media="(prefers-color-scheme: dark)"><img src="img/nuvem_lula.png?v=5" alt="Nuvem de palavras das falas de Lula" data-claro="img/nuvem_lula.png?v=5" data-escuro="img/nuvem_lula_escuro.png?v=5"></picture></figure>
-      <figure><h3><i class="sw flavio"></i>Flávio</h3><picture><source srcset="img/nuvem_flavio_escuro.png?v=5" media="(prefers-color-scheme: dark)"><img src="img/nuvem_flavio.png?v=5" alt="Nuvem de palavras das falas de Flávio Bolsonaro" data-claro="img/nuvem_flavio.png?v=5" data-escuro="img/nuvem_flavio_escuro.png?v=5"></picture></figure>
-    </div>
-    <details class="nota"><summary>Como lemos as palavras</summary><ul id="crit-nuvem" style="margin:8px 0 0;padding-left:18px"></ul></details>
-  </figure>
+  <section class="sec mid" aria-labelledby="h-af">
+    <p class="sec-n">6 · Para checar</p>
+    <h2 id="h-af">O que foi afirmado</h2>
+    <p class="fig-sub">Números e fatos citados no confronto, listados por IA. A lista diz o que foi afirmado, não se é verdade. Para saber se são verdadeiras, veja as <a href="https://www.aosfatos.org/noticias/checamos-lula-flavio-bolsonaro-debate-band/">checagens do Aos Fatos sobre este debate</a>, feitas por jornalistas.</p>
+    <ul class="claims" id="claims"></ul>
+    <button type="button" class="mais-btn" id="af-mais" hidden></button>
+    </section>
 
   <section class="sec col prose" aria-labelledby="h-falas">
-    <p class="sec-n">5 · A transcrição</p>
+    <p class="sec-n">7 · A transcrição</p>
     <h2 id="h-falas">Tudo o que foi dito, com link para o vídeo</h2>
     <p>Perguntas diretas ao adversário estão em <strong>negrito</strong> e afirmações checáveis, <span style="text-decoration:underline dotted;text-underline-offset:4px">sublinhadas</span>. O botão com o tempo abre o vídeo da Band naquele segundo. A transcrição é automática e revisada por IA: na dúvida, vale o vídeo.</p>
   </section>
@@ -389,26 +397,6 @@ svg [tabindex]:focus-visible { outline: none; stroke: var(--ink); stroke-width: 
     <ol class="falas" id="falas"></ol>
   </section>
 
-  <section class="sec mid" aria-labelledby="h-mais">
-    <p class="sec-n">6 · Outros recortes</p>
-    <h2 id="h-mais">Mais dados do confronto</h2>
-
-    <figure style="margin-top:20px">
-      <div class="fig-h">Figura 7. Flávio falou mais, mais rápido e esgotou o relógio primeiro</div>
-      <p class="fig-sub">Cada linha soma as palavras de um candidato ao longo do bloco: sobe enquanto ele fala (quanto mais inclinada, mais rápido) e fica reta enquanto o outro fala. Passe o mouse ou o dedo para ler os dois relógios em qualquer momento; clique para ler a fala.</p>
-      <div class="legend"><span><i class="sw lula"></i>Lula</span><span><i class="sw flavio"></i>Flávio</span><span>● pergunta direta</span><span>| citação ao adversário</span><span>○ quando restavam 10, 5 e 1 min no relógio</span></div>
-      <div id="ritmo"></div>
-      <p class="fig-src">Tempos medidos no áudio do bloco; o relógio escalona a fala de cada um para os 15 minutos oficiais. Palavras distribuídas por igual dentro de cada fala. Citações e pronomes contados por código com regras fixas.</p>
-    </figure>
-
-    <figure>
-      <div class="fig-h">Afirmações para checar</div>
-      <p class="fig-sub">Números e fatos citados no confronto, listados por IA. A lista diz o que foi afirmado, não se é verdade. Para saber se são verdadeiras, veja as <a href="https://www.aosfatos.org/noticias/checamos-lula-flavio-bolsonaro-debate-band/">checagens do Aos Fatos sobre este debate</a>, feitas por jornalistas.</p>
-      <ul class="claims" id="claims"></ul>
-      <button type="button" class="mais-btn" id="af-mais" hidden></button>
-    </figure>
-  </section>
-
   <section class="sec mid metodo" id="metodo" aria-labelledby="h-metodo">
     <p class="sec-n">Método</p>
     <h2 id="h-metodo">Como fizemos</h2>
@@ -418,6 +406,7 @@ svg [tabindex]:focus-visible { outline: none; stroke: var(--ink); stroke-width: 
   </section>
 
   <footer class="col">
+    <p><b>Primeiro protótipo de uma ferramenta de análise de debates.</b> O mesmo processo, da gravação à página, pode ser aplicado a outros debates gravados.</p>
     <p>Erros de transcrição e de atribuição de falas curtas são possíveis, sobretudo quando os dois falam ao mesmo tempo. Na dúvida, vale o vídeo original.</p>
     <p>Fonte: transmissão ao vivo da Band no YouTube, 18/10/2026. Transcrição e classificação automáticas, sem revisão humana fala a fala.</p>
     <p><a href="data/dados.json">Baixar os dados (JSON)</a> · <a href="https://github.com/MatheusGSD/debate-lula-flavio">Código no GitHub</a></p>
@@ -458,12 +447,6 @@ function aplicaTema() {
   btn.innerHTML = t === "dark" ? `${ICONE.light}Claro` : `${ICONE.dark}Escuro`;
   btn.setAttribute("aria-label", t === "dark" ? "Mudar para o tema claro" : "Mudar para o tema escuro");
   btn.setAttribute("aria-pressed", t === "dark");
-  // nuvens: imagem própria para cada tema
-  document.querySelectorAll(".clouds picture").forEach(pic => {
-    const src = pic.querySelector("source"), img = pic.querySelector("img");
-    if (src) src.media = raiz.dataset.theme ? (t === "dark" ? "all" : "not all") : "(prefers-color-scheme: dark)";
-    img.src = img.dataset[t === "dark" ? "escuro" : "claro"];
-  });
 }
 document.getElementById("tema-btn").addEventListener("click", () => {
   raiz.dataset.theme = temaAtual() === "dark" ? "light" : "dark";
@@ -496,7 +479,7 @@ function tipOn(el, html) {
 }
 document.addEventListener("pointerdown", e => { if (!e.target.closest?.("[tabindex], [data-tip]")) hideTip(); });
 
-fetch("data/dados.json").then(r => r.json()).then(render).catch(err => {
+fetch("data/dados.json", { cache: "no-cache" }).then(r => r.json()).then(render).catch(err => {
   document.querySelector("main").insertAdjacentHTML("afterbegin", `<p class="empty">Não foi possível carregar os dados (${esc(err.message)}).</p>`);
 });
 
@@ -520,43 +503,59 @@ function numeros(d) {
 
 function render(d) {
   const N = numeros(d), { L, F } = N, r = Math.round, fl = N.fios("Lula"), ff = N.fios("Flávio");
+  // rótulos de assunto vão em itálico e com a grafia original (muitos começam com nome próprio: Bolsa Família, Lulinha)
+  const rot = t => esc(t);
 
-  // números principais
+  // números principais: os três primeiros cards do fio
   const par = (a, b) => `<div class="v">${sw("Lula")}${a}<small>Lula</small></div><div class="v">${sw("Flávio")}${b}<small>Flávio</small></div>`;
   document.getElementById("stats").innerHTML = [
     ["#h-perg", "Perguntas diretas ao adversário", par(N.nPerg("Lula"), N.nPerg("Flávio"))],
-    ["#h-pal", "Vezes que citou o adversário", par(L.mencoes_adversario, F.mencoes_adversario)],
-    ["#h-tom", "Tempo atacando o adversário", par(r(N.pct(L, "ataque")) + "%", r(N.pct(F, "ataque")) + "%")],
-    ["#h-mais", "Palavras por minuto", par(r(L.palavras_por_minuto), r(F.palavras_por_minuto))],
-    ["#h-temas", "Tema nº 1 dos dois", `<div class="v txt">${esc(N.temaTop)}</div><div class="det">${r(N.tp(L, N.temaTop))}% do tempo de Lula e ${r(N.tp(F, N.temaTop))}% do de Flávio</div>`],
+    ["#h-nome", "Vezes que disse o nome do adversário", par(L.nome_adversario, F.nome_adversario)],
+    ["#h-tom", "Tempo atacando o adversário <span class=\"ia\">classificação por IA</span>", par(r(N.pct(L, "ataque")) + "%", r(N.pct(F, "ataque")) + "%")],
   ].map(([href, lb, v]) => `<a class="stat" href="${href}"><div class="lb">${lb}</div>${v}</a>`).join("");
 
-  // texto da abertura e das seções
+  // textos: contexto e leitura; os números ficam nas figuras
   document.getElementById("lead1").innerHTML =
-    `Os dois usaram quase o mesmo tempo, mas de jeitos diferentes. Lula fez <b>${N.nPerg("Lula")} perguntas diretas</b> ao adversário, ` +
-    `${fl[0].instancias.length} delas sobre o mesmo assunto: “${esc(fl[0].tema)}”. Flávio fez ${N.nPerg("Flávio")} perguntas, ` +
-    `citou o adversário <b>${F.mencoes_adversario} vezes</b>${N.disseLula ? `, ${N.disseLula} delas dizendo "Lula",` : ""} e falou mais rápido: ` +
-    `${r(F.palavras_por_minuto)} palavras por minuto, contra ${r(L.palavras_por_minuto)} de Lula.`;
-  document.getElementById("lead2").innerHTML =
-    `Numa classificação feita por IA, fala a fala, <b>${r(N.pct(F, "ataque"))}%</b> do tempo de Flávio foi de ataque ao adversário. ` +
-    `No de Lula, ${r(N.pct(L, "ataque"))}%. O tema que mais ocupou os dois foi “${esc(N.temaTop)}”.`;
+    "No confronto livre, cada candidato tinha 15 minutos num relógio de xadrez: o relógio de um só corre enquanto ele fala, " +
+    "e quem esgota o seu tempo fica calado enquanto o outro termina. Medimos o que cada um fez com os seus 15 minutos: " +
+    "quanto falou, o que perguntou, como tratou o adversário e de que falou.";
+  const blocos = fl.filter(p => p.instancias.length > 1).slice(0, 4)
+    .map(p => ({ p, a: Math.min(...p.instancias.map(i => i.t)), b: Math.max(...p.instancias.map(i => i.t)) }))
+    .sort((x, y) => x.a - y.a)
+    .map(({ p, a, b }) => {
+      const ma = Math.floor(a / 60), mb = Math.floor(b / 60), nome = rot(p.tema);
+      return `<i>${nome}</i>, ${ma === mb ? (ma === 0 ? "no primeiro minuto" : `no minuto ${ma}`) : `do minuto ${ma || 1} ao ${mb}`}`;
+    });
   document.getElementById("p-perg").innerHTML =
-    `Lula voltou ${fl[0].instancias.length} vezes ao assunto “${esc(fl[0].tema)}” e ${fl[1].instancias.length} vezes a “${esc(fl[1].tema)}”, ` +
-    `com perguntas espalhadas pelo bloco inteiro. As de Flávio variaram mais: o assunto mais repetido, “${esc(ff[0].tema)}”, apareceu ${ff[0].instancias.length} vezes.`;
+    `Lula perguntou em blocos: ${blocos.slice(0, -1).join("; ")}; e, por fim, ${blocos.at(-1)}. ` +
+    `As perguntas de Flávio variaram mais de assunto; o que ele mais repetiu foi <i>${rot(ff[0].tema)}</i>.`;
+  // exemplos literais de Flávio chamando Lula pelo nome
+  const exemplos = [];
+  d.turnos.filter(t => t.quem === "Flávio").forEach(t => (t.texto.match(/[^.?!]*\bLula\b[^.?!]*[.?!]?/g) || []).forEach(f => {
+    f = f.trim().replace(/\.+$/, "");
+    if (!/Instituto Lula/.test(f) && f.split(/\s+/).length <= 9 && exemplos.length < 3 && !exemplos.includes(f)) exemplos.push(f);
+  }));
+  document.getElementById("p-nome").innerHTML =
+    `Flávio disse “Lula” ${F.nome_adversario} vezes, na maioria delas para chamar o adversário no meio da frase` +
+    (exemplos.length ? `: ${exemplos.map(f => `“${esc(f)}”`).join(", ")}` : "") + `. ` +
+    `Lula disse “Flávio” ${L.nome_adversario} ${L.nome_adversario === 1 ? "vez" : "vezes"} e, uma vez, chamou o adversário de “senador”. ` +
+    `Os dois trataram o outro sobretudo por “você”, e Flávio com mais frequência.`;
+  const Rl = relogio(d), restoL = Rl.fimF ? Math.max(0, Rl.S["Lula"].reduce((v, p) => p[0] <= Rl.fimF ? p[1] : v, Rl.CAP)) : null;
+  document.getElementById("p-relogio").innerHTML =
+    "O relógio de cada um só corria enquanto ele falava. Flávio falou mais rápido, disse mais palavras e gastou o seu tempo antes" +
+    (restoL ? `: quando o relógio dele zerou, Lula ainda tinha ${mmss(restoL)} e fechou o bloco sem réplica.` : ".");
+  const maisDefesa = N.pct(L, "defesa") > N.pct(F, "defesa"), maisProp = N.pct(L, "proposta") > N.pct(F, "proposta");
   document.getElementById("p-tom").innerHTML =
-    `Pedimos a um modelo de IA que classificasse cada fala como ataque, defesa, proposta ou outro, seguindo instruções publicadas. ` +
-    `Pela classificação, Flávio dedicou ${r(N.pct(F, "ataque"))}% do seu tempo a atacar, e Lula, ${r(N.pct(L, "ataque"))}%. ` +
-    `Lula passou mais tempo se defendendo (${r(N.pct(L, "defesa"))}% contra ${r(N.pct(F, "defesa"))}%) e propondo (${r(N.pct(L, "proposta"))}% contra ${r(N.pct(F, "proposta"))}%).`;
+    "Pedimos a um modelo de IA que classificasse cada fala como ataque, defesa, proposta ou outro, seguindo instruções publicadas; " +
+    "cada fala recebe um tipo só. Pela classificação, a maior parte do tempo dos dois foi de ataque" +
+    (maisDefesa && maisProp ? ", e Lula reservou mais tempo que Flávio para se defender e para propor." : ".");
   document.getElementById("p-temas").innerHTML =
-    `“${esc(N.temaTop)}” ocupou ${r(N.tp(L, N.temaTop))}% do tempo de Lula e ${r(N.tp(F, N.temaTop))}% do de Flávio. ` +
-    `Fora ele, cada um seguiu um caminho: Lula falou mais que Flávio de ${N.maisLula.map(t => `“${esc(t)}”`).join(" e ")}; ` +
-    `Flávio, de ${N.maisFlavio.map(t => `“${esc(t)}”`).join(" e ")}.`;
-  const lista = q => d.distintivas[q].slice(0, 5).map(s => `“${esc(s.palavra)}”`).join(", ");
+    `Fora esse tema, cada um seguiu um caminho: Lula falou mais que Flávio de ${N.maisLula.map(t => `<i>${rot(t)}</i>`).join(" e ")}; ` +
+    `Flávio, de ${N.maisFlavio.map(t => `<i>${rot(t)}</i>`).join(" e ")}.`;
   document.getElementById("p-pal").innerHTML =
-    `Contar palavras engana: os dois dizem muito "Brasil" e "governo". Comparando o vocabulário dos dois, as palavras mais típicas de Lula foram ` +
-    `${lista("Lula")}. As de Flávio, ${lista("Flávio")}.`;
+    "Contar palavras engana: os dois dizem muito “Brasil” e “governo”. Por isso comparamos o vocabulário: " +
+    "na figura, as palavras que um usou muito mais que o outro.";
 
-  figLinha(d, N);
   figPerguntas(d, N);
   listaPerguntas(d);
   figTom(N);
@@ -584,56 +583,6 @@ function relogio(d) {
 // quebra um rótulo em linhas de até n caracteres
 const linhas = (s, n) => s.split(" ").reduce((a, w) => { const u = a[a.length - 1]; if (u && (u + " " + w).length <= n) a[a.length - 1] = u + " " + w; else a.push(w); return a; }, []);
 const eixoMin = (x, T, y, estreito) => { let g = ""; for (let s = 0; s <= T; s += 300) if (!estreito || s % 600 === 0) g += `<text x="${x(s)}" y="${y}" text-anchor="${s === 0 ? "start" : "middle"}" font-size="12" fill="var(--muted)">${s / 60} min</text>`; return g; };
-
-function figLinha(d, N) {
-  const box = document.getElementById("linha"), T = d.duracao_bloco_s, R = relogio(d);
-  const fl = N.fios("Lula"), ff = N.fios("Flávio");
-  const notas = [
-    { t: fl[0].instancias[0].t, quem: "Lula", txt: `1ª pergunta de Lula sobre “${fl[0].tema}”; foram ${fl[0].instancias.length} ao todo` },
-    { t: ff[0].instancias[0].t, quem: "Flávio", txt: `1ª pergunta de Flávio sobre “${ff[0].tema}”; foram ${ff[0].instancias.length}` },
-  ].sort((a, b) => a.t - b.t);
-  desenhaSempre(() => {
-    const W = Math.max(300, box.clientWidth), estreito = W < 600;
-    const m = { l: estreito ? 0 : 64, r: 4 }, alt = 26, gap = estreito ? 38 : 22;
-    const x = s => m.l + s / T * (W - m.l - m.r);
-    // anotações empilhadas no topo, cada uma com uma linha-guia até a faixa de quem pergunta
-    let yc = 14;  // no celular, os rótulos dos candidatos ficam acima de cada faixa
-    const lay = notas.map(n => { const ls = linhas(n.txt, estreito ? 30 : 46), o = { ...n, ls, y0: yc }; yc += ls.length * 15 + 10; return o; });
-    const topo = yc + (estreito ? 26 : 14), yL = topo, yF = topo + alt + gap, base = yF + alt + 16, H = base + 22;
-    let g = "";
-    for (let s = 0; s <= T; s += 300) g += `<line x1="${x(s)}" x2="${x(s)}" y1="${topo - 10}" y2="${base}" stroke="var(--rule)"/>`;
-    g += eixoMin(x, T, H - 4, estreito);
-    g += estreito
-      ? `<text x="0" y="${yL - 16}" font-size="12" font-weight="700" fill="var(--ink)">Lula</text><text x="0" y="${yF - 16}" font-size="12" font-weight="700" fill="var(--ink)">Flávio</text>`
-      : `<text x="0" y="${yL + 18}" font-size="14" font-weight="700" fill="var(--ink)">Lula</text><text x="0" y="${yF + 18}" font-size="14" font-weight="700" fill="var(--ink)">Flávio</text>`;
-    d.turnos.forEach((t, i) => {
-      if (t.quem === "Mediação") return;
-      g += `<rect data-i="${i}" x="${x(t.ini).toFixed(1)}" y="${t.quem === "Lula" ? yL : yF}" width="${Math.max(1.5, x(t.fim) - x(t.ini) - 1).toFixed(1)}" height="${alt}" fill="var(--${C[t.quem]})"/>`;
-    });
-    N.P.forEach((p, k) => p.instancias.forEach(it => {
-      g += `<circle data-q="${k}" cx="${x(it.t).toFixed(1)}" cy="${p.quem === "Lula" ? yL - 7 : yF - 7}" r="3.5" fill="var(--${C[p.quem]})" stroke="var(--bg)" stroke-width="1.5"/>`;
-    }));
-    if (R.fimF) g += `<line x1="${x(R.fimF)}" x2="${x(R.fimF)}" y1="${yL - 4}" y2="${base}" stroke="var(--ink)" stroke-dasharray="3 3"/>` +
-      `<text x="${x(R.fimF) - 6}" y="${base - 4}" text-anchor="end" font-size="12" fill="var(--ink-2)">acaba o tempo de Flávio</text>`;
-    lay.forEach(n => {
-      const xn = x(n.t), fim = xn > W * 0.55, tx = fim ? xn - 7 : xn + 7, yAlvo = (n.quem === "Lula" ? yL : yF) - 12;
-      g += `<line x1="${xn}" x2="${xn}" y1="${n.y0 - 11}" y2="${yAlvo}" stroke="var(--ink)" stroke-width="1"/>` +
-        n.ls.map((l, j) => `<text x="${tx}" y="${n.y0 + j * 15}" text-anchor="${fim ? "end" : "start"}" font-size="12.5" fill="var(--ink)"${j === 0 ? ' font-weight="600"' : ""}>${esc(l)}</text>`).join("");
-    });
-    box.innerHTML = `<svg class="chart" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Linha do tempo das falas de Lula e Flávio nos ${Math.round(T / 60)} minutos do bloco, com as perguntas diretas marcadas">${g}</svg>`;
-    box.querySelectorAll("rect[data-i]").forEach(el => {
-      const t = d.turnos[+el.dataset.i];
-      el.setAttribute("aria-label", `${NOME[t.quem]}, ${mmss(t.ini)}: ir para a fala na transcrição`);
-      tipOn(el, () => `<div class="h">${sw(t.quem)}${NOME[t.quem]} · ${mmss(t.ini)}–${mmss(t.fim)}</div>${esc(t.resumo || t.trecho)}<div style="opacity:.7;margin-top:4px">Clique para ler a fala inteira</div>`);
-      el.addEventListener("click", () => irParaFala(+el.dataset.i));
-      el.addEventListener("keydown", e => { if (e.key === "Enter") irParaFala(+el.dataset.i); });
-    });
-    box.querySelectorAll("circle[data-q]").forEach(el => {
-      const p = N.P[+el.dataset.q];
-      tipOn(el, () => `<div class="h">${sw(p.quem)}${NOME[p.quem]} pergunta</div>${esc(p.tema)}`);
-    });
-  });
-}
 
 // perguntas por assunto: cada quadrado é uma pergunta; os assuntos de uma pergunta só vão juntos, vazados
 function figPerguntas(d, N) {
@@ -761,15 +710,6 @@ function figPalavras(d) {
       <span class="bar" style="width:${Math.abs(s.z) / maxZ * 100}%;background:var(--${C[q]})"></span></div>`).join("") + `</div>`).join("");
   document.querySelectorAll("#dist .dw").forEach(el => tipOn(el, () => `<div class="h">“${esc(el.dataset.w)}”</div>Lula disse ${el.dataset.a} vezes; Flávio, ${el.dataset.b}` +
     (el.dataset.tema ? `<br>Mais presente em falas sobre: ${esc(el.dataset.tema)}` : "")));
-  const cn = d.criterio_nuvem;
-  if (cn) document.getElementById("crit-nuvem").innerHTML = [
-    `<b>Entram:</b> ${esc(cn.classes)}; também ${esc(cn.tambem_entram)}.`,
-    `<b>Contam como um termo só:</b> ${cn.inteiros.map(esc).join(", ")}.`,
-    `<b>Mínimo:</b> ${cn.minimo_ocorrencias} ocorrências.`,
-    `<b>Saem:</b> palavras gramaticais (lista padrão do spaCy em português), as frases ${esc(cn.frases_excluidas)} e estas muletas e verbos genéricos: ${cn.muletas_excluidas.map(esc).join(", ")}.`,
-    `<b>Tamanho:</b> ${esc(cn.escala)}.`,
-    `O nome do adversário fica na nuvem: quem cita mais o outro aparece aqui também.`,
-  ].map(s => `<li style="margin-bottom:6px">${s}</li>`).join("");
 }
 
 // transcrição navegável: perguntas em negrito, afirmações sublinhadas, link para o vídeo em cada fala
@@ -881,7 +821,7 @@ function renderFalas(d) {
     try {
       const [{ pipeline, env }, dados] = await Promise.all([
         import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1"),
-        fetch("data/busca.json").then(r => r.json()),
+        fetch("data/busca.json", { cache: "no-cache" }).then(r => r.json()),
       ]);
       env.allowLocalModels = false;
       const prog = {};
@@ -925,7 +865,8 @@ function outros(d, N) {
   figRitmo(d, N);
   // afirmações para checar
   const cl = document.getElementById("claims"), VIS_AF = 6;
-  cl.innerHTML = d.afirmacoes.map((a, i) => `<li${i >= VIS_AF ? " hidden" : ""}><span class="t">${mmss(a.t)}</span><div><span class="who">${sw(a.quem)}${NOME[a.quem]}</span>${esc(a.texto)}</div></li>`).join("");
+  cl.innerHTML = d.afirmacoes.map((a, i) => `<li${i >= VIS_AF ? " hidden" : ""}><a class="t" href="https://www.youtube.com/watch?v=${d.video_youtube}&t=${Math.max(0, Math.floor(d.inicio_bloco_s + a.t) - 2)}s" target="_blank" rel="noopener" aria-label="Assistir a partir de ${mmss(a.t)}">▶ ${mmss(a.t)}</a><div><span class="who">${sw(a.quem)}${NOME[a.quem]}</span>` +
+    (a.trecho ? `“${esc(a.trecho)}”<div class="res">Em resumo (IA): ${esc(a.texto)}</div>` : esc(a.texto)) + `</div></li>`).join("");
   const afMais = document.getElementById("af-mais");
   if (d.afirmacoes.length > VIS_AF) {
     afMais.hidden = false; afMais.textContent = `Ver todas as ${d.afirmacoes.length} afirmações`;
@@ -933,7 +874,7 @@ function outros(d, N) {
   }
 }
 
-// Figura 7: palavras somadas de cada candidato ao longo do bloco. A linha sobe enquanto ele fala (a
+// Figura 1: palavras somadas de cada candidato ao longo do bloco. A linha sobe enquanto ele fala (a
 // inclinação é o ritmo) e fica reta enquanto o outro fala; anéis marcam 10, 5 e 1 min no relógio de
 // cada um; o cursor lê os dois relógios em qualquer instante.
 // Interpola uma série de pontos [t, v]
@@ -952,11 +893,6 @@ const quandoSerie = (p, v) => {
     return a + (b - a) * (va - v) / (va - vb);
   }
 };
-// citações ao adversário: mesmas regras do analyze.py, com limites Unicode (o \b do JS falha depois de "á")
-const CITA = {
-  "Lula": "(?<!\\p{L})(fl[aá]vio|bolsonaro|bolsonarista|bolsonarismo|seu pai|sua fam[ií]lia)(?!\\p{L})",
-  "Flávio": "(?<!\\p{L})(lula|pt|petista|petismo|seu governo)(?!\\p{L})",
-};
 
 function figRitmo(d, N) {
   const box = document.getElementById("ritmo"), R = relogio(d), T = R.T, Q = ["Lula", "Flávio"], P = {};
@@ -964,27 +900,20 @@ function figRitmo(d, N) {
     const c = N[q === "Lula" ? "L" : "F"], ts = d.turnos.filter(t => t.quem === q);
     // fator para a linha terminar no mesmo total de palavras dos outros números da página
     const kw = c.palavras / ts.reduce((s, t) => s + t.palavras, 0);
-    const cum = [[0, 0]], cita = [];
+    const cum = [[0, 0]];
     let soma = 0;
     for (const t of ts) {
       cum.push([t.ini, soma]); soma += t.palavras * kw; cum.push([t.fim, soma]);
-      const re = new RegExp(CITA[q], "giu"); let m;
-      while ((m = re.exec(t.texto))) cita.push({ t: t.ini + m.index / t.texto.length * (t.fim - t.ini), turno: t });
     }
     cum.push([T, soma]);
-    P[q] = { cum, cita, total: soma, perg: N.P.filter(p => p.quem === q).flatMap(p => p.instancias.map(i => i.t)),
+    P[q] = { cum, total: soma,
       marco: [600, 300, 60].map(v => quandoSerie(R.S[q], v)) };
   }
   const fin = R.fimF ? d.turnos.find(t => t.quem === "Lula" && t.ini > R.fimF - 1) : null;  // fala final, sem réplica
-  const porFala = new Map();
-  P["Flávio"].cita.forEach(c => porFala.set(c.turno, (porFala.get(c.turno) || 0) + 1));
-  const [topCita, nTop] = [...porFala].sort((a, b) => b[1] - a[1])[0] || [];
-  const fioL = N.fios("Lula")[0];
   const falaEm = t => { let k = 0; d.turnos.forEach((u, i) => { if (u.quem !== "Mediação" && u.ini <= t + 0.5) k = i; }); return k; };
   const quadro = (q, x0, y0, curto) => {
     const c = N[q === "Lula" ? "L" : "F"], o = q === "Lula" ? "Flávio" : "Lula";
-    const ls = [`${fmt(c.palavras)} palavras · ${Math.round(c.palavras_por_minuto)} por minuto`, `citou ${o} ${c.mencoes_adversario} vezes · ${N.nPerg(q)} perguntas`];
-    if (!curto) ls.push(`“você” ou “o senhor”: ${Math.round(c.pronomes["você/senhor"] / c.palavras * 1000)} a cada mil palavras`);
+    const ls = [`${fmt(c.palavras)} palavras · ${Math.round(c.palavras_por_minuto)} por minuto`];
     return `<rect x="${x0}" y="${y0 - 1}" width="10" height="10" rx="2" fill="var(--${C[q]})"/><text x="${x0 + 16}" y="${y0 + 9}" font-size="13" font-weight="700" fill="var(--ink)">${NOME[q]}</text>` +
       ls.map((l, j) => `<text x="${x0}" y="${y0 + 26 + j * 16}" font-size="12" fill="var(--ink-2)">${l}</text>`).join("");
   };
@@ -1013,9 +942,6 @@ function figRitmo(d, N) {
     }
     if (fin) g += `<line x1="${x(fin.ini)}" y1="${yq("Lula", fin.ini)}" x2="${x(fin.fim)}" y2="${yq("Lula", fin.fim)}" stroke="var(--lula)" stroke-width="5" stroke-linecap="round"/>`;
     for (const q of Q) {
-      const dir = q === "Flávio" ? -1 : 1;  // citações: para cima em Flávio, para baixo em Lula
-      P[q].cita.forEach(c => { const px = x(c.t), py = yq(q, c.t); g += `<line x1="${px}" x2="${px}" y1="${py + dir * 3}" y2="${py + dir * 10}" stroke="var(--${C[q]})" stroke-width="1.3"/>`; });
-      P[q].perg.forEach(t => { g += `<circle cx="${x(t)}" cy="${yq(q, t)}" r="3.2" fill="var(--${C[q]})" stroke="var(--bg)" stroke-width="1.5"/>`; });
       P[q].marco.forEach((t, k) => {
         if (!t) return;
         g += `<circle cx="${x(t)}" cy="${yq(q, t)}" r="4.5" fill="var(--bg)" stroke="var(--ink)" stroke-width="1.3"/>`;
@@ -1024,26 +950,19 @@ function figRitmo(d, N) {
     }
     if (R.fimF) g += `<line x1="${x(R.fimF)}" x2="${x(R.fimF)}" y1="${yq("Flávio", R.fimF) - 6}" y2="${yq("Flávio", R.fimF) + 6}" stroke="var(--ink)" stroke-width="2"/>` +
       nota(x(R.fimF) - 8, yq("Flávio", R.fimF) - 12, est ? "fim do tempo de Flávio" : "Flávio: acabou o tempo", 30, "end");
+    if (est && fin) g += nota(x(fin.ini) - 6, Math.max(yq("Lula", fin.ini) + 40, y(P.Lula.total * 0.45)), `Lula fecha sozinho: ${mmss(fin.fim - fin.ini)} sem réplica`, 16, "end");
     if (!est) {
     // nota da fala final abaixo da linha vermelha, no espaço vazio do canto de baixo
     const yFin = fin ? Math.max(yq("Lula", fin.ini) + 42, y(P.Lula.total * 0.5)) : 0;
     if (fin) g += `<line x1="${x(fin.ini)}" y1="${yq("Lula", fin.ini) + 6}" x2="${x(fin.ini)}" y2="${yFin - 14}" stroke="var(--ink)"/>` +
       nota(x(fin.ini) - 6, yFin, `Lula fecha sozinho: ${mmss(fin.fim - fin.ini)} sem réplica, ${fin.palavras} palavras`, est ? 22 : 30, "end");
-    if (fioL) {
-      const it = fioL.instancias[0], px = x(it.t), py = yq("Lula", it.t);
-      g += `<line x1="${px}" y1="${py + 5}" x2="${px + 14}" y2="${py + 36}" stroke="var(--ink)"/>` + nota(px + 18, py + 48, `A partir daqui, Lula faz ${fioL.instancias.length} vezes a pergunta “${fioL.tema}”`, est ? 22 : 34);
-    }
-    if (topCita) {
-      const t = (topCita.ini + topCita.fim) / 2, px = x(t), py = yq("Flávio", t);
-      g += `<line x1="${px}" y1="${py - 12}" x2="${px}" y2="${py - (est ? 70 : 92)}" stroke="var(--ink)"/>` + nota(px + 6, py - (est ? 76 : 98), `Flávio cita Lula ou o PT ${nTop} vezes numa fala só`, est ? 18 : 30);
-    }
     // resumos no canto de cima à esquerda, que as linhas não ocupam
     g += quadro("Flávio", m.l + 10, m.t + 14) + quadro("Lula", m.l + 290, m.t + 14);
     }
     const sumario = `Flávio disse ${fmt(N.F.palavras)} palavras, a ${Math.round(N.F.palavras_por_minuto)} por minuto${R.fimF ? `, e esgotou o relógio aos ${mmss(R.fimF)} do bloco` : ""}; ` +
       `Lula disse ${fmt(N.L.palavras)}, a ${Math.round(N.L.palavras_por_minuto)} por minuto${fin ? `, e falou ${mmss(fin.fim - fin.ini)} sozinho no fim` : ""}.`;
     g += `<rect class="scrub" x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent" tabindex="0" aria-label="Percorrer o bloco: setas para avançar e voltar, Enter para ler a fala"/><g id="agora" pointer-events="none"></g>`;
-    const resumoHtml = q => { const c = N[q === "Lula" ? "L" : "F"]; return `<div>${sw(q)}<b>${NOME[q]}</b> ${fmt(c.palavras)} palavras · ${Math.round(c.palavras_por_minuto)}/min · citou ${q === "Lula" ? "Flávio" : "Lula"} ${c.mencoes_adversario}× · ${N.nPerg(q)} perguntas</div>`; };
+    const resumoHtml = q => { const c = N[q === "Lula" ? "L" : "F"]; return `<div>${sw(q)}<b>${NOME[q]}</b> ${fmt(c.palavras)} palavras · ${Math.round(c.palavras_por_minuto)} por minuto</div>`; };
     box.innerHTML = (est ? `<div class="ritmo-res">${resumoHtml("Flávio")}${resumoHtml("Lula")}</div>` : "") +
       `<svg class="chart" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(sumario)}">${g}</svg>` +
       (est ? `<p class="ritmo-ler" aria-live="polite"></p>` : "");
@@ -1056,7 +975,7 @@ function figRitmo(d, N) {
       tAtual = t;
       const px = x(t), dir = px > m.l + (W - m.l - m.r) * 0.62, tx = dir ? px - 10 : px + 10;
       const ty = t > T / 2 ? H - m.b - 58 : (est ? m.t + 140 : m.t + 96);
-      const ls = [`aos ${mmss(t)} do bloco, no relógio:`,
+      const ls = [`aos ${mmss(t)} do bloco, relógio (estimado):`,
         ...Q.map(q => `${quadrado(q)} ${NOME[q]} ${mmss(Math.max(0, emSerie(R.S[q], t)))} · ${fmt(Math.round(emSerie(P[q].cum, q === "Flávio" && R.fimF ? Math.min(t, R.fimF) : t)))} palavras`)];
       const marcas = `<line x1="${px}" x2="${px}" y1="${m.t}" y2="${H - m.b}" stroke="var(--ink)" stroke-width="1"/>` +
         Q.map(q => `<circle cx="${px}" cy="${yq(q, t)}" r="4.5" fill="var(--${C[q]})" stroke="var(--bg)" stroke-width="1.5"/>`).join("");
@@ -1180,9 +1099,9 @@ function renderMetodo(d) {
     ["falas", "Falas", "codigo", "código com regra fixa",
       `Trechos seguidos da mesma pessoa, com pausa menor que 4 segundos, viram uma fala: ${n(P.turnos)} no confronto.`],
     ["classificacao", "Classificação", "ia", `agente de IA (${agente(P.classificacao_por)})`,
-      "O agente marca o tipo de cada fala (ataque, defesa, proposta), até três temas de uma lista fixa e um resumo, e lista as afirmações checáveis e as perguntas diretas. Todo trecho citado é conferido letra a letra na transcrição."],
+      "O agente marca o tipo de cada fala (ataque, defesa, proposta), até três temas de uma lista fixa e um resumo, e lista as afirmações checáveis e as perguntas diretas. Cada fala recebe um tipo só: uma fala que mistura ataque e proposta conta inteira pelo tipo principal. Um programa confere que cada trecho citado existe, letra a letra, na transcrição."],
     ["contagens", "Contagens e palavras", "codigo", "código com regras fixas (spaCy)",
-      "Tempo de fala, ritmo, citações ao adversário, nuvens e palavras típicas saem de contas com regras fixas, sem IA generativa."],
+      "Tempo de fala, ritmo, vezes que cada um disse o nome do outro e palavras típicas saem de contas com regras fixas, sem IA generativa."],
     ["busca", "Busca por sentido (opcional)", "nav", "modelo aberto, no seu navegador (e5-small)",
       "Cada trecho de fala vira um vetor que representa seu sentido. Se você ativar a busca, sua consulta vira um vetor no seu navegador e aparecem as falas mais parecidas."],
   ];

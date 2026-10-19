@@ -114,20 +114,19 @@ salva(img, "1_perguntas.png")
 # 2. citou o adversário e "você"
 mil = lambda c, k: c["pronomes"][k] / c["palavras"] * 1000
 lula_nome = next((s["Flávio"] for s in d["distintivas"]["Flávio"] if s["palavra"] == "Lula"), None)
-img, dr, y = card(f"Flávio citou Lula {F['mencoes_adversario']} vezes. Lula citou Flávio {L['mencoes_adversario']}.",
-                  "Citação: nome, sobrenome ou partido do adversário, ou expressões como \"seu pai\". Contagem por código")
+img, dr, y = card(f"Flávio disse “Lula” {F['nome_adversario']} vezes. Lula disse “Flávio” {L['nome_adversario']}.",
+                  "Quantas vezes cada um disse o nome do outro (\"Instituto Lula\" não conta). Contagem por código")
 y += 30
 meio = W // 2
 for quem, c, x, anc in (("Lula", L, meio - 60, "ra"), ("Flávio", F, meio + 60, "la")):
-    dr.text((x, y), str(c["mencoes_adversario"]), font=f(150, True), fill=INK, anchor=anc)
+    dr.text((x, y), str(c["nome_adversario"]), font=f(150, True), fill=INK, anchor=anc)
     larg = dr.textlength(quem, font=f(30, True))
     x_sw = x - larg - 30 if anc == "ra" else x
     dr.rounded_rectangle((x_sw, y + 196, x_sw + 20, y + 216), radius=4, fill=COR[quem])
     dr.text((x - 0 if anc == "ra" else x + 30, y + 190), quem, font=f(30, True), fill=INK, anchor=anc)
 dr.line((meio, y + 20, meio, y + 220), fill=GRID, width=2)
 y += 260
-txt = (f"Flávio disse \"Lula\" {lula_nome} vezes. " if lula_nome else "") + \
-      f"A cada mil palavras, Flávio disse \"você\" {arred(mil(F, 'você/senhor'))} vezes; Lula, {arred(mil(L, 'você/senhor'))}."
+txt = f"A cada mil palavras, Flávio disse \"você\" ou \"o senhor\" {arred(mil(F, 'você/senhor'))} vezes; Lula, {arred(mil(L, 'você/senhor'))}."
 for ln in quebra(dr, txt, f(26), W - 2 * X0):
     dr.text((meio, y), ln, font=f(26), fill=INK2, anchor="ma")
     y += 36
@@ -136,7 +135,7 @@ salva(img, "2_citacoes.png")
 # 3. tom: ataque, defesa, proposta
 TIPOS = [("ataque", "Ataque"), ("defesa", "Defesa / resposta"), ("proposta", "Proposta"), ("outro", "Outro")]
 pct = lambda c, k: (c["segundos_por_tipo"].get(k, 0) / c["segundos_fala"] * 100) if c["segundos_fala"] else 0
-img, dr, y = card(f"{arred(pct(F, 'ataque'))}% do tempo de Flávio foi ataque ao adversário. No de Lula, {arred(pct(L, 'ataque'))}%.",
+img, dr, y = card(f"Pela classificação da IA, {arred(pct(F, 'ataque'))}% do tempo de Flávio foi ataque ao adversário. No de Lula, {arred(pct(L, 'ataque'))}%.",
                   "Parcela do tempo de fala. Cada fala classificada por agente Claude com prompt público; pode ter erro")
 legenda(dr, X0 + 266, y)
 y += 46

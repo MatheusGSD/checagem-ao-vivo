@@ -15,7 +15,7 @@
    "palavras_por_minuto": 175.7,
    "turno_medio_s": 12.5,
    "diversidade_lexical": 0.591,
-   "mencoes_adversario": 12,
+   "nome_adversario": 2,
    "pronomes": {
     "eu": 75,
     "nós": 7,
@@ -266,7 +266,7 @@
    "palavras_por_minuto": 206.4,
    "turno_medio_s": 12.7,
    "diversidade_lexical": 0.628,
-   "mencoes_adversario": 64,
+   "nome_adversario": 51,
    "pronomes": {
     "eu": 60,
     "nós": 5,

@@ -44,7 +44,7 @@ dr.text((60, 84), "Lula × Flávio: o confronto livre em números", font=ImageFo
 
 linhas = [("Tempo de fala (medido no áudio)", mmss(L["segundos_fala"]), mmss(F["segundos_fala"])),
           ("Palavras por minuto", str(arred(L["palavras_por_minuto"])), str(arred(F["palavras_por_minuto"]))),
-          ("Vezes que citou o adversário", str(L["mencoes_adversario"]), str(F["mencoes_adversario"]))]
+          ("Vezes que disse o nome do adversário", str(L["nome_adversario"]), str(F["nome_adversario"]))]
 y = 196
 meio = W // 2
 for rot, a, b in linhas:

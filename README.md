@@ -1,6 +1,6 @@
 # Lula × Flávio: o confronto livre em números
 
-Painel com a análise do primeiro confronto direto (banco de tempo, 15 min para cada um) do debate presidencial do 2º turno na Band, em 18/10/2026: tempo de fala, relógio de xadrez, mapa de palavras, palavras típicas de cada candidato, temas, tipo de fala (ataque, defesa, proposta) e afirmações para checar.
+Primeiro protótipo de uma ferramenta de análise de debates. Aplicada aqui ao confronto livre (banco de tempo, 15 min para cada um) do debate presidencial do 2º turno na Band, em 18/10/2026: perguntas diretas, como cada um tratou o adversário, relógio de xadrez e ritmo, tom (classificação por IA), temas, palavras típicas, afirmações para checar e a transcrição completa, com link para o vídeo.
 
 O painel é estático e fica em `docs/`, publicado pelo GitHub Pages.
 
