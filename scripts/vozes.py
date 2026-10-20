@@ -399,6 +399,26 @@ def relatorio(saida, res, alinhamento, trans, desl, audio):
           f"com o locutor certo no teste (depois do confronto livre); {curvas[(dur, cal)][i_lim] * 100:.1f}% na "
           f"calibração; {curvas[(dur, b1)][i_lim] * 100:.1f}% no confronto livre (de onde saíram os perfis).")
     w("")
+    x = res[ref]
+    ini, fim, quem, partes = _partes(x["jan"])
+    m = partes[tst]
+    mx = x["sims"][m].max(axis=1)
+    p10_cand = min(np.percentile(mx[quem[m] == q], 10) for q in ("Lula", "Flávio"))
+    p90_med = np.percentile(mx[quem[m] == MEDIACAO], 90)
+    w("**Leitura:**\n")
+    w(f"- Por que {limiar:.2f}: no teste, 90% dos trechos de candidato ficam acima de {p10_cand:.2f} de semelhança "
+      f"e 90% dos de mediação abaixo de {p90_med:.2f}. O limiar fica no meio da faixa em que o acerto da calibração "
+      "é máximo, o que deixa folga dos dois lados: para baixo, se o áudio do g1 capturado pelo som do computador "
+      "baixar a semelhança dos candidatos; para cima, se a voz do mediador da Globo for mais parecida com a de um "
+      "candidato do que a dos jornalistas da Band.")
+    w(f"- Trechos de 1,5 s erram mais ({curvas[(1.5, tst)][i_lim] * 100:.1f}% no teste) porque o embedding fica "
+      "mais ruidoso e cai mais vezes abaixo do limiar. Para o ticket 09: classificar trechos de pelo menos ~3 s "
+      "(ou juntar trechos curtos ao vizinho antes de decidir).")
+    w(f"- O confronto livre tem acerto menor ({curvas[(ref, b1)][i_lim] * 100:.1f}% em 3 s) mesmo sendo a origem "
+      "dos perfis: é a parte com trocas rápidas, apartes e fala sobreposta, onde o próprio gabarito tem mais "
+      "ruído (ver a conferência do alinhamento abaixo). É a parte que mais se parece com um confronto direto ao "
+      "vivo, então convém tratá-la como o caso difícil.")
+    w("")
     w("## Como foi medido\n")
     w(f"- **Perfis:** {perfis['fonte']}. Janelas: {perfis['janelas']}; segundos: {perfis['segundos']}. "
       f"Modelo `{MODELO}` (o mesmo do `diarize.py`), embeddings normalizados, perfil = média renormalizada.")
@@ -464,7 +484,9 @@ def relatorio(saida, res, alinhamento, trans, desl, audio):
         w(f"| {a} | {np.percentile(v, 10):.2f} | {np.median(v):.2f} | {np.percentile(v, 90):.2f} |")
     w("")
     w("## Tempo de processamento na CPU\n")
-    w("Na medição acima (torch com 8 threads, máquina ociosa), mediana por trecho:\n")
+    w("Os números absolutos variam com o que mais estiver rodando na máquina (outros processos estavam ativos "
+      "durante esta medição). Na medição acima (torch com 8 threads, sem o Whisper ao lado), mediana por "
+      "trecho:\n")
     w("| trecho | ms por trecho | fração do tempo real |")
     w("|---:|---:|---:|")
     for dur in DURACOES:
@@ -490,6 +512,11 @@ def relatorio(saida, res, alinhamento, trans, desl, audio):
     for th in sorted({t for t, _ in tc}):
         w(f"| {th} | " + " | ".join(f"{tc[(th, d)] * 1000:.0f} ms" for d in durs) + " |")
     w("")
+    pior = max(tc[k] / k[1] for k in tc)
+    w(f"**Conclusão:** no pior caso medido sob carga, o reconhecimento gasta {pior * 100:.0f}% da duração do trecho, "
+      "bem abaixo do tempo real e pequeno perto da transcrição (o Whisper roda a ~4× o tempo real, isto é, ~25%). "
+      "Cabe no ao vivo na CPU. O `torch.set_num_threads` vale para o processo inteiro; se o ticket 09 rodar o "
+      "ECAPA no mesmo processo do Whisper, não precisa mudar o número de threads.\n")
     w("## Limitações e próximos passos\n")
     w("- Os perfis são da Band (YouTube, AAC). No ao vivo o áudio vem do g1 pelo som do computador: outro canal. "
       "O ensaio (tickets 09/10) mede isso de ponta a ponta; se o acerto cair, recalcular o limiar com o áudio "
