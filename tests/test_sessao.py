@@ -221,6 +221,39 @@ def test_repassar_varias_falas_de_uma_vez_da_o_mesmo_resultado_que_uma_a_uma(ind
     assert [lig["trecho"] for lig in de_uma_vez.fila()] == [DESEMPREGO["trecho"], pix["trecho"]]
 
 
+FOF_13 = ("https://g1.globo.com/fato-ou-fake/noticia/2026/10/23/"
+          "e-fake-video-de-flavio-bolsonaro-dizendo-que-vai-cortar-13-e-aposentadorias.ghtml")
+CHECAGEM_DA_NOITE = {
+    "id": FOF_13, "url": FOF_13, "agencia": "Fato ou Fake (g1)", "site": "g1.globo.com",
+    "frase": "Vídeo de Flávio Bolsonaro dizendo que, se eleito, vai cortar 13° e aposentadorias; fala foi manipulada",
+    "quem_disse": None, "idioma": "pt", "data": "2026-10-23", "data_origem": "publicacao", "rotulo": "#FAKE",
+    "coletado_em": "2026-10-24T00:50:00Z", "fonte_coleta": "fato_ou_fake_rss", "buscas": [],
+}
+FALA_13 = "E o meu adversário já disse que, se ganhar, vai cortar o décimo terceiro e as aposentadorias."
+
+
+def test_atualizacao_da_base_liga_uma_afirmacao_que_estava_sem_par():
+    registros = json.loads((FIXTURES / "base_sessao.json").read_text(encoding="utf-8"))["registros"]
+    corte = afirmacao("vai cortar o décimo terceiro e as aposentadorias",
+                      "Flávio Bolsonaro disse que, se eleito, vai cortar o 13º salário e as aposentadorias.",
+                      "perene", {FOF_13: (0.9, "Mesma fala atribuída a Flávio sobre cortar 13º e aposentadorias.")})
+    gasolina = afirmacao("a gasolina caiu trinta por cento no posto em um ano",
+                         "O preço da gasolina caiu 30% em um ano no governo Bolsonaro.", "numero")
+    s = sessao(Indice(registros), Claude({FALA_13: [corte], FALA_GASOLINA: [gasolina]}))
+    s.recebe_fala("Lula", 1500.0, FALA_13)
+    s.recebe_fala("Flávio", 1530.0, FALA_GASOLINA)
+    assert s.fila() == []
+    assert [a["trecho"] for a in s.exporta()["sem_par"]] == [corte["trecho"], gasolina["trecho"]]
+
+    s.atualiza_base([CHECAGEM_DA_NOITE])
+
+    [lig] = s.fila()
+    assert (lig["quem"], lig["minutagem_s"], lig["trecho"]) == ("Lula", 1500.0, corte["trecho"])
+    [chk] = lig["checagens"]
+    assert (chk["url"], chk["agencia"], chk["rotulo"], chk["data"]) == (FOF_13, "Fato ou Fake (g1)", "#FAKE", "2026-10-23")
+    assert [a["trecho"] for a in s.exporta()["sem_par"]] == [gasolina["trecho"]]
+
+
 def test_falha_do_claude_numa_fala_fica_registrada_e_a_sessao_segue(indice):
     dublê = Claude({FALA_DESEMPREGO: [DESEMPREGO]})
 

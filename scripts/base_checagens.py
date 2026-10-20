@@ -191,7 +191,9 @@ class Indice:
         import numpy as np
 
         self.registros = list(registros)
-        if vetores is None:
+        if not self.registros:
+            vetores = np.zeros((0, 384), np.float32)
+        elif vetores is None:
             vetores = modelo().encode([f"passage: {r['frase'] or ''}" for r in self.registros],
                                       normalize_embeddings=True, batch_size=32, show_progress_bar=False)
         self.X = np.asarray(vetores, dtype=np.float32).reshape(len(self.registros), -1)
@@ -208,20 +210,39 @@ class Indice:
             sys.exit(f"vetores fora de ordem com a base em {pasta}: rode `base_checagens.py reconstruir`")
         return cls(registros, np.load(pasta / "vetores.npy"))
 
-    def busca(self, frase, n=8, desde=None):
-        """As n checagens com frase mais parecida: [(cosseno, registro)], da mais parecida para a
-        menos. Com `desde` ("AAAA-MM-DD"), só entram checagens com data a partir desse dia."""
+    def acrescenta(self, registros):
+        """Põe na base os registros com id que ela ainda não tem (atualização durante o debate) e
+        devolve esses registros novos. Só eles ganham vetores."""
         import numpy as np
 
-        if not self.registros:
-            return []
         with self._trava:
+            ja = {r["id"] for r in self.registros}
+            novos = list({r["id"]: r for r in registros if r["id"] not in ja}.values())
+            if novos:
+                V = modelo().encode([f"passage: {r['frase'] or ''}" for r in novos], normalize_embeddings=True,
+                                    batch_size=32, show_progress_bar=False)
+                # troca de uma vez: uma busca em curso segue com a lista e os vetores que pegou
+                self.registros, self.X = self.registros + novos, np.vstack([self.X, np.asarray(V, np.float32)])
+        return novos
+
+    def busca(self, frase, n=8, desde=None, entre=None):
+        """As n checagens com frase mais parecida: [(cosseno, registro)], da mais parecida para a
+        menos. Com `desde` ("AAAA-MM-DD"), só entram checagens com data a partir desse dia; com
+        `entre` (ids), só essas checagens."""
+        import numpy as np
+
+        with self._trava:
+            registros, X = self.registros, self.X
+            if not registros:
+                return []
             q = modelo().encode([f"query: {frase}"], normalize_embeddings=True, show_progress_bar=False)[0]
-        s = self.X @ q
+        s = X @ q
         out = []
         for k in np.argsort(-s):
-            r = self.registros[k]
+            r = registros[k]
             if desde and not (r["data"] and r["data"] >= desde):
+                continue
+            if entre is not None and r["id"] not in entre:
                 continue
             out.append((float(s[k]), r))
             if len(out) == n:
