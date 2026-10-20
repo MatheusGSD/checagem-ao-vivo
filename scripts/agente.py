@@ -50,8 +50,14 @@ def lista(item):
 TXT, INT = {"type": "string"}, {"type": "integer"}
 
 
-def chama(etapa, prompt, conteudo, schema):
-    """Uma chamada com saída estruturada. Registra tudo em data/agente/ e devolve (saída, registro)."""
+class RespostaInvalida(SystemExit):
+    """O modelo recusou ou a resposta foi cortada. Na linha de comando encerra o script, como antes;
+    a sessão de checagem ao vivo a captura para não cair."""
+
+
+def chama(etapa, prompt, conteudo, schema, logs=None):
+    """Uma chamada com saída estruturada. Registra tudo em `logs` (padrão data/agente/) e devolve
+    (saída, registro)."""
     system = (PROMPTS / prompt).read_text(encoding="utf-8")
     with anthropic.Anthropic().beta.messages.stream(
         model=MODELO,
@@ -65,9 +71,9 @@ def chama(etapa, prompt, conteudo, schema):
     ) as stream:
         msg = stream.get_final_message()
     if msg.stop_reason == "refusal":
-        raise SystemExit(f"{etapa}: o modelo recusou ({msg.stop_details})")
+        raise RespostaInvalida(f"{etapa}: o modelo recusou ({msg.stop_details})")
     if msg.stop_reason == "max_tokens":
-        raise SystemExit(f"{etapa}: a resposta foi cortada no limite de tokens")
+        raise RespostaInvalida(f"{etapa}: a resposta foi cortada no limite de tokens")
     saida = json.loads(next(b.text for b in msg.content if b.type == "text"))
     registro = {
         "etapa": etapa, "data": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -76,12 +82,20 @@ def chama(etapa, prompt, conteudo, schema):
         "entrada_sha256": hashlib.sha256(conteudo.encode()).hexdigest(),
         "tokens": {"entrada": msg.usage.input_tokens, "saida": msg.usage.output_tokens},
     }
-    LOGS.mkdir(parents=True, exist_ok=True)
-    nome = f"{etapa}_{registro['data'].replace(':', '')}.json"
-    (LOGS / nome).write_text(json.dumps({**registro, "entrada": conteudo, "saida": saida}, ensure_ascii=False, indent=1),
-                             encoding="utf-8")
+    pasta = Path(logs or LOGS)
+    pasta.mkdir(parents=True, exist_ok=True)
+    texto = json.dumps({**registro, "entrada": conteudo, "saida": saida}, ensure_ascii=False, indent=1)
+    base, n = f"{etapa}_{registro['data'].replace(':', '')}", 1
+    while True:  # duas chamadas da mesma etapa no mesmo segundo não se sobrescrevem
+        nome = f"{base}.json" if n == 1 else f"{base}_{n}.json"
+        try:
+            with (pasta / nome).open("x", encoding="utf-8") as f:
+                f.write(texto)
+            break
+        except FileExistsError:
+            n += 1
     print(f"{etapa}: {msg.model}, {registro['tokens']['entrada']} tokens de entrada, "
-          f"{registro['tokens']['saida']} de saída -> data/agente/{nome}")
+          f"{registro['tokens']['saida']} de saída -> {pasta.name}/{nome}")
     return saida, registro
 
 

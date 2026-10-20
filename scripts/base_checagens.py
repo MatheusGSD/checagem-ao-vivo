@@ -22,6 +22,7 @@ import json
 import os
 import subprocess
 import sys
+import threading
 import time
 from collections import Counter
 from datetime import datetime, timezone
@@ -186,6 +187,52 @@ def atualiza_indice(pasta, registros):
                                                     "ids": [i for i, _ in chaves], "frases": [f for _, f in chaves]},
                                                    ensure_ascii=False), encoding="utf-8")
     return len(novos)
+
+
+class Indice:
+    """Base de checagens em memória com os vetores da frase checada, para a sessão consultar a
+    cada afirmação sem reler os arquivos. Pode ser usado por várias threads."""
+
+    def __init__(self, registros, vetores=None):
+        import numpy as np
+
+        self.registros = list(registros)
+        if vetores is None:
+            vetores = modelo().encode([f"passage: {r['frase'] or ''}" for r in self.registros],
+                                      normalize_embeddings=True, batch_size=32, show_progress_bar=False)
+        self.X = np.asarray(vetores, dtype=np.float32).reshape(len(self.registros), -1)
+        self._trava = threading.Lock()
+
+    @classmethod
+    def da_pasta(cls, pasta):
+        """A base e os vetores gravados em `pasta` (ver atualiza_indice)."""
+        import numpy as np
+
+        registros = le_base(pasta)
+        meta = json.loads((pasta / "vetores.json").read_text(encoding="utf-8"))
+        if meta["ids"] != [r["id"] for r in registros]:
+            sys.exit(f"vetores fora de ordem com a base em {pasta}: rode `base_checagens.py reconstruir`")
+        return cls(registros, np.load(pasta / "vetores.npy"))
+
+    def busca(self, frase, n=8, desde=None):
+        """As n checagens com frase mais parecida: [(cosseno, registro)], da mais parecida para a
+        menos. Com `desde` ("AAAA-MM-DD"), só entram checagens com data a partir desse dia."""
+        import numpy as np
+
+        if not self.registros:
+            return []
+        with self._trava:
+            q = modelo().encode([f"query: {frase}"], normalize_embeddings=True, show_progress_bar=False)[0]
+        s = self.X @ q
+        out = []
+        for k in np.argsort(-s):
+            r = self.registros[k]
+            if desde and not (r["data"] and r["data"] >= desde):
+                continue
+            out.append((float(s[k]), r))
+            if len(out) == n:
+                break
+        return out
 
 
 def consulta(pasta, frase, n=8):
