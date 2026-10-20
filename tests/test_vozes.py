@@ -3,13 +3,9 @@
 O modelo ECAPA é trocado por um dublê que devolve um vetor fixo por trecho; o que se testa é a regra de
 decisão (perfil mais parecido, ou "Mediação" abaixo do limiar) e os perfis gravados e lidos do disco.
 """
-import sys
-from pathlib import Path
-
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-import vozes  # noqa: E402
+import vozes
 
 TAXA = 16000
 LULA = np.array([1.0, 0.0, 0.0])
