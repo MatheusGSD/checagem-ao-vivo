@@ -169,3 +169,47 @@ y += 40
 barras(dr, y, [(t, tp(L, t), tp(F, t)) for t in temas], lambda v: f"{arred(v)}%",
        max(max(tp(L, t), tp(F, t)) for t in temas) * 1.1, rot_larg=280, alt=16)
 salva(img, "5_temas.png")
+
+# 0. abertura do fio: as duas nuvens lado a lado (as mesmas da página, tema claro)
+img, dr, y = card("O que Lula e Flávio mais disseram no confronto livre da Band",
+                  "Tamanho = vezes que a palavra foi dita. Em cor: palavras que um falou muito mais que o outro; em cinza, as que os dois usaram")
+larg = (W - 2 * X0 - 32) // 2
+for k, (quem, slug) in enumerate((("Lula", "lula"), ("Flávio", "flavio"))):
+    x = X0 + k * (larg + 32)
+    dr.rounded_rectangle((x, y + 6, x + 18, y + 24), radius=4, fill=COR[quem])
+    dr.text((x + 28, y), quem, font=f(26, True), fill=INK)
+    nv = Image.open(site / "img" / f"nuvem_{slug}.png").convert("RGBA")
+    nv = nv.resize((larg, round(nv.height * larg / nv.width)), Image.LANCZOS)
+    img.paste(nv, (x, y + 40), nv)
+salva(img, "0_nuvens.png")
+
+# 6. o relógio: ritmo e quem esgotou o tempo (mesma estimativa do painel: fala escalonada para 15 min)
+def serie(q):
+    ts = [t for t in d["turnos"] if t["quem"] == q]
+    k, resto, pts = 900 / sum(t["fim"] - t["ini"] for t in ts), 900.0, [(0, 900.0)]
+    for t in ts:
+        pts.append((t["ini"], resto)); resto -= (t["fim"] - t["ini"]) * k; pts.append((t["fim"], resto))
+    return pts
+fimF = next(t for t, r in serie("Flávio") if r <= 0.5)
+restoL = [r for t, r in serie("Lula") if t <= fimF][-1]
+final = next(t for t in d["turnos"] if t["quem"] == "Lula" and t["ini"] > fimF - 1)
+img, dr, y = card("Flávio falou mais rápido e esgotou o relógio primeiro",
+                  "Tempo estimado a partir do áudio; o relógio de cada um é escalonado para os 15 minutos oficiais")
+y += 20
+meio = W // 2
+for quem, c, x, anc in (("Lula", L, meio - 60, "ra"), ("Flávio", F, meio + 60, "la")):
+    dr.text((x, y), str(arred(c["palavras_por_minuto"])), font=f(130, True), fill=INK, anchor=anc)
+    larg_n = dr.textlength(quem, font=f(30, True))
+    x_sw = x - larg_n - 30 if anc == "ra" else x
+    dr.rounded_rectangle((x_sw, y + 170, x_sw + 20, y + 190), radius=4, fill=COR[quem])
+    dr.text((x if anc == "ra" else x + 30, y + 164), quem, font=f(30, True), fill=INK, anchor=anc)
+dr.line((meio, y + 20, meio, y + 196), fill=GRID, width=2)
+dr.text((meio, y + 214), "palavras por minuto", font=f(24), fill=INK2, anchor="ma")
+s_resto = arred(restoL)
+txt = (f"Quando o relógio de Flávio zerou, Lula ainda tinha {s_resto // 60}:{s_resto % 60:02d} "
+       f"e fechou o bloco sem réplica.")
+yy = y + 262
+for ln in quebra(dr, txt, f(26), W - 2 * X0):
+    dr.text((meio, yy), ln, font=f(26), fill=INK2, anchor="ma")
+    yy += 36
+salva(img, "6_relogio.png")
