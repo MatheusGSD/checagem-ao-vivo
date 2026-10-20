@@ -35,6 +35,18 @@ python -P ../scripts/make_cards.py ../docs
 
 O agente lê a chave da API de `ANTHROPIC_API_KEY` ou de um arquivo `.env` na raiz, que é ignorado pelo git.
 
+## Checagem ao vivo (debate da Globo, em construção)
+
+**Base de checagens:** `scripts/base_checagens.py` busca cada termo de `data/buscas_checagens.json` (nomes, temas, regiões, assuntos e as 73 afirmações da Band) na API oficial do Google Fact Check (`claims:search`, `languageCode=pt`), pagina até esgotar e guarda as respostas brutas. `scripts/checagens.py` transforma cada resposta num registro só com metadados: agência, URL, frase checada, quem disse, data e de onde ela veio, e rótulo como a agência publicou. Nada do texto da checagem é guardado. A base e os vetores `multilingual-e5-small` da frase checada ficam em `data/checagens/`, fora do git. A chave vem de `GOOGLE_FACTCHECK_KEY`, no ambiente ou no `.env`.
+
+```sh
+python -P scripts/base_checagens.py coletar            # ~200 buscas; grava brutos, base, vetores e relatório
+python -P scripts/base_checagens.py coletar --dias 1   # só checagens do último dia (atualização)
+python -P scripts/base_checagens.py reconstruir        # refaz base e vetores a partir dos brutos, sem rede
+python -P scripts/base_checagens.py consultar "Bolsonaro triplicou o Bolsa Família"
+python -P -m pytest -q                                 # testes
+```
+
 ## Limitações
 
 - O tempo de fala é medido no áudio, com pausas e apartes, e não no relógio oficial. O gráfico do relógio escalona cada candidato para 15 min. A estimativa deixa 1min07 para Lula quando o tempo de Flávio acaba, e a mediação anunciou 1min08.

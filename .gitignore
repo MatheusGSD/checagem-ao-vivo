@@ -4,6 +4,7 @@ data/*
 !data/bloco*_classificacao.json
 !data/glossario.json
 !data/vocabulario.json
+!data/buscas_checagens.json
 __pycache__/
 
 # chave da API do Claude (nunca vai para o git)

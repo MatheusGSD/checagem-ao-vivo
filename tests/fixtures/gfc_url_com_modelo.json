@@ -1,0 +1,46 @@
+{
+ "claims": [
+  {
+   "text": "Post diz que imagem da Avenida Paulista de ato pró-Lula é IA",
+   "claimant": "Boato de internet",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "BOL - UOL",
+      "site": "bol.uol.com.br"
+     },
+     "url": "https://www.bol.uol.com.br/noticias/2026/10/16/desinformacao-ia-falso-posts-imagens-x-atos-pro-lula-paulista-copacabana.htm?t={seek_to_second_number}",
+     "title": "Posts no X distorcem atos pró-Lula na Paulista e em Copacabana",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    },
+    {
+     "publisher": {
+      "name": "UOL Notícias",
+      "site": "noticias.uol.com.br"
+     },
+     "url": "https://noticias.uol.com.br/comprova/ultimas-noticias/2026/10/16/desinformacao-ia-falso-posts-imagens-x-atos-pro-lula-paulista-copacabana.ghtm",
+     "title": "Posts no X distorcem atos pró-Lula na Paulista e em Copacabana",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Prefeito de Curitiba foi vaiado com coro pró-Lula",
+   "claimant": "Boatos de internet",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "BOL - UOL",
+      "site": "bol.uol.com.br"
+     },
+     "url": "https://www.bol.uol.com.br/noticias/2026/07/01/prefeito-de-cuiaba-nao-foi-vaiado-com-coro-de-lula-lula.ghtm?t=%7Bseek_to_second_number%7D",
+     "title": "Vídeo de prefeito de Cuiabá é alterado para incluir gritos em apoio a Lula",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  }
+ ]
+}
