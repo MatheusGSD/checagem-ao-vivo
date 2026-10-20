@@ -1,0 +1,102 @@
+{
+  "versao_contrato": 1,
+  "meta": {
+    "titulo": "Lula × Flávio: o que as agências já checaram",
+    "debate": "Debate do 2º turno · TV Globo · 23/10/2026",
+    "inicio_debate": "2026-10-23T21:21:40-03:00",
+    "atualizado_em": "2026-10-23T22:47:12-03:00",
+    "exemplo": true,
+    "encerrado": false,
+    "fontes": [
+      {"nome": "Google Fact Check Tools API (ClaimReview)", "url": "https://developers.google.com/fact-check/tools/api"},
+      {"nome": "Fato ou Fake: RSS e sitemap", "url": "https://g1.globo.com/fato-ou-fake/"}
+    ],
+    "agencias_incluidas": [
+      {"nome": "Fato ou Fake (g1)", "via": "RSS e sitemap do g1"},
+      {"nome": "Aos Fatos", "via": "ClaimReview na API do Google"},
+      {"nome": "AFP Checamos", "via": "ClaimReview na API do Google"},
+      {"nome": "Estadão Verifica", "via": "ClaimReview na API do Google"},
+      {"nome": "UOL Confere", "via": "ClaimReview na API do Google"},
+      {"nome": "Projeto Comprova", "via": "ClaimReview na API do Google"}
+    ],
+    "agencias_excluidas": [
+      {"nome": "Lupa", "motivo": "Não publica ClaimReview e não autorizou a coleta das checagens até agora."}
+    ],
+    "modelo": "claude-opus-5-5",
+    "prompts": [
+      {"arquivo": "prompts/extrair_afirmacoes.md", "sha256": "3f9a1c0d5e7b2a4f6c8d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b"},
+      {"arquivo": "prompts/confirmar_ligacao.md", "sha256": "a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778899aabbccddeeff00"}
+    ],
+    "limiar_automatico": 0.9
+  },
+  "ligacoes": [
+    {
+      "id": "lig-0004",
+      "minutagem_s": 4325,
+      "quem": "Flávio",
+      "trecho": "A comida no prato do brasileiro ficou mais de vinte por cento mais cara só no ano passado.",
+      "reformulacao": "Os preços dos alimentos subiram mais de 20% em 2025.",
+      "tipo": "numero",
+      "origem": "aprovada",
+      "publicada_em": "2026-10-23T22:35:10-03:00",
+      "ligada_depois": false,
+      "checagens": [
+        {"agencia": "Estadão Verifica", "data": "2026-02-11", "rotulo": "Enganoso", "fonte_rotulo": "selo_da_pagina", "url": "https://example.org/exemplo/estadao-alimentos"},
+        {"agencia": "AFP Checamos", "data": "2026-01-29", "rotulo": "Falso", "fonte_rotulo": "dados_da_agencia", "url": "https://example.org/exemplo/afp-alimentos"}
+      ]
+    },
+    {
+      "id": "lig-0003",
+      "minutagem_s": 3500,
+      "quem": "Lula",
+      "trecho": "O salário mínimo teve aumento acima da inflação em todos os anos do nosso governo.",
+      "reformulacao": "O salário mínimo teve ganho real em todos os anos do governo Lula iniciado em 2023.",
+      "tipo": "numero",
+      "origem": "automatica",
+      "publicada_em": "2026-10-23T22:21:30-03:00",
+      "ligada_depois": false,
+      "checagens": [
+        {"agencia": "Aos Fatos", "data": "2025-05-02", "rotulo": "Verdadeiro", "fonte_rotulo": "dados_da_agencia", "url": "https://example.org/exemplo/aosfatos-salario"}
+      ]
+    },
+    {
+      "id": "lig-0001",
+      "minutagem_s": 400,
+      "quem": "Flávio",
+      "trecho": "Quem criou o Pix foi o governo do meu pai, isso todo mundo sabe.",
+      "reformulacao": "O Pix foi criado no governo de Jair Bolsonaro.",
+      "tipo": "perene",
+      "origem": "aprovada",
+      "publicada_em": "2026-10-23T22:30:02-03:00",
+      "ligada_depois": true,
+      "checagens": [
+        {"agencia": "Fato ou Fake (g1)", "data": "2023-03-14", "rotulo": "Não é bem assim", "fonte_rotulo": "selo_da_pagina", "url": "https://example.org/exemplo/fatooufake-pix"}
+      ]
+    }
+  ],
+  "sem_par": [
+    {"minutagem_s": 4830, "quem": "Lula", "trecho": "Nós construímos mais de dois milhões de casas desde que voltamos.", "reformulacao": "O governo Lula entregou mais de 2 milhões de moradias desde 2023."},
+    {"minutagem_s": 2650, "quem": "Flávio", "trecho": "O Nordeste tem hoje a maior taxa de homicídios do país.", "reformulacao": "A região Nordeste tem a maior taxa de homicídios entre as regiões do Brasil."}
+  ],
+  "correcoes": [
+    {
+      "em": "2026-10-23T22:12:40-03:00",
+      "ligacao_id": "lig-0002",
+      "motivo": "A checagem tratava do desmatamento de 2019, não do período citado na fala.",
+      "retirado": {
+        "id": "lig-0002",
+        "minutagem_s": 1875,
+        "quem": "Lula",
+        "trecho": "O desmatamento na Amazônia caiu pela metade.",
+        "reformulacao": "O desmatamento na Amazônia caiu 50%.",
+        "tipo": "numero",
+        "origem": "aprovada",
+        "publicada_em": "2026-10-23T21:55:00-03:00",
+        "ligada_depois": false,
+        "checagens": [
+          {"agencia": "UOL Confere", "data": "2025-08-20", "rotulo": "Verdadeiro", "fonte_rotulo": "dados_da_agencia", "url": "https://example.org/exemplo/uol-desmatamento"}
+        ]
+      }
+    }
+  ]
+}
