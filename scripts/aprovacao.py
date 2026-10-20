@@ -39,8 +39,23 @@ HOST = "127.0.0.1"
 PORTA = 8765
 
 
-def estado(sessao):
-    """O que a tela mostra: fila, publicadas, correções, recusadas, sem par, descartes e erros."""
+# painel de erros da tela: etapa registrada (Sessao.erros) -> quadro
+QUADROS_DE_ERRO = [("Transcrição e áudio", ("transcricao", "audio")), ("API do Claude", ("extrair", "confirmar")),
+                   ("API do Google (base)", ("base",)), ("Publicação", ("publicar",))]
+
+
+def painel_de_erros(erros):
+    """Um quadro por etapa da noite (mais "Outros", se houver), com o número de erros e o último."""
+    quadros = [(nome, etapas, [e for e in erros if e["etapa"] in etapas]) for nome, etapas in QUADROS_DE_ERRO]
+    conhecidas = {etapa for _, etapas in QUADROS_DE_ERRO for etapa in etapas}
+    if outros := [e for e in erros if e["etapa"] not in conhecidas]:
+        quadros.append(("Outros", (), outros))
+    return [{"nome": nome, "n": len(lista), "ultimo": lista[-1] if lista else None} for nome, _, lista in quadros]
+
+
+def estado(sessao, situacao=None):
+    """O que a tela mostra: fila, publicadas, correções, recusadas, sem par, descartes, erros (um quadro
+    por etapa) e a situação da noite (situacao(): dicionário curto, da integração ao vivo)."""
     versao = len(sessao.eventos)  # lida antes: um evento no meio só faz a próxima busca redesenhar
     dados = sessao.exporta()
     return {
@@ -53,7 +68,9 @@ def estado(sessao):
         "sem_par": dados["sem_par"],
         "recusadas": sessao.recusadas(),
         "descartados": sessao.descartados(),
-        "erros": sessao.erros(),
+        "erros": (erros := sessao.erros()),
+        "painel_erros": painel_de_erros(erros),
+        "situacao": situacao() if situacao else None,
     }
 
 
@@ -67,7 +84,7 @@ def _acoes(sessao):
     }
 
 
-def _handler(sessao):
+def _handler(sessao, situacao=None):
     acoes = _acoes(sessao)
 
     class Tela(BaseHTTPRequestHandler):
@@ -104,7 +121,7 @@ def _handler(sessao):
             if caminho == "/":
                 return self._responde(200, PAGINA.read_bytes(), "text/html; charset=utf-8")
             if caminho == "/estado":
-                return self._responde(200, estado(sessao))
+                return self._responde(200, estado(sessao, situacao))
             if caminho == "/favicon.ico":
                 return self._responde(204, b"", "image/x-icon")
             self._responde(404, {"erro": "não existe"})
@@ -127,9 +144,10 @@ def _handler(sessao):
     return Tela
 
 
-def serve(sessao, porta=PORTA):
-    """Sobe a tela numa thread e devolve o servidor. porta=0 escolhe uma livre."""
-    servidor = ThreadingHTTPServer((HOST, porta), _handler(sessao))
+def serve(sessao, porta=PORTA, situacao=None):
+    """Sobe a tela numa thread e devolve o servidor. porta=0 escolhe uma livre. situacao(): o que mostrar
+    da noite no cabeçalho (falas, última fala, base...)."""
+    servidor = ThreadingHTTPServer((HOST, porta), _handler(sessao, situacao))
     servidor.daemon_threads = True
     threading.Thread(target=servidor.serve_forever, name="tela-de-aprovacao", daemon=True).start()
     return servidor

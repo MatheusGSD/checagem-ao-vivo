@@ -60,6 +60,11 @@
   button.perigo { color: var(--erro); border-color: var(--erro); }
   button:disabled { opacity: .45; cursor: default; }
   #erros { grid-column: 1 / -1; }
+  #quadros { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+  #quadros .quadro { border-radius: 6px; padding: 5px 10px; font-size: 13px; border: 1px solid var(--linha); }
+  #quadros .bem { background: #e0efe5; color: var(--ok); }
+  #quadros .antes { background: #fbe9da; color: var(--alerta); }
+  #quadros .mal { background: #fdecea; color: #7a1a13; border-color: #f1b8b2; font-weight: 600; }
   #erros .erro { background: #fdecea; border: 1px solid #f1b8b2; color: #7a1a13; border-radius: 6px;
                  padding: 6px 10px; margin-bottom: 6px; font-size: 13px; }
   #aviso { grid-column: 1 / -1; display: none; background: #fdecea; color: #7a1a13; border-radius: 6px; padding: 8px 12px; }
@@ -74,10 +79,12 @@
   <span class="item"><span id="conexao" title="conexão com a sessão"></span> <b id="relogio">--:--:--</b></span>
   <span class="item">00:00: <b id="inicio">não marcado</b> <button id="marcar" type="button">Marcar 00:00 agora</button></span>
   <span class="item">Automática: <b id="auto">desligada</b></span>
+  <span class="item" id="situacao"></span>
   <span class="item">fila <b id="n-fila">0</b> · publicadas <b id="n-pub">0</b> · correções <b id="n-cor">0</b> · sem par <b id="n-sp">0</b></span>
 </header>
 <main>
   <div id="aviso" role="alert"></div>
+  <section id="quadros" aria-label="erros por etapa"></section>
   <section id="erros" aria-live="polite"></section>
   <section>
     <h2>Fila <span class="n" id="n-fila2">0</span></h2>
@@ -244,6 +251,13 @@ async function atualiza(forca) {
                           [["n-cor", "n-cor2"], e.correcoes.length], [["n-sp", "n-sp2"], e.sem_par.length],
                           [["n-rec"], e.recusadas.length], [["n-desc"], e.descartados.length]])
     ids.forEach((id) => { $(id).textContent = n; });
+  const recente = (x) => x && (Date.now() - new Date(x.em)) < 10 * 60 * 1000;
+  $("quadros").innerHTML = (e.painel_erros || []).map((q) =>
+    `<div class="quadro ${q.n ? (recente(q.ultimo) ? "mal" : "antes") : "bem"}" title="${q.ultimo ? esc(q.ultimo.mensagem) : ""}">
+      <b>${esc(q.nome)}</b> ${q.n ? `${q.n} erro${q.n > 1 ? "s" : ""} · último às ${hora(q.ultimo.em)}` : "ok"}</div>`).join("");
+  const s = e.situacao;
+  $("situacao").textContent = s ? `linha ${s.linha} · ${s.falas} falas` + (s.ultima_fala_em ? ` · última às ${hora(s.ultima_fala_em)}` : "")
+    + ` · base ${s.base_atualizada_em || "ainda não atualizada"}` : "";
   $("erros").innerHTML = e.erros.slice(-6).reverse().map((x) =>
     `<div class="erro"><b>${esc(x.etapa)}</b> ${hora(x.em)}${x.quem ? ` · ${esc(x.quem)} ${minutagem(x.minutagem_s)}` : ""} — ${esc(x.mensagem)}</div>`).join("");
   sincroniza($("fila"), e.fila, (p) => p.id, cartaoFila, "Nada esperando aprovação.");
