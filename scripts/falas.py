@@ -15,6 +15,7 @@ Uso como biblioteca (a sessão, ticket 10):
 
 Linha de comando:
     python -P scripts/falas.py loopback --gravar G.wav [--saida F.jsonl]   # Enter marca o 00:00; Ctrl+C encerra
+    python -P scripts/falas.py gravar --gravar G.wav                        # só grava (notebook reserva); Ctrl+C
     python -P scripts/falas.py arquivo AUDIO [--inicio S] [--fim S] [--zero S] [--ritmo 1|0] [--saida F.jsonl]
 """
 import argparse
@@ -288,7 +289,7 @@ class Transcritor:
         for s in segs:
             for w in s.words or []:
                 if not out or w.start >= out[-1][1] - 0.05:
-                    out.append((w.start, w.end, w.word))
+                    out.append((float(w.start), float(w.end), w.word))
         return out
 
 
@@ -420,7 +421,10 @@ class LinhaDeFalas:
         return t
 
     def parar(self):
+        """Para a fonte; espera a captura terminar (o WAV do loopback é fechado nela)."""
         self.fonte.parar()
+        if self._threads and threading.current_thread() is not self._threads[0]:
+            self._threads[0].join(timeout=10)
 
     def rodar(self, ao_fechar):
         for fala in self:
@@ -598,7 +602,23 @@ def main(argv=None):
         p.add_argument("--prompt", default=PROMPT)
         p.add_argument("--vocabulario", default=str(RAIZ / "data" / "vocabulario.json"))
         p.add_argument("--dados", help="pasta de dados (padrão: CHECAGEM_DADOS ou C:\\dev\\debate_lulavsflavio\\data)")
+    gr = sub.add_parser("gravar", help="só grava o som do Windows (sem transcrever); Ctrl+C encerra")
+    gr.add_argument("--gravar", required=True)
+    gr.add_argument("--dispositivo", type=int)
     a = ap.parse_args(argv)
+    if a.cmd == "gravar":
+        fonte = FonteLoopback(a.gravar, a.dispositivo)
+        print(f"Gravando em {a.gravar}. Ctrl+C encerra.", flush=True)
+        blocos = fonte.blocos()
+        try:
+            for _ in blocos:
+                pass
+        except KeyboardInterrupt:
+            pass
+        finally:
+            blocos.close()  # fecha o WAV e o stream antes de sair
+        print(f"{fonte.posicao():.0f} s gravados.")
+        return
     from vozes import Reconhecedor
 
     dados = Path(a.dados) if a.dados else DADOS
