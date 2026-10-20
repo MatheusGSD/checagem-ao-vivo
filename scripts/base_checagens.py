@@ -337,12 +337,12 @@ def incorpora(pasta, paginas):
     return novos
 
 
-def atualiza(pasta, termos, chave, dias=1, pausa=PAUSA_S, log=print):
+def atualiza(pasta, termos, chave, dias=1, pausa=PAUSA_S, pausa_google=0.5, log=print):
     """Atualização durante o debate: Google só com checagens dos últimos `dias` dias e o RSS do Fato
     ou Fake; o que vier de novo entra na base (ver incorpora). Devolve os registros novos."""
     inicio = agora().replace(":", "-")
     saidas = [pasta / "brutos" / "google_api" / f"{inicio}.jsonl", pasta / "brutos" / "fato_ou_fake" / f"{inicio}.jsonl"]
-    coleta_google(termos, chave, saidas[0], dias=dias, pausa=pausa, log=lambda *_: None)
+    coleta_google(termos, chave, saidas[0], dias=dias, pausa=pausa_google, log=lambda *_: None)
     coleta_fof_rss(G1(pausa=pausa, log=log), saidas[1])
     novos = incorpora(pasta, le_jsonl(saidas))
     log(f"atualização {inicio}: {len(novos)} checagens novas "
@@ -509,7 +509,7 @@ def main():
     ap.add_argument("--so-novas", action="store_true", help="só os termos que nunca foram buscados (sem resposta bruta)")
     ap.add_argument("-n", type=int, default=8)
     ap.add_argument("--desde", default=FOF_DESDE, help="fato-ou-fake: sitemaps diários a partir deste dia")
-    ap.add_argument("--pausa", type=float, default=PAUSA_S, help="segundos entre requisições")
+    ap.add_argument("--pausa", type=float, help=f"segundos entre requisições (padrão: {PAUSA_S} no g1, 0.5 no Google ao atualizar)")
     a = ap.parse_args()
     pasta = pasta_base(a.dados)
 
@@ -522,7 +522,8 @@ def main():
         return
 
     if a.comando == "atualizar":  # durante o debate, a cada 10 min
-        atualiza(pasta, termos_de_busca(a.buscas), chave_google(), dias=a.dias or 1, pausa=a.pausa)
+        atualiza(pasta, termos_de_busca(a.buscas), chave_google(), dias=a.dias or 1,
+                 **({"pausa": a.pausa, "pausa_google": a.pausa} if a.pausa is not None else {}))
         return
     if a.comando == "incorporar":  # arquivos brutos (.jsonl) coletados à parte
         novos = incorpora(pasta, le_jsonl(a.frases))
@@ -530,7 +531,7 @@ def main():
             f"{ag} {n}" for ag, n in Counter(r["agencia"] for r in novos).most_common()))
         return
     if a.comando == "fato-ou-fake":
-        g1 = G1(pausa=a.pausa)
+        g1 = G1(pausa=a.pausa if a.pausa is not None else PAUSA_S)
         saida = pasta / "brutos" / "fato_ou_fake" / f"{agora().replace(':', '-')}.jsonl"
         coleta_fof_rss(g1, saida)
         print(f"coleta do Fato ou Fake desde {a.desde} → {saida}")
