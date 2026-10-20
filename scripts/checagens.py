@@ -107,9 +107,11 @@ FOF_AGENCIA = "Fato ou Fake (g1)"
 FOF_SITE = "g1.globo.com"
 BRASILIA = timezone(timedelta(hours=-3))
 # selo no começo do título: "É #FAKE que…", "É #FATO: …", "#NÃOÉBEMASSIM: …" (às vezes sem o #, como em
-# "É FATO: …"). Resumos com várias checagens ("Veja o que é #FATO ou #FAKE…") e notícias da seção sem
-# selo não têm rótulo único e ficam de fora.
-SELO_FOF = re.compile(r"^\s*(?:É\s+)?#?(FATO|FAKE|N[ÃA]O\s*[ÉE]\s*BEM\s*ASSIM)(?![\w#])\s*:?\s*(?:que\s+)?")
+# "É FATO: …" ou "#É FAKE …", e às vezes depois do assunto, como em "Diogo Jota: É #FAKE que…"). Resumos
+# com várias checagens ("Veja o que é #FATO ou #FAKE…") e notícias da seção sem selo não têm rótulo
+# único e ficam de fora.
+SELO_FOF = re.compile(r"^\s*(?:[^:#]{1,40}:\s+)?#?(?:É\s+)?#?(FATO|FAKE|N[ÃA]O\s*[ÉE]\s*BEM\s*ASSIM)(?![\w#])"
+                      r"\s*:?\s*(?:que\s+)?")
 
 
 def _titulo_fof(titulo):

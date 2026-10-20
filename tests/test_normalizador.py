@@ -180,6 +180,23 @@ def test_pagina_do_fato_ou_fake_achada_no_sitemap_extrai_os_campos_da_checagem()
     }
 
 
+def test_selo_do_fato_ou_fake_com_o_assunto_antes_ou_o_jogo_da_velha_trocado():
+    # manchetes reais de 2025 (recorte guardado pela coleta)
+    def pagina(titulo):
+        return (f'<link rel="canonical" href="https://g1.globo.com/fato-ou-fake/noticia/2025/07/03/x.ghtml">\n'
+                f'<h1 class="content-head__title" itemprop="headline">{titulo}</h1>\n')
+
+    [jota] = normaliza("fato_ou_fake_pagina", pagina("Diogo Jota: É #FAKE que foto de carro queimado em rodovia "
+                                                     "seja de acidente com jogador; imagem é de agosto de 2021"), COLETA)
+    [raios] = normaliza("fato_ou_fake_pagina", pagina("#É FAKE vídeo que mostra sequência de raios intensos "
+                                                      "&#x27;ejetando plasma&#x27; sobre praia; trata-se de IA"), COLETA)
+    assert (jota["rotulo"], jota["frase"]) == ("#FAKE", "Foto de carro queimado em rodovia seja de acidente com "
+                                                        "jogador; imagem é de agosto de 2021")
+    assert (raios["rotulo"], raios["frase"]) == ("#FAKE", "Vídeo que mostra sequência de raios intensos "
+                                                          "'ejetando plasma' sobre praia; trata-se de IA")
+    assert normaliza("fato_ou_fake_pagina", pagina("Fato ou Fake: veja como enviar sugestões"), COLETA) == []
+
+
 def test_o_recorte_guardado_da_pagina_e_do_rss_so_tem_metadados_e_da_os_mesmos_registros():
     pagina, rss = fato_ou_fake("g1_check.html"), fato_ou_fake("g1_rss_fof.xml")
     rss_com_resumo = rss.replace("</title>", "</title><description>Corpo da checagem.</description>", 1)
