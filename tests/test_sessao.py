@@ -237,3 +237,317 @@ def test_falha_do_claude_numa_fala_fica_registrada_e_a_sessao_segue(indice):
     assert (erro["quem"], erro["minutagem_s"]) == ("Flávio", 400.0)
     assert "recusou" in erro["mensagem"]
     assert len(s.fila()) == 1
+
+
+# ---------- operador: aprovação, publicação automática, correções e retomada ----------
+
+INICIO = datetime(2026, 10, 23, 21, 20, tzinfo=BRASILIA)
+
+PIX = afirmacao("Quem criou o Pix foi o governo do meu pai", "O Pix foi criado no governo de Jair Bolsonaro.",
+                "perene", {PIX_ESTADAO: (0.95, "Mesma afirmação sobre a criação do Pix."),
+                           PIX_AFP: (0.9, "Mesma afirmação, atribuída a redes sociais.")})
+
+
+class Relogio:
+    """Relógio que o teste adianta."""
+
+    def __init__(self, agora):
+        self.agora = agora
+
+    def __call__(self):
+        return self.agora
+
+    def adianta(self, **kw):
+        self.agora += timedelta(**kw)
+
+
+def test_aprovar_com_selo_faz_o_painel_exibir_o_selo_e_nao_o_rotulo_do_claimreview(indice):
+    relogio = Relogio(INICIO + timedelta(minutes=30))
+    s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX]}), relogio=relogio)
+    s.recebe_fala("Flávio", 1800.0, FALA_PIX)
+    [proposta] = s.fila()
+    relogio.adianta(seconds=40)
+
+    # o ClaimReview do Estadão diz "Enganoso"; na página o operador vê "Falso". A AFP fica sem selo informado.
+    s.aprova(proposta["id"], selos={PIX_ESTADAO: "Falso"})
+
+    assert s.fila() == []
+    [lig] = s.exporta()["ligacoes"]
+    assert (lig["id"], lig["origem"], lig["publicada_em"]) == (proposta["id"], "aprovada", "2026-10-23T21:50:40-03:00")
+    assert (lig["quem"], lig["minutagem_s"], lig["trecho"]) == ("Flávio", 1800.0, PIX["trecho"])
+    assert lig["ligada_depois"] is False
+    assert {c["url"]: (c["agencia"], c["rotulo"], c["fonte_rotulo"]) for c in lig["checagens"]} == {
+        PIX_ESTADAO: ("Estadão", "Falso", "selo_da_pagina"),
+        PIX_AFP: ("AFP Checamos", "Não é bem assim", "dados_da_agencia"),
+    }
+
+
+def test_aprovar_so_parte_das_checagens_publica_so_essas(indice):
+    s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX]}), relogio=Relogio(INICIO + timedelta(minutes=30)))
+    s.recebe_fala("Flávio", 1800.0, FALA_PIX)
+
+    s.aprova(s.fila()[0]["id"], manter=[PIX_AFP])
+
+    [lig] = s.exporta()["ligacoes"]
+    assert [c["url"] for c in lig["checagens"]] == [PIX_AFP]
+
+
+def sessao_com_limiar(indice, claude, relogio, limiar):
+    s = Sessao(indice, chamar=claude, relogio=relogio, meta={"limiar_automatico": limiar})
+    s.marca_inicio(INICIO)
+    return s
+
+
+def test_ligacao_acima_do_limiar_so_e_publicada_sozinha_depois_de_10_min(indice):
+    relogio = Relogio(INICIO + timedelta(minutes=9, seconds=50))
+    s = sessao_com_limiar(indice, Claude({FALA_DESEMPREGO: [DESEMPREGO], FALA_PIX: [PIX]}), relogio, 0.9)
+
+    s.recebe_fala("Lula", 560.0, FALA_DESEMPREGO)  # nota 0.92, ainda no aquecimento
+    assert [lig["trecho"] for lig in s.fila()] == [DESEMPREGO["trecho"]]
+    assert s.exporta()["ligacoes"] == []
+
+    relogio.adianta(seconds=20)  # 10 min e 10 s desde o 00:00
+    s.recebe_fala("Flávio", 590.0, FALA_PIX)  # Estadão 0.95 e AFP 0.9
+
+    assert [lig["trecho"] for lig in s.fila()] == [DESEMPREGO["trecho"]]  # a primeira continua esperando
+    dados = s.exporta()
+    [lig] = dados["ligacoes"]
+    assert (lig["trecho"], lig["origem"], lig["publicada_em"]) == (PIX["trecho"], "automatica",
+                                                                    "2026-10-23T21:30:10-03:00")
+    # na publicação automática vai o rótulo dos dados da agência, que a página mostra com o aviso
+    assert {(c["agencia"], c["rotulo"], c["fonte_rotulo"]) for c in lig["checagens"]} == {
+        ("Estadão", "Enganoso", "dados_da_agencia"), ("AFP Checamos", "Não é bem assim", "dados_da_agencia")}
+    assert dados["meta"]["limiar_automatico"] == 0.9
+    assert dados["meta"]["inicio_debate"] == "2026-10-23T21:20:00-03:00"
+
+
+def test_ligacao_abaixo_do_limiar_vai_para_a_fila_mesmo_depois_de_10_min(indice):
+    relogio = Relogio(INICIO + timedelta(minutes=40))
+    s = sessao_com_limiar(indice, Claude({FALA_DESEMPREGO: [DESEMPREGO]}), relogio, 0.95)
+
+    s.recebe_fala("Lula", 2400.0, FALA_DESEMPREGO)  # nota 0.92
+
+    assert len(s.fila()) == 1
+    assert s.exporta()["ligacoes"] == []
+
+
+def test_publicacao_automatica_leva_so_as_checagens_acima_do_limiar(indice):
+    relogio = Relogio(INICIO + timedelta(minutes=40))
+    s = sessao_com_limiar(indice, Claude({FALA_PIX: [PIX]}), relogio, 0.93)
+
+    s.recebe_fala("Flávio", 2400.0, FALA_PIX)  # Estadão 0.95, AFP 0.9
+
+    [lig] = s.exporta()["ligacoes"]
+    assert [c["url"] for c in lig["checagens"]] == [PIX_ESTADAO]
+
+
+def test_sem_00_00_marcado_nada_e_publicado_sozinho(indice):
+    s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX]}), relogio=Relogio(INICIO + timedelta(hours=1)),
+               meta={"limiar_automatico": 0.5})
+
+    s.recebe_fala("Flávio", 3600.0, FALA_PIX)
+
+    assert len(s.fila()) == 1
+    assert s.exporta()["ligacoes"] == []
+
+
+def test_com_a_publicacao_automatica_desligada_tudo_vai_para_a_fila(indice):
+    relogio = Relogio(INICIO + timedelta(minutes=50))
+    s = sessao_com_limiar(indice, Claude({FALA_DESEMPREGO: [DESEMPREGO], FALA_PIX: [PIX]}), relogio, None)
+
+    s.recebe_fala("Lula", 2900.0, FALA_DESEMPREGO)
+    s.recebe_fala("Flávio", 2950.0, FALA_PIX)
+
+    assert [lig["trecho"] for lig in s.fila()] == [DESEMPREGO["trecho"], PIX["trecho"]]
+    dados = s.exporta()
+    assert dados["ligacoes"] == []
+    assert dados["meta"]["limiar_automatico"] is None
+
+
+def test_limiar_vem_do_resultado_da_avaliacao_e_sem_ele_fica_desligado(tmp_path):
+    from sessao import le_limiar
+
+    assert le_limiar(tmp_path) is None  # sem arquivo
+    (tmp_path / "avaliacao").mkdir()
+    arquivo = tmp_path / "avaliacao" / "limiar.json"
+    arquivo.write_text(json.dumps({"limiar": None, "origem": "nenhuma nota passou", "em": "2026-10-22T10:00:00-03:00"}),
+                       encoding="utf-8")
+    assert le_limiar(tmp_path) is None
+    arquivo.write_text(json.dumps({"limiar": 0.85, "origem": "avaliação da Band", "em": "2026-10-22T10:00:00-03:00"}),
+                       encoding="utf-8")
+    assert le_limiar(tmp_path) == 0.85
+
+
+def test_despublicar_tira_a_ligacao_da_lista_e_cria_a_correcao_com_horario_e_motivo(indice):
+    relogio = Relogio(INICIO + timedelta(minutes=30))
+    s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX], FALA_DESEMPREGO: [DESEMPREGO]}), relogio=relogio)
+    s.recebe_fala("Flávio", 1800.0, FALA_PIX)
+    s.recebe_fala("Lula", 1850.0, FALA_DESEMPREGO)
+    pix, desemprego = (p["id"] for p in s.fila())
+    s.aprova(pix, selos={PIX_ESTADAO: "Falso"})
+    s.aprova(desemprego)
+    [publicada] = [lig for lig in s.exporta()["ligacoes"] if lig["id"] == pix]
+    relogio.adianta(minutes=3)
+
+    s.despublica(pix, "A checagem da AFP trata da taxa do Pix, não da criação.")
+
+    dados = s.exporta()
+    assert [lig["id"] for lig in dados["ligacoes"]] == [desemprego]
+    assert dados["correcoes"] == [{"em": "2026-10-23T21:53:00-03:00", "ligacao_id": pix,
+                                   "motivo": "A checagem da AFP trata da taxa do Pix, não da criação.",
+                                   "retirado": publicada}]
+    assert valida(dados) == []
+
+
+def test_despublicar_sem_motivo_nao_vale(indice):
+    s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX]}), relogio=relogio)
+    s.recebe_fala("Flávio", 1800.0, FALA_PIX)
+    ident = s.fila()[0]["id"]
+    s.aprova(ident)
+    n = len(s.eventos)
+
+    with pytest.raises(ValueError):
+        s.despublica(ident, "  ")
+
+    assert len(s.eventos) == n
+    assert len(s.exporta()["ligacoes"]) == 1
+
+
+def test_recusar_tira_da_fila_sem_publicar_e_nao_deixa_aprovar_depois(indice):
+    s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX]}), relogio=relogio)
+    s.recebe_fala("Flávio", 1800.0, FALA_PIX)
+    ident = s.fila()[0]["id"]
+
+    s.recusa(ident, "não é a mesma afirmação")
+
+    assert s.fila() == []
+    assert [p["id"] for p in s.recusadas()] == [ident]
+    assert (s.exporta()["ligacoes"], s.exporta()["correcoes"]) == ([], [])
+    with pytest.raises(ValueError):
+        s.aprova(ident)
+
+
+def test_corrigir_rotulo_de_ligacao_publicada_troca_o_rotulo_exibido_pelo_selo(indice):
+    relogio = Relogio(INICIO + timedelta(minutes=40))
+    s = sessao_com_limiar(indice, Claude({FALA_PIX: [PIX]}), relogio, 0.8)
+    s.recebe_fala("Flávio", 2400.0, FALA_PIX)  # publicada sozinha com o rótulo do ClaimReview
+    [lig] = s.exporta()["ligacoes"]
+
+    s.corrige_rotulo(lig["id"], PIX_ESTADAO, "Falso")
+
+    [lig] = s.exporta()["ligacoes"]
+    assert {c["url"]: (c["rotulo"], c["fonte_rotulo"]) for c in lig["checagens"]} == {
+        PIX_ESTADAO: ("Falso", "selo_da_pagina"), PIX_AFP: ("Não é bem assim", "dados_da_agencia")}
+    assert lig["origem"] == "automatica"
+
+
+def test_o_publicador_e_avisado_a_cada_mudanca_do_conteudo_publico(indice):
+    avisos = []
+    relogio = Relogio(INICIO + timedelta(minutes=30))
+    s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX]}), relogio=relogio, ao_mudar_publicado=avisos.append)
+
+    s.recebe_fala("Mediação", 1790.0, FALA_MEDIACAO)  # não muda nada do que é público
+    assert avisos == []
+    s.recebe_fala("Flávio", 1800.0, FALA_PIX)  # proposta: só na fila, o painel não muda
+    assert avisos == []
+    s.aprova(s.fila()[0]["id"])
+
+    [dados] = avisos
+    assert [lig["trecho"] for lig in dados["ligacoes"]] == [PIX["trecho"]]
+
+
+def test_exportacao_lista_as_agencias_pela_politica_de_agencias(indice):
+    from agencias import agencias_do_painel
+
+    esperado = agencias_do_painel(indice.registros)
+    assert {"Lupa", "Observador"} <= {a["nome"] for a in esperado["agencias_excluidas"]}
+
+    meta = sessao(indice, Claude({})).exporta()["meta"]
+
+    assert meta["agencias_incluidas"] == esperado["agencias_incluidas"]
+    assert meta["agencias_excluidas"] == esperado["agencias_excluidas"]
+    assert {"nome": "Estadão", "via": "ClaimReview na API do Google"} in meta["agencias_incluidas"]
+
+
+# ---------- retomada ----------
+
+def noite_movimentada(indice, relogio, ao_registrar=None, claude=None):
+    """Falas, publicação automática, aprovação com selo, recusa e despublicação."""
+    gasolina = afirmacao("a gasolina caiu trinta por cento no posto em um ano",
+                         "O preço da gasolina caiu 30% em um ano no governo Bolsonaro.", "numero")
+    claude = claude or Claude({FALA_DESEMPREGO: [DESEMPREGO], FALA_PIX: [PIX], FALA_GASOLINA: [gasolina],
+                               FALA_LICENCA: [afirmacao(
+                                   "você foi o único deputado da Assembleia que votou contra a licença-maternidade",
+                                   "Flávio Bolsonaro votou contra a licença-maternidade de seis meses na Alerj.",
+                                   "perene", {LICENCA_2022: (0.7, "Mesmo voto.")})]})
+    s = Sessao(indice, chamar=claude, relogio=relogio, ao_registrar=ao_registrar, meta={"limiar_automatico": 0.94})
+    s.marca_inicio(INICIO)
+    s.recebe_fala("Mediação", 0.0, FALA_MEDIACAO)
+    s.recebe_fala("Lula", 300.0, FALA_DESEMPREGO)  # aquecimento: fila
+    relogio.adianta(minutes=15)
+    s.recebe_fala("Flávio", 900.0, FALA_PIX)  # Estadão 0.95: sai sozinha
+    s.recebe_fala("Flávio", 950.0, FALA_GASOLINA)  # sem par
+    s.recebe_fala("Lula", 1000.0, FALA_LICENCA)  # 0.7: fila
+    desemprego, licenca = (p["id"] for p in s.fila())
+    s.aprova(desemprego, selos={DESEMPREGO_2025: "Verdadeiro, mas"})
+    s.recusa(licenca)
+    pix = next(lig["id"] for lig in s.exporta()["ligacoes"] if lig["origem"] == "automatica")
+    s.despublica(pix, "Ligação errada.")
+    return s
+
+
+def estado(s):
+    return s.fila(), s.recusadas(), s.descartados(), s.erros(), s.exporta()
+
+
+def test_repetir_o_registro_de_eventos_reconstroi_o_mesmo_estado_sem_chamar_o_claude(indice):
+    relogio = Relogio(INICIO)
+    original = noite_movimentada(indice, relogio)
+    assert len(original.exporta()["correcoes"]) == 1  # a noite teve de tudo
+    claude = Claude({})
+
+    copia = Sessao.reconstroi(indice, json.loads(json.dumps(original.eventos)), chamar=claude, relogio=relogio,
+                              meta={"limiar_automatico": 0.94})
+
+    assert claude.chamadas == []
+    assert estado(copia) == estado(original)
+    assert copia.eventos == original.eventos  # nada republicado nem registrado de novo
+
+
+def test_sessao_gravada_em_pasta_retoma_depois_de_um_travamento(indice, tmp_path):
+    relogio = Relogio(INICIO)
+    original = noite_movimentada(indice, relogio)
+    gravada = Sessao.abre(tmp_path, indice, chamar=original._chamar, relogio=Relogio(INICIO),
+                          meta={"limiar_automatico": 0.94})
+    for e in original.eventos:  # o mesmo registro, gravado evento a evento
+        gravada._ao_registrar(e)
+    with (tmp_path / "eventos.jsonl").open("a", encoding="utf-8") as f:
+        f.write('{"n": 999, "tipo": "fala", "fa')  # travou no meio da gravação de um evento
+    claude = Claude({FALA_PIX: [PIX]})
+
+    retomada = Sessao.abre(tmp_path, indice, chamar=claude, relogio=relogio, meta={"limiar_automatico": 0.94})
+
+    assert claude.chamadas == []
+    assert estado(retomada) == estado(original)
+    # e segue gravando no mesmo registro
+    retomada.recebe_fala("Flávio", 1500.0, FALA_PIX)
+    de_novo = Sessao.abre(tmp_path, indice, chamar=Claude({}), relogio=relogio, meta={"limiar_automatico": 0.94})
+    assert estado(de_novo) == estado(retomada)
+    assert len(de_novo.exporta()["ligacoes"]) == 2
+
+
+def test_fala_registrada_e_nao_analisada_antes_do_travamento_e_analisada_ao_retomar(indice):
+    relogio = Relogio(INICIO + timedelta(minutes=30))
+    original = Sessao(indice, chamar=Claude({FALA_PIX: [PIX]}), relogio=relogio)
+    original.recebe_fala("Flávio", 1800.0, FALA_PIX)
+    [fala] = original.eventos[:1]  # o processo morreu logo depois de registrar a fala
+    claude = Claude({FALA_PIX: [PIX], FALA_DESEMPREGO: [DESEMPREGO]})
+
+    retomada = Sessao.reconstroi(indice, [fala], chamar=claude, relogio=relogio)
+    assert retomada.fila() == [] and claude.chamadas == []
+    retomada.retoma_analises()
+
+    assert [p["trecho"] for p in retomada.fila()] == [PIX["trecho"]]
+    assert claude.extracoes() == 1
+    retomada.retoma_analises()  # nada mais pendente
+    assert claude.extracoes() == 1
