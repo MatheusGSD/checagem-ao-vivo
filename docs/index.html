@@ -205,6 +205,13 @@ svg text { font-family: var(--sans); }
 .dw .n { grid-column: 2; grid-row: 1 / span 2; font: 400 13px/1.2 var(--sans); color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 600px) { .dist { grid-template-columns: 1fr; gap: 24px; } }
 
+/* nuvens */
+.clouds { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.clouds figure { margin: 0; }
+.clouds h3 { display: flex; align-items: center; gap: 8px; }
+.clouds img { width: 100%; height: auto; display: block; }
+@media (max-width: 600px) { .clouds { grid-template-columns: 1fr; } }
+
 /* outros recortes */
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; }
 @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
@@ -334,7 +341,17 @@ svg [tabindex]:focus-visible { outline: none; stroke: var(--ink); stroke-width: 
   </section>
 
   <figure class="mid">
-    <div class="fig-h">Figura 5. As palavras que cada um usou muito mais que o outro</div>
+    <div class="fig-h">Figura 5. Nuvens de palavras, na mesma escala</div>
+    <p class="fig-sub">Quanto maior a palavra, mais vezes foi dita (mesma escala nas duas nuvens). <b>Em cor:</b> palavras que um falou muito mais que o outro, as dez da Figura 6. <b>Em cinza:</b> palavras que os dois usaram.</p>
+    <div class="clouds">
+      <figure><h3><i class="sw lula"></i>Lula</h3><picture><source srcset="img/nuvem_lula_escuro.png?v=7" media="(prefers-color-scheme: dark)"><img src="img/nuvem_lula.png?v=7" alt="Nuvem de palavras das falas de Lula" data-claro="img/nuvem_lula.png?v=7" data-escuro="img/nuvem_lula_escuro.png?v=7"></picture></figure>
+      <figure><h3><i class="sw flavio"></i>Flávio</h3><picture><source srcset="img/nuvem_flavio_escuro.png?v=7" media="(prefers-color-scheme: dark)"><img src="img/nuvem_flavio.png?v=7" alt="Nuvem de palavras das falas de Flávio Bolsonaro" data-claro="img/nuvem_flavio.png?v=7" data-escuro="img/nuvem_flavio_escuro.png?v=7"></picture></figure>
+    </div>
+    <details class="nota"><summary>Como lemos as palavras</summary><ul id="crit-nuvem" style="margin:8px 0 0;padding-left:18px"></ul></details>
+  </figure>
+
+  <figure class="mid">
+    <div class="fig-h">Figura 6. As palavras que cada um usou muito mais que o outro</div>
     <p class="fig-sub">A barra mostra o quanto a palavra é típica do candidato. À direita, quantas vezes Lula × Flávio a disseram. “Lula” lidera a lista de Flávio porque ele chamava o adversário pelo nome (seção 2).</p>
     <div class="dist" id="dist"></div>
     <p class="fig-src">Log-odds com prior de Dirichlet informativo (Monroe, Colaresi e Quinn, 2008), sobre lemas do spaCy pt_core_news_lg.</p>
@@ -419,6 +436,12 @@ function aplicaTema() {
   btn.innerHTML = t === "dark" ? `${ICONE.light}Claro` : `${ICONE.dark}Escuro`;
   btn.setAttribute("aria-label", t === "dark" ? "Mudar para o tema claro" : "Mudar para o tema escuro");
   btn.setAttribute("aria-pressed", t === "dark");
+  // nuvens: imagem própria para cada tema
+  document.querySelectorAll(".clouds picture").forEach(pic => {
+    const src = pic.querySelector("source"), img = pic.querySelector("img");
+    if (src) src.media = raiz.dataset.theme ? (t === "dark" ? "all" : "not all") : "(prefers-color-scheme: dark)";
+    img.src = img.dataset[t === "dark" ? "escuro" : "claro"];
+  });
 }
 document.getElementById("tema-btn").addEventListener("click", () => {
   raiz.dataset.theme = temaAtual() === "dark" ? "light" : "dark";
@@ -525,8 +548,8 @@ function render(d) {
     `Fora esse tema, cada um seguiu um caminho: Lula falou mais que Flávio de ${N.maisLula.map(t => `<i>${rot(t)}</i>`).join(" e ")}; ` +
     `Flávio, de ${N.maisFlavio.map(t => `<i>${rot(t)}</i>`).join(" e ")}.`;
   document.getElementById("p-pal").innerHTML =
-    "Contar palavras engana: os dois dizem muito “Brasil” e “governo”. Por isso comparamos o vocabulário: " +
-    "na figura, as palavras que um usou muito mais que o outro.";
+    "As nuvens mostram o que cada um mais disse, e por isso os dois aparecem com “Brasil” e “governo” em destaque. " +
+    "A Figura 6 compara o vocabulário dos dois e mostra só as palavras que um usou muito mais que o outro.";
 
   figPerguntas(d, N);
   figTom(N);
@@ -639,6 +662,16 @@ function figPalavras(d) {
       <span class="bar" style="width:${Math.abs(s.z) / maxZ * 100}%;background:var(--${C[q]})"></span></div>`).join("") + `</div>`).join("");
   document.querySelectorAll("#dist .dw").forEach(el => tipOn(el, () => `<div class="h">“${esc(el.dataset.w)}”</div>Lula disse ${el.dataset.a} vezes; Flávio, ${el.dataset.b}` +
     (el.dataset.tema ? `<br>Mais presente em falas sobre: ${esc(el.dataset.tema)}` : "")));
+  const cn = d.criterio_nuvem;
+  if (cn) document.getElementById("crit-nuvem").innerHTML = [
+    `<b>Entram:</b> ${esc(cn.classes)}; também ${esc(cn.tambem_entram)}.`,
+    `<b>Contam como um termo só:</b> ${cn.inteiros.map(esc).join(", ")}.`,
+    `<b>Mínimo:</b> ${cn.minimo_ocorrencias} ocorrências.`,
+    `<b>Saem:</b> palavras gramaticais (lista padrão do spaCy em português), as frases ${esc(cn.frases_excluidas)} e estas muletas e verbos genéricos: ${cn.muletas_excluidas.map(esc).join(", ")}.`,
+    `<b>Tamanho:</b> ${esc(cn.escala)}.`,
+    `<b>Cor:</b> as dez palavras mais típicas de cada candidato pelo log-odds com prior informativo (Monroe, Colaresi e Quinn, 2008), a mesma medida da Figura 6. O tamanho continua sendo só a frequência.`,
+    `O nome do adversário fica na nuvem: por isso “Lula” aparece grande na de Flávio (ver seção 2).`,
+  ].map(x => `<li style="margin-bottom:6px">${x}</li>`).join("");
 }
 
 // Explorar o que foi dito: uma fala por cartão, com perguntas em negrito e afirmações sublinhadas no texto,
@@ -1084,7 +1117,7 @@ function renderMetodo(d) {
     ["classificacao", "Classificação", "ia", `agente de IA (${agente(P.classificacao_por)})`,
       "O agente marca o tipo de cada fala (ataque, defesa, proposta), até três temas de uma lista fixa e um resumo, e lista as afirmações checáveis e as perguntas diretas. Cada fala recebe um tipo só: uma fala que mistura ataque e proposta conta inteira pelo tipo principal. Um programa confere que cada trecho citado existe, letra a letra, na transcrição."],
     ["contagens", "Contagens e palavras", "codigo", "código com regras fixas (spaCy)",
-      "Tempo de fala, ritmo, vezes que cada um disse o nome do outro e palavras típicas saem de contas com regras fixas, sem IA generativa."],
+      "Tempo de fala, ritmo, vezes que cada um disse o nome do outro, nuvens e palavras típicas saem de contas com regras fixas, sem IA generativa."],
     ["busca", "Busca por sentido (opcional)", "nav", "modelo aberto, no seu navegador (e5-small)",
       "Cada trecho de fala vira um vetor que representa seu sentido. Se você ativar a busca, sua consulta vira um vetor no seu navegador e aparecem as falas mais parecidas."],
   ];

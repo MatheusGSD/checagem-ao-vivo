@@ -26,11 +26,13 @@ site = Path(sys.argv[2])
 CANDS = ["Lula", "Flávio"]
 SLUG = {"Lula": "lula", "Flávio": "flavio"}
 # tons da mesma rampa que passam contraste nas superfícies clara e escura do painel
-CLOUD_TONES = {"Lula": ["#e34948", "#c93a3a", "#e66767", "#b33232"],
-               "Flávio": ["#2a78d6", "#256abf", "#3987e5", "#1c5cab"]}
-# versão para o modo escuro: tons mais claros das mesmas rampas, legíveis sobre #1a1a19
-CLOUD_TONES_ESCURO = {"Lula": ["#e66767", "#f08a8a", "#eb7a7a", "#f5a3a3"],
-                      "Flávio": ["#3987e5", "#6da7ec", "#5598e7", "#86b6ef"]}
+# nas nuvens, o tamanho é a frequência e a cor diz se a palavra é típica de quem fala: na cor do
+# candidato as 10 palavras que ele usou muito mais que o outro (as mesmas da figura de palavras típicas,
+# log-odds com prior); em cinza, as demais. Tons que passam contraste nas duas superfícies.
+COR_TIPICA = {"Lula": "#d33a39", "Flávio": "#2a6fc9"}
+COR_TIPICA_ESCURO = {"Lula": "#ec7a7a", "Flávio": "#5b9bea"}
+COR_OUTRA, COR_OUTRA_ESCURO = "#a19f98", "#7d7c77"
+N_TIPICAS = 10
 
 STOP_SUPERFICIE = nlp.Defaults.stop_words | EXTRA_STOP | {"deixa", "olha", "vai", "vou", "é", "tá", "lhe", "ô"}
 # palavra que nunca aparece em minúscula na transcrição é nome próprio ("Roberta Luchsinger", "Brasil")
@@ -136,6 +138,9 @@ for w, aw in prior.items():
 scores.sort(key=lambda x: x["z"])
 res["distintivas"] = {"Lula": [s for s in scores[::-1][:15] if s["z"] > 0],
                       "Flávio": [s for s in scores[:15] if s["z"] < 0]}
+# nas nuvens, ganham a cor do candidato as mesmas palavras da figura de típicas (as 10 primeiras)
+TIPICAS_NUVEM = {c: {x["palavra"] for x in res["distintivas"][c][:N_TIPICAS]} for c in CANDS}
+tipica = lambda c, w: w in TIPICAS_NUVEM[c]
 
 # cada palavra típica herda o tema das falas do candidato em que ela aparece (votos ponderados
 # pelas ocorrências; um turno com dois temas divide o voto). Junta "bala", "criança", "matar"
@@ -182,13 +187,11 @@ gmax = max(max(lem[c].values()) for c in CANDS)
 
 def nuvem(c, letra_max):
     freq = {w: math.sqrt(n) for w, n in lem[c].items() if n >= MIN_OCORR}
-    rng = random.Random(7)
-    tones = CLOUD_TONES[c]
     return WordCloud(width=1200, height=760, mode="RGBA", background_color=None, prefer_horizontal=0.92,
                      font_path="C:/Windows/Fonts/segoeuib.ttf", random_state=7, margin=6,
                      relative_scaling=1, max_words=len(freq), min_font_size=8,
                      max_font_size=round(letra_max * math.sqrt(max(lem[c].values()) / gmax)),
-                     color_func=lambda *a, **k: rng.choice(tones)).generate_from_frequencies(freq)
+                     color_func=lambda *a, **k: COR_TIPICA[c] if tipica(c, a[0] if a else k.get("word")) else COR_OUTRA).generate_from_frequencies(freq)
 
 
 def proporcional(wc, c, k):
@@ -209,9 +212,9 @@ else:
     raise SystemExit("nenhuma letra máxima coube na escala; aumente a área da nuvem")
 for c, wc in clouds.items():
     wc.to_file(str(site / "img" / f"nuvem_{SLUG[c]}.png"))
-    rng_escuro = random.Random(7)  # mesma disposição, só troca as cores
-    wc.recolor(color_func=lambda *a, **k: rng_escuro.choice(CLOUD_TONES_ESCURO[c]))
+    wc.recolor(color_func=lambda *a, **k: COR_TIPICA_ESCURO[c] if tipica(c, a[0] if a else k.get("word")) else COR_OUTRA_ESCURO)  # mesma disposição
     wc.to_file(str(site / "img" / f"nuvem_{SLUG[c]}_escuro.png"))
+print("  nuvens: típicas coloridas:", {c: sum(tipica(c, w) for w, n in lem[c].items() if n >= MIN_OCORR) for c in CANDS})
 print(f"  nuvens: letra máxima {letra_max}px para {gmax} ocorrências; "
       f"{', '.join(f'{c} {len(w.layout_)} termos' for c, w in clouds.items())}")
 
