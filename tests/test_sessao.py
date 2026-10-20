@@ -721,3 +721,41 @@ def test_fala_registrada_e_nao_analisada_antes_do_travamento_e_analisada_ao_reto
     assert claude.extracoes() == 1
     retomada.retoma_analises()  # nada mais pendente
     assert claude.extracoes() == 1
+
+
+GASOLINA_NOITE_URL = "https://g1.globo.com/fato-ou-fake/noticia/2026/10/23/gasolina-caiu-30-por-cento.ghtml"
+GASOLINA_NOITE = {**CHECAGEM_DA_NOITE, "id": GASOLINA_NOITE_URL, "url": GASOLINA_NOITE_URL,
+                  "frase": "Gasolina caiu 30% em um ano no governo Bolsonaro", "rotulo": "#NÃOÉBEMASSIM"}
+
+
+def test_atualizacao_da_base_interrompida_no_meio_termina_ao_retomar_sem_refazer_o_que_ja_foi_conferido():
+    registros = json.loads((FIXTURES / "base_sessao.json").read_text(encoding="utf-8"))["registros"]
+    corte = afirmacao("vai cortar o décimo terceiro e as aposentadorias",
+                      "Flávio Bolsonaro disse que, se eleito, vai cortar o 13º salário e as aposentadorias.",
+                      "perene", {FOF_13: (0.9, "Mesma fala atribuída a Flávio.")})
+    gasolina = afirmacao("a gasolina caiu trinta por cento no posto em um ano",
+                         "O preço da gasolina caiu 30% em um ano no governo Bolsonaro.", "numero",
+                         {GASOLINA_NOITE_URL: (0.85, "Mesmo número.")})
+    relogio = Relogio(INICIO + timedelta(minutes=30))
+    claude_original = Claude({FALA_13: [corte], FALA_GASOLINA: [gasolina]})
+    original = Sessao(Indice(registros), chamar=claude_original, relogio=relogio)
+    original.recebe_fala("Lula", 1500.0, FALA_13)
+    original.recebe_fala("Flávio", 1530.0, FALA_GASOLINA)
+    original.atualiza_base([CHECAGEM_DA_NOITE, GASOLINA_NOITE])
+    assert [p["trecho"] for p in original.fila()] == [corte["trecho"], gasolina["trecho"]]
+    # o processo morreu depois de registrar a base e a primeira reconferência
+    n = next(i for i, e in enumerate(original.eventos) if e.get("tardia")) + 1
+    claude = Claude({FALA_13: [corte], FALA_GASOLINA: [gasolina]})
+
+    retomada = Sessao.reconstroi(Indice(registros), json.loads(json.dumps(original.eventos[:n])), chamar=claude,
+                                 relogio=relogio)
+    assert [p["trecho"] for p in retomada.fila()] == [corte["trecho"]]
+    retomada.retoma_analises()
+
+    assert claude.confirmacoes() == 1  # só a gasolina volta ao Claude
+    assert estado(retomada) == estado(original)
+    retomada.retoma_analises()  # nada mais pendente
+    assert claude.confirmacoes() == 1
+    feitas = len(claude_original.chamadas)
+    original.retoma_analises()  # a atualização que terminou não é refeita
+    assert len(claude_original.chamadas) == feitas

@@ -11,10 +11,14 @@ dados da página (docs/globo/formato-dos-dados.md).
 Todo o estado muda por eventos (`Sessao.eventos`, também entregues a `ao_registrar`), que levam o que
 o Claude respondeu: repetir os eventos reconstrói o estado sem chamar o Claude de novo
 (`Sessao.reconstroi`; `Sessao.abre` faz isso a partir de <pasta>/eventos.jsonl e continua gravando lá).
+O que um travamento deixou pela metade (fala sem extração, afirmação sem confirmação, atualização da
+base sem todas as reconferências) é terminado por `retoma_analises`.
 
 O operador aprova (informando o selo visível na página da agência), recusa, despublica com motivo e
-corrige o rótulo. Com limiar (`meta["limiar_automatico"]`, lido de <dados>/avaliacao/limiar.json por
-`le_limiar`) e mais de 10 min passados desde o 00:00, a ligação com nota ≥ limiar é publicada sozinha.
+corrige o rótulo (despublicar e corrigir o rótulo entram nas correções públicas). Com limiar
+(`meta["limiar_automatico"]`, lido de <dados>/avaliacao/limiar.json por `le_limiar`) e mais de 10 min
+passados desde o 00:00, as checagens com nota ≥ limiar são publicadas sozinhas; as demais da mesma
+ligação esperam o operador na fila.
 
 Uso (repassa as falas de referência do debate da Band, com o Claude de verdade):
   python -P scripts/sessao.py band [--falas data/bloco1_final.json] [--dados DADOS] [--saida PASTA]
@@ -101,6 +105,11 @@ class Sessao:
         self._recusas = {}  # id -> {"urls": checagens recusadas, "motivo": motivo ou None}
         self._publicadas = {}  # id -> ligação no formato do arquivo de dados, na ordem de publicação
         self._correcoes = []
+        # n do evento "base" -> {"registros": ids novos, "afirmacoes": sem par a reconferir}, até o
+        # "base_conferida" (sobra aqui o que um travamento interrompeu)
+        self._reconferir = {}
+        self._reconferindo = set()  # bases sendo reconferidas agora (não é estado do registro)
+        self._ultima_base = None
         self._inicio = None  # 00:00 marcado pelo operador (marca_inicio)
         self._marca_publico()
 
@@ -167,13 +176,29 @@ class Sessao:
         novos = list({r["id"]: r for r in registros if r["id"] not in ja}.values())
         if not novos:
             return
-        self._registra({"tipo": "base", "registros": novos})  # registrada antes das chamadas ao Claude
-        ids = {r["id"] for r in novos}
-        with ThreadPoolExecutor(max_workers=CONFIRMACOES_EM_PARALELO) as ex:
-            eventos = list(ex.map(lambda a: self._confirma(a, entre=ids), list(self._sem_par)))
-        for evento in eventos:
-            if evento["tipo"] != "confirmacao" or evento["candidatas"]:  # sem candidata nova: nada mudou
-                self._registra({**evento, "tardia": True})
+        base = self._registra({"tipo": "base", "registros": novos})  # registrada antes das chamadas ao Claude
+        self._reconfere(base["n"])
+
+    def _reconfere(self, n):
+        """Reconfere contra os registros da base n as afirmações que estavam sem par quando ela chegou
+        e que ainda não foram reconferidas nem ganharam par, e registra "base_conferida" no fim."""
+        with self._trava:
+            # a retomada e a atualização ao vivo não reconferem a mesma base ao mesmo tempo
+            if (pendente := self._reconferir.get(n)) is None or n in self._reconferindo:
+                return
+            self._reconferindo.add(n)
+            sem_par = {a["id"] for a in self._sem_par}
+            ids, afirmacoes = pendente["registros"], [a for a in pendente["afirmacoes"] if a["id"] in sem_par]
+        try:
+            with ThreadPoolExecutor(max_workers=CONFIRMACOES_EM_PARALELO) as ex:
+                eventos = list(ex.map(lambda a: self._confirma(a, entre=ids), afirmacoes))
+            for evento in eventos:
+                if evento["tipo"] != "confirmacao" or evento["candidatas"]:  # sem candidata nova: nada mudou
+                    self._registra({**evento, "tardia": True, "base_n": n})
+            self._registra({"tipo": "base_conferida", "base_n": n})
+        finally:
+            with self._trava:
+                self._reconferindo.discard(n)
 
     def _nova_fala(self, quem, inicio_s, texto):
         return {"id": f"f{len(self._falas) + 1:04d}", "quem": quem, "inicio_s": inicio_s, "texto": texto}
@@ -281,7 +306,12 @@ class Sessao:
 
     def retoma_analises(self):
         """Termina as análises que um travamento interrompeu: falas de candidato registradas sem
-        extração e afirmações extraídas sem confirmação. Só elas voltam ao Claude."""
+        extração, afirmações extraídas sem confirmação e atualizações da base registradas sem todas as
+        reconferências das afirmações sem par. Só o que não está no registro volta ao Claude."""
+        with self._trava:
+            bases = sorted(self._reconferir)
+        for n in bases:
+            self._reconfere(n)
         with self._trava:
             feitas = {e.get("fala_id") for e in self.eventos if e["tipo"] in ("afirmacoes", "erro")}
             confirmadas = {e["afirmacao"]["id"] for e in self.eventos
@@ -379,6 +409,7 @@ class Sessao:
     # ---------- estado (só muda por eventos) ----------
 
     def _registra(self, evento):
+        """Registra e aplica o evento; devolve-o com o número e o horário."""
         with self._trava:
             evento = {"n": len(self.eventos) + 1, "em": self._agora(), **evento}
             self.eventos.append(evento)
@@ -389,6 +420,7 @@ class Sessao:
             for p in self._propostas[propostas:]:  # ligação nova: a política decide se sai sozinha
                 self._politica(p)
             self._avisa_publicado()
+            return evento
 
     def _politica(self, p):
         """Publicação automática: com limiar, depois dos 10 min de aquecimento, vão as checagens com
@@ -419,6 +451,10 @@ class Sessao:
     def _aplica(self, e):
         if e["tipo"] in EVENTOS_DE_PUBLICACAO:
             return self._aplica_publicacao(e)
+        if e.get("tardia"):  # reconferência feita: não se repete ao retomar (registros antigos sem base_n: a última base)
+            pendente = self._reconferir.get(e.get("base_n", self._ultima_base))
+            if pendente:
+                pendente["afirmacoes"] = [a for a in pendente["afirmacoes"] if a["id"] != e["afirmacao"]["id"]]
         if e["tipo"] == "fala":
             self._falas.append(e["fala"])
         elif e["tipo"] == "erro":
@@ -427,6 +463,11 @@ class Sessao:
             self._descartados += e["descartadas"]
         elif e["tipo"] == "base":  # repetir o registro também refaz a base em memória
             self.indice.acrescenta(e["registros"])
+            self._ultima_base = e["n"]
+            self._reconferir[e["n"]] = {"registros": {r["id"] for r in e["registros"]},
+                                        "afirmacoes": list(self._sem_par)}
+        elif e["tipo"] == "base_conferida":
+            self._reconferir.pop(e["base_n"], None)
         elif e["tipo"] == "confirmacao" and not e["confirmadas"]:
             if not e.get("tardia"):  # reconferida sem par: continua onde estava
                 self._sem_par.append(e["afirmacao"])
