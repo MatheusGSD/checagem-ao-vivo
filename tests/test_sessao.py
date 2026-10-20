@@ -249,6 +249,7 @@ def test_atualizacao_da_base_liga_uma_afirmacao_que_estava_sem_par():
 
     [lig] = s.fila()
     assert (lig["quem"], lig["minutagem_s"], lig["trecho"]) == ("Lula", 1500.0, corte["trecho"])
+    assert lig["ligada_depois"] is True
     [chk] = lig["checagens"]
     assert (chk["url"], chk["agencia"], chk["rotulo"], chk["data"]) == (FOF_13, "Fato ou Fake (g1)", "#FAKE", "2026-10-23")
     assert [a["trecho"] for a in s.exporta()["sem_par"]] == [gasolina["trecho"]]

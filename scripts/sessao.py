@@ -221,6 +221,7 @@ class Sessao:
                 "minutagem_s": a["minutagem_s"], "quem": a["quem"], "fala": self._fala(a["fala_id"])["texto"],
                 "trecho": a["trecho"], "reformulacao": a["reformulacao"], "tipo": a["tipo"],
                 "nota": max(c["nota"] for c in e["confirmadas"]), "proposta_em": e["em"],
+                "ligada_depois": bool(e.get("tardia")),
                 "checagens": [{**c["checagem"], "nota": c["nota"], "motivo": c["motivo"]} for c in e["confirmadas"]],
             })
 
