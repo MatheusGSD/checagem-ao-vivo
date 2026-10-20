@@ -337,13 +337,24 @@ def incorpora(pasta, paginas):
     return novos
 
 
-def atualiza(pasta, termos, chave, dias=1, pausa=PAUSA_S, pausa_google=0.5, log=print):
+def atualiza(pasta, termos, chave, dias=1, pausa=PAUSA_S, pausa_google=0.5, log=print, ao_erro=None):
     """Atualização durante o debate: Google só com checagens dos últimos `dias` dias e o RSS do Fato
-    ou Fake; o que vier de novo entra na base (ver incorpora). Devolve os registros novos."""
+    ou Fake; o que vier de novo entra na base (ver incorpora). Devolve os registros novos.
+    ao_erro(mensagem): buscas do Google que falharam e RSS fora do ar (a tela de aprovação)."""
     inicio = agora().replace(":", "-")
     saidas = [pasta / "brutos" / "google_api" / f"{inicio}.jsonl", pasta / "brutos" / "fato_ou_fake" / f"{inicio}.jsonl"]
-    coleta_google(termos, chave, saidas[0], dias=dias, pausa=pausa_google, log=lambda *_: None)
-    coleta_fof_rss(G1(pausa=pausa, log=log), saidas[1])
+    falhas = []
+    _, erros = coleta_google(termos, chave, saidas[0], dias=dias, pausa=pausa_google,
+                             log=lambda m: falhas.append(m.strip()) if m.lstrip().startswith(("HTTP", "rede")) else None)
+    if erros and ao_erro:
+        ao_erro(f"API do Google: {erros} de {len(termos)} buscas falharam (último: {falhas[-1] if falhas else '?'})")
+    try:  # o g1 fora do ar não pode levar junto o que veio do Google
+        if not coleta_fof_rss(G1(pausa=pausa, log=log), saidas[1]) and ao_erro:
+            ao_erro("RSS do Fato ou Fake não respondeu")
+    except Exception as e:  # noqa: BLE001
+        if not ao_erro:
+            raise
+        ao_erro(f"RSS do Fato ou Fake: {type(e).__name__}: {e}")
     novos = incorpora(pasta, le_jsonl(saidas))
     log(f"atualização {inicio}: {len(novos)} checagens novas "
         + ", ".join(f"{ag} {n}" for ag, n in Counter(r["agencia"] for r in novos).most_common()))

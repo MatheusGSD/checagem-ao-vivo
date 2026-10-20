@@ -61,6 +61,22 @@ python -P scripts/base_checagens.py incorporar BRUTO.jsonl   # acrescenta à bas
 python -P scripts/sessao.py band    # repassa as 150 falas da Band; grava data/sessao_band/{painel,fila}.json, eventos.jsonl e agente/
 ```
 
+**A noite num comando só:** `scripts/noite.py` liga as partes:
+
+- a linha de falas (`scripts/falas.py`), sobre o loopback do som do Windows ou sobre um arquivo;
+- a sessão;
+- a tela de aprovação (`scripts/aprovacao.py`), com um quadro de erros por etapa: transcrição e áudio, API do Claude, API do Google e publicação;
+- a atualização da base a cada 10 min;
+- o publicador (`--publicar`).
+
+O 00:00 é marcado uma vez, por Enter ou pelo botão da tela, e vale para a sessão e para as falas. Se a linha de falas cai, ela recomeça sozinha. Se o processo cai, o mesmo comando retoma a sessão pelo registro, sem chamar o Claude de novo para o que já foi feito e sem republicar. O modo pós-debate roda a mesma sessão sobre as gravações da noite e gera o painel completo. O passo a passo da noite está em `roteiros/`.
+
+```sh
+python -P scripts/noite.py ao-vivo --publicar --vocabulario data/vocabulario_globo.json   # a noite; Enter marca o 00:00
+python -P scripts/noite.py arquivo AUDIO --zero S [--inicio S --fim S] [--ritmo 0]         # ensaio sobre um arquivo
+python -P scripts/noite.py pos-debate [GRAVACAO.wav ...] --publicar                        # painel completo depois do debate
+```
+
 ## Limitações
 
 - O tempo de fala é medido no áudio, com pausas e apartes, e não no relógio oficial. O gráfico do relógio escalona cada candidato para 15 min. A estimativa deixa 1min07 para Lula quando o tempo de Flávio acaba, e a mediação anunciou 1min08.
