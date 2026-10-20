@@ -124,7 +124,7 @@ No notebook principal, na tomada, com "Melhor desempenho" e a reserva gravando e
    python -P scripts/noite.py ao-vivo --pasta data/ensaio/sessao_audivel --sem-base
    ```
 
-   Atenção: o ensaio chama o Claude de verdade. Pelo ensaio seco, são ~9 chamadas por minuto de confronto livre.
+   Atenção: o ensaio chama o Claude de verdade. Pelo ensaio seco, são ~8 chamadas por minuto de confronto livre (~13 mil tokens de entrada por minuto).
 3. Dê play e aperte Enter na abertura do mediador.
 4. Deixe tocar uns 20 min, com um trecho de confronto livre.
 5. No meio, feche o terminal e rode o mesmo comando de novo, para conferir a retomada com o loopback.
