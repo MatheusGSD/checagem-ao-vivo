@@ -4,8 +4,9 @@ checagens que agências já publicaram.
 Para cada fala de candidato: o Claude extrai as afirmações checáveis (prompts/extrair_afirmacoes.md),
 a base é consultada por sentido e o Claude confirma quais candidatas tratam da mesma afirmação
 (prompts/confirmar_ligacao.md). Ligações confirmadas vão para a fila; afirmações sem nenhuma
-confirmada ficam "sem par". O estado sai no formato do arquivo de dados da página
-(docs/globo/formato-dos-dados.md).
+confirmada ficam "sem par". A cada atualização da base (`atualiza_base`), as afirmações sem par são
+conferidas de novo contra os registros novos (ligação tardia). O estado sai no formato do arquivo de
+dados da página (docs/globo/formato-dos-dados.md).
 
 Todo o estado muda por eventos (`Sessao.eventos`, também entregues a `ao_registrar`), que levam o que
 o Claude respondeu: repetir os eventos reconstrói o estado sem chamar o Claude de novo
@@ -155,6 +156,22 @@ class Sessao:
             for fala, eventos in zip(falas, ex.map(self._analisa, falas)):
                 for evento in [{"tipo": "fala", "fala": fala}] + eventos:
                     self._registra(evento)
+
+    def atualiza_base(self, registros):
+        """Novos registros de checagem (atualização da base durante o debate, ver
+        base_checagens.atualiza): entram na base e as afirmações sem par são conferidas de novo só
+        contra eles (ligação tardia). As que ganham par seguem o caminho de qualquer ligação."""
+        ja = {r["id"] for r in self.indice.registros}
+        novos = list({r["id"]: r for r in registros if r["id"] not in ja}.values())
+        if not novos:
+            return
+        self._registra({"tipo": "base", "registros": novos})  # registrada antes das chamadas ao Claude
+        ids = {r["id"] for r in novos}
+        with ThreadPoolExecutor(max_workers=CONFIRMACOES_EM_PARALELO) as ex:
+            eventos = list(ex.map(lambda a: self._confirma(a, entre=ids), list(self._sem_par)))
+        for evento in eventos:
+            if evento["tipo"] != "confirmacao" or evento["candidatas"]:  # sem candidata nova: nada mudou
+                self._registra({**evento, "tardia": True})
 
     def _nova_fala(self, quem, inicio_s, texto):
         return {"id": f"f{len(self._falas) + 1:04d}", "quem": quem, "inicio_s": inicio_s, "texto": texto}
@@ -312,11 +329,11 @@ class Sessao:
             eventos += list(ex.map(self._confirma, afirmacoes))
         return eventos
 
-    def _confirma(self, a):
+    def _confirma(self, a, entre=None):
         # números mudam com o tempo: só valem checagens recentes; fatos perenes valem de qualquer data
         desde = NUMERO_DESDE if a["tipo"] == "numero" else None
         try:
-            candidatas = [r for _, r in self.indice.busca(a["reformulacao"], N_CANDIDATAS, desde=desde)]
+            candidatas = [r for _, r in self.indice.busca(a["reformulacao"], N_CANDIDATAS, desde=desde, entre=entre)]
             if not candidatas:
                 return {"tipo": "confirmacao", "afirmacao": a, "candidatas": [], "confirmadas": [],
                         "ignoradas": [], "chamada": None}
@@ -388,15 +405,20 @@ class Sessao:
             self._erros.append({k: v for k, v in e.items() if k not in ("tipo", "n")})
         elif e["tipo"] == "afirmacoes":
             self._descartados += e["descartadas"]
+        elif e["tipo"] == "base":  # repetir o registro também refaz a base em memória
+            self.indice.acrescenta(e["registros"])
         elif e["tipo"] == "confirmacao" and not e["confirmadas"]:
-            self._sem_par.append(e["afirmacao"])
+            if not e.get("tardia"):  # reconferida sem par: continua onde estava
+                self._sem_par.append(e["afirmacao"])
         elif e["tipo"] == "confirmacao":
             a = e["afirmacao"]
+            self._sem_par = [x for x in self._sem_par if x["id"] != a["id"]]  # ligação tardia sai de "sem par"
             self._propostas.append({
                 "id": f"lig-{len(self._propostas) + 1:04d}", "afirmacao_id": a["id"],
                 "minutagem_s": a["minutagem_s"], "quem": a["quem"], "fala": self._fala(a["fala_id"])["texto"],
                 "trecho": a["trecho"], "reformulacao": a["reformulacao"], "tipo": a["tipo"],
                 "nota": max(c["nota"] for c in e["confirmadas"]), "proposta_em": e["em"],
+                "ligada_depois": bool(e.get("tardia")),
                 "checagens": [{**c["checagem"], "nota": c["nota"], "motivo": c["motivo"]} for c in e["confirmadas"]],
             })
 
@@ -454,6 +476,7 @@ class Sessao:
         return self._agencias_cache[1]
 
     def _meta_padrao(self):
+        fof = any((r.get("fonte_coleta") or "").startswith("fato_ou_fake") for r in self.indice.registros)
         return {
             "titulo": "Lula × Flávio: o que as agências já checaram",
             "debate": "Debate do 2º turno · TV Globo · 23/10/2026",
@@ -461,7 +484,9 @@ class Sessao:
             "exemplo": False,
             "encerrado": False,
             "fontes": [{"nome": "Google Fact Check Tools API (ClaimReview)",
-                        "url": "https://developers.google.com/fact-check/tools/api"}],
+                        "url": "https://developers.google.com/fact-check/tools/api"}]
+                      + ([{"nome": "RSS e sitemap do Fato ou Fake (g1)", "url": "https://g1.globo.com/fato-ou-fake/"}]
+                         if fof else []),
             **self._agencias(),
             "modelo": MODELO,
             "prompts": [{"arquivo": f"prompts/{p}", "sha256": sha256_prompt(p)} for p in (EXTRAIR, CONFIRMAR)],

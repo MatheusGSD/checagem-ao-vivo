@@ -22,6 +22,8 @@
   },
   "vias": {
     "google_api": "ClaimReview na API do Google",
-    "google_explorer": "ClaimReview no Fact Check Explorer do Google"
+    "google_explorer": "ClaimReview no Fact Check Explorer do Google",
+    "fato_ou_fake_rss": "RSS do Fato ou Fake",
+    "fato_ou_fake_pagina": "sitemap do g1"
   }
 }
