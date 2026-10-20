@@ -1,6 +1,7 @@
 """Base local de checagens: normalizador de cada fonte num registro uniforme (só metadados).
 
-Um registro de checagem tem: id (URL canônica), url, agência e site, frase checada, quem disse,
+Um registro de checagem tem: id (URL canônica), url, agência (nome exibido e nome como a fonte
+entregou) e site, frase checada, quem disse,
 idioma, data e de onde ela veio (revisao, publicacao ou afirmacao), rótulo como a fonte entrega,
 data e fonte da coleta e as buscas que o trouxeram. Nada do corpo do texto da checagem.
 `normaliza` e `junta` são puras (sem rede); a coleta e o índice ficam em base_checagens.py.
@@ -50,7 +51,8 @@ def _registro(url, agencia, site, frase, quem_disse, idioma, data, rotulo, colet
     return {
         "id": url_canonica(url),
         "url": url,
-        "agencia": agencia,
+        "agencia": agencia,  # nome exibido; a política de agências (agencias.py) unifica grafias
+        "agencia_na_fonte": agencia,  # como a fonte entregou, nunca alterado
         "site": site,
         "frase": frase,
         "quem_disse": quem_disse,
