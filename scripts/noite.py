@@ -452,7 +452,7 @@ def main(argv=None):
     import base_checagens
     from base_checagens import Indice, pasta_base, raiz_principal
     from falas import PROMPT
-    from sessao import le_limiar
+    from sessao import MODELO, le_limiar
 
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -504,7 +504,7 @@ def main(argv=None):
                                                             f"{c[:8]} -> {a.remoto}/{a.ramo}", flush=True))
 
     def chamar(etapa, prompt, conteudo, schema):
-        return agente.chama(etapa, prompt, conteudo, schema, logs=pasta / "agente")
+        return agente.chama(etapa, prompt, conteudo, schema, logs=pasta / "agente", modelo=MODELO)
 
     atualiza_base = None
     if not a.sem_base:
@@ -534,7 +534,7 @@ def main(argv=None):
     if a.cmd == "pos-debate" and noite._inicio() is None:
         _marca_inicio_pela_gravacao(noite, _gravacoes(a, pasta, None)[0])
     print(f"sessão: {pasta} ({len(noite.sessao.eventos)} eventos no registro) · base: {len(indice.registros)} checagens · "
-          "publicação automática: " + (f"nota >= {limiar} depois de 10 min" if limiar is not None else "desligada")
+          f"modelo: {MODELO} · publicação automática: " + (f"nota >= {limiar} depois de 10 min" if limiar is not None else "desligada")
           + (f" · publicador -> {a.remoto}/{a.ramo}" if publicador else " · sem publicar"), flush=True)
     noite.comeca()
     print(f"tela de aprovação: http://127.0.0.1:{noite.tela.server_address[1]}/", flush=True)
