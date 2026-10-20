@@ -19,7 +19,7 @@ Regras gerais:
 | `meta` | objeto | ver abaixo |
 | `ligacoes` | lista de ligação | ligações publicadas, em qualquer ordem (a página ordena pela minutagem, mais recente primeiro) |
 | `sem_par` | lista de afirmação sem par | afirmações checáveis ainda sem checagem anterior |
-| `correcoes` | lista de correção | ligações despublicadas |
+| `correcoes` | lista de correção | ligações despublicadas e rótulos corrigidos, em qualquer ordem (a página ordena pelo horário, mais recente primeiro) |
 
 ## `meta`
 
@@ -78,11 +78,34 @@ Quando ganha ligação, a afirmação sai de `sem_par` e entra em `ligacoes` com
 
 ## Correção
 
+Duas formas, pelo campo `tipo`. Cada uma tem só os seus campos.
+
+### Despublicação (`"tipo": "despublicacao"`)
+
 | campo | tipo | o que é |
 |---|---|---|
+| `tipo` | `"despublicacao"` | |
 | `em` | horário | quando a ligação foi despublicada |
 | `ligacao_id` | texto | `id` da ligação retirada |
 | `motivo` | texto | por que saiu |
 | `retirado` | ligação | a ligação inteira, como estava publicada |
 
 Despublicar nunca apaga: a ligação sai de `ligacoes` e entra aqui.
+
+### Rótulo corrigido (`"tipo": "rotulo"`)
+
+| campo | tipo | o que é |
+|---|---|---|
+| `tipo` | `"rotulo"` | |
+| `em` | horário | quando o rótulo foi trocado |
+| `ligacao_id` | texto | `id` da ligação, que continua em `ligacoes` (até ser despublicada, se for) |
+| `minutagem_s` | segundos | da ligação |
+| `quem` | `"Lula"` ou `"Flávio"` | da ligação |
+| `agencia` | texto | agência da checagem cujo rótulo mudou |
+| `url` | texto | link da checagem (o mesmo `url` da checagem na ligação) |
+| `rotulo_anterior` | texto | rótulo exibido até a troca |
+| `fonte_rotulo_anterior` | `"selo_da_pagina"` ou `"dados_da_agencia"` | de onde vinha o rótulo anterior |
+| `rotulo` | texto | rótulo exibido a partir de agora |
+| `fonte_rotulo` | `"selo_da_pagina"` | o operador conferiu o selo visível na página da agência |
+
+Corrigir o rótulo troca o rótulo da checagem na ligação e deixa a troca registrada aqui; trocas seguidas na mesma checagem geram uma entrada cada.

@@ -80,6 +80,7 @@
   ],
   "correcoes": [
     {
+      "tipo": "despublicacao",
       "em": "2026-10-23T22:12:40-03:00",
       "ligacao_id": "lig-0002",
       "motivo": "A checagem tratava do desmatamento de 2019, não do período citado na fala.",
@@ -97,6 +98,19 @@
           {"agencia": "UOL Confere", "data": "2025-08-20", "rotulo": "Verdadeiro", "fonte_rotulo": "dados_da_agencia", "url": "https://example.org/exemplo/uol-desmatamento"}
         ]
       }
+    },
+    {
+      "tipo": "rotulo",
+      "em": "2026-10-23T22:40:05-03:00",
+      "ligacao_id": "lig-0004",
+      "minutagem_s": 4325,
+      "quem": "Flávio",
+      "agencia": "Estadão Verifica",
+      "url": "https://example.org/exemplo/estadao-alimentos",
+      "rotulo_anterior": "Falso",
+      "fonte_rotulo_anterior": "dados_da_agencia",
+      "rotulo": "Enganoso",
+      "fonte_rotulo": "selo_da_pagina"
     }
   ]
 }
