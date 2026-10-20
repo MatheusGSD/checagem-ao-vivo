@@ -1,0 +1,188 @@
+{
+ "claims": [
+  {
+   "text": "Meta AI faz camiseta de Flávio Bolsonaro, mas se recusa a fazer de Lula",
+   "claimant": "redes sociais",
+   "claimDate": "2026-10-13T00:00:00Z",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "Projeto Comprova",
+      "site": "projetocomprova.com.br"
+     },
+     "url": "https://projetocomprova.com.br/publica%C3%A7%C3%B5es/meta-ai-gerou-imagem-com-o-nome-de-flavio-mas-recusou-o-mesmo-pedido-relacionado-a-lula-entenda/",
+     "title": "Meta AI gerou imagem com o nome de Flávio, mas recusou o mesmo pedido relacionado a Lula; entenda",
+     "reviewDate": "2026-10-15T00:00:00Z",
+     "textualRating": "Falta contexto",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Cleitinho mostra áudio de Flávio Bolsonaro sobre Nossa Senhora Aparecida",
+   "claimant": "Boatos de internet",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "BOL - UOL",
+      "site": "bol.uol.com.br"
+     },
+     "url": "https://www.bol.uol.com.br/noticias/2026/10/14/e-montagem-video-de-cleitinho-mostrando-audio-de-flavio-sobre-nossa-senhora.ghtm",
+     "title": "Vídeo de Cleitinho com áudio de Flávio Bolsonaro sobre padroeira é montagem",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    },
+    {
+     "publisher": {
+      "name": "UOL Notícias",
+      "site": "noticias.uol.com.br"
+     },
+     "url": "https://noticias.uol.com.br/confere/ultimas-noticias/2026/10/14/e-montagem-video-de-cleitinho-mostrando-audio-de-flavio-sobre-nossa-senhora.ghtm",
+     "title": "Vídeo de Cleitinho com áudio de Flávio Bolsonaro sobre padroeira é montagem",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Trabalhadora doméstica 'faz o L' de apoio a Lula em apartamento com adesivo de Flávio Bolsonaro",
+   "claimant": "Boatos em redes sociais",
+   "claimDate": "2026-10-14T14:38:03Z",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "Estadão",
+      "site": "estadao.com.br"
+     },
+     "url": "https://www.estadao.com.br/estadao-verifica/adesivo-flavio-digitalmente-imagem-empregada-domestica-fez-l/",
+     "title": "Falso adesivo sugere divergência política entre empregada e donos de apartamento",
+     "textualRating": "Enganoso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Mapa mostra que Flávio Bolsonaro ganhou a eleição com 54,98%",
+   "claimant": "Várias fontes",
+   "claimDate": "2026-10-05T00:00:00Z",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "AFP Checamos",
+      "site": "checamos.afp.com"
+     },
+     "url": "https://checamos.afp.com/doc.afp.com.D2TN8T3",
+     "title": "Mapa viral distorce resultados de Flávio e Lula no primeiro turno das eleições de 2026",
+     "reviewDate": "2026-10-09T22:14:00Z",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Cleitinho mostra áudio de Flávio Bolsonaro sobre tirar Padroeira do Brasil",
+   "claimant": "Várias fontes",
+   "claimDate": "2026-09-26T00:00:00Z",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "AFP Checamos",
+      "site": "checamos.afp.com"
+     },
+     "url": "https://checamos.afp.com/doc.afp.com.D2TQ6ZR",
+     "title": "Cleitinho não reproduziu áudio de Flávio Bolsonaro sobre tirar Padroeira do Brasil; vídeo é montagem",
+     "reviewDate": "2026-10-09T22:29:00Z",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Flávio Bolsonaro diz que vai cortar aposentadorias, 13º salário e programa Pé-de-Meia",
+   "claimant": "Postagens em redes sociais",
+   "claimDate": "2026-10-09T20:50:42Z",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "Estadão",
+      "site": "estadao.com.br"
+     },
+     "url": "https://www.estadao.com.br/estadao-verifica/flavio-bolsonaro-corte-aposentadorias-13-salario-pe-de-meia-fake-news/",
+     "title": "É falso que Flávio Bolsonaro tenha anunciado corte em aposentadorias, no 13º salário e no Pé-de-Meia",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "O Sport Club Corinthians Paulista acabou de declarar seu apoio ao Flávio Bolsonaro.",
+   "claimant": "desinformação",
+   "claimDate": "2026-10-09T00:00:00Z",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "Aos Fatos",
+      "site": "aosfatos.org"
+     },
+     "url": "https://www.aosfatos.org/noticias/corinthians-apoio-flavio-bolsonaro-falso/",
+     "title": "Corinthians não declarou apoio a Flávio Bolsonaro",
+     "reviewDate": "2026-10-09T00:00:00Z",
+     "textualRating": "falso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Porcentagem de Flávio diminiui entre 21,96% e 24,95% da apuração mesmo ele tendo tido mais votos que os outros candidatos",
+   "claimant": "Redes Sociais",
+   "claimDate": "2026-10-09T18:02:50Z",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "Estadão",
+      "site": "estadao.com.br"
+     },
+     "url": "https://www.estadao.com.br/estadao-verifica/queda-porcentagem-flavio-bolsonaro-apuracao-nao-e-erro/",
+     "title": "Vídeo enganoso desconsidera matemática básica ao levantar suspeita sobre apuração",
+     "textualRating": "Enganoso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Flávio diz que vai cortar aposentadorias, o 13º salário e o Pé-de-Meia",
+   "claimant": "Boato de internet",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "UOL Notícias",
+      "site": "noticias.uol.com.br"
+     },
+     "url": "https://noticias.uol.com.br/confere/ultimas-noticias/2026/10/09/desinformacao-falso-video-ia-flavio-cortes-aposentadoria-13-salario.ghtm",
+     "title": "Vídeo de Flávio anunciando cortes em aposentadorias e 13º salário é IA",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Após primeiro turno, Flávio anunciou cortes em pensões, 13º e Pé-de-Meia é ‘deepfake’",
+   "claimant": "desinformação",
+   "claimDate": "2026-10-08T00:00:00Z",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "Aos Fatos",
+      "site": "aosfatos.org"
+     },
+     "url": "https://www.aosfatos.org/noticias/flavio-cortes-pensoes-deepfake/",
+     "title": "Vídeo em que Flávio anuncia cortes em pensões, 13º e Pé-de-Meia é ‘deepfake’",
+     "reviewDate": "2026-10-08T00:00:00Z",
+     "textualRating": "falso",
+     "languageCode": "pt"
+    }
+   ]
+  }
+ ],
+ "nextPageToken": "CBQ"
+}

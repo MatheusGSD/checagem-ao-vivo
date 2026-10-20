@@ -1,0 +1,507 @@
+{
+ "descricao": "Buscas na API do Google Fact Check (claims:search, languageCode=pt) para montar a base de checagens antes do debate da Globo. Cada termo é buscado e paginado até esgotar.",
+ "nota_temas_telao": "PROVISÓRIO: a lista oficial dos 10 temas do telão do debate da Globo não foi encontrada; estes são palpites a trocar pela lista divulgada.",
+ "nomes": [
+  "Lula",
+  "Luiz Inácio Lula da Silva",
+  "Flávio Bolsonaro",
+  "Jair Bolsonaro",
+  "Michelle Bolsonaro",
+  "Eduardo Bolsonaro",
+  "Carlos Bolsonaro",
+  "Janja",
+  "Lulinha",
+  "Fábio Luís Lula da Silva",
+  "Frei Chico",
+  "Daniel Vorcaro",
+  "Banco Master",
+  "BRB Banco de Brasília",
+  "Roberta Luchsinger",
+  "Careca do INSS",
+  "Fernando Haddad",
+  "Geraldo Alckmin",
+  "Gabriel Galípolo",
+  "Jaques Wagner",
+  "Rui Costa",
+  "Gleisi Hoffmann",
+  "André Mendonça",
+  "Alexandre de Moraes",
+  "Gilmar Mendes",
+  "Deltan Dallagnol",
+  "Sergio Moro",
+  "Tarcísio de Freitas",
+  "Renan Santos",
+  "Hugo Motta",
+  "Davi Alcolumbre",
+  "Valdemar Costa Neto",
+  "Nikolas Ferreira",
+  "Javier Milei",
+  "Donald Trump",
+  "Nicolás Maduro",
+  "Marcola",
+  "Instituto Lula",
+  "Polícia Federal",
+  "STF",
+  "TSE",
+  "César Tralli"
+ ],
+ "temas_telao": [
+  "economia e emprego",
+  "saúde pública",
+  "educação",
+  "segurança pública",
+  "corrupção",
+  "meio ambiente Amazônia",
+  "previdência aposentadoria",
+  "programas sociais",
+  "política externa",
+  "infraestrutura"
+ ],
+ "regioes": [
+  "Lula Norte",
+  "Flávio Bolsonaro Norte",
+  "Lula Nordeste",
+  "Flávio Bolsonaro Nordeste",
+  "Lula Centro-Oeste",
+  "Flávio Bolsonaro Centro-Oeste",
+  "Lula Sudeste",
+  "Flávio Bolsonaro Sudeste",
+  "Lula Sul",
+  "Flávio Bolsonaro Sul"
+ ],
+ "assuntos": {
+  "economia": [
+   "inflação",
+   "desemprego",
+   "salário mínimo",
+   "dívida pública",
+   "taxa de juros Selic",
+   "isenção do imposto de renda",
+   "preço da gasolina",
+   "PIB",
+   "dólar",
+   "reforma tributária",
+   "arcabouço fiscal",
+   "taxa das blusinhas",
+   "taxação do Pix",
+   "escala 6x1",
+   "Desenrola",
+   "Pé-de-Meia",
+   "Bolsa Família",
+   "MEI",
+   "fome",
+   "cesta básica"
+  ],
+  "seguranca": [
+   "crime organizado facções",
+   "PCC",
+   "Comando Vermelho",
+   "armas de fogo",
+   "munições",
+   "feminicídio",
+   "homicídios",
+   "PEC da Segurança Pública",
+   "operação policial no Rio",
+   "milícia",
+   "Escritório do Crime"
+  ],
+  "saude": [
+   "SUS",
+   "Mais Médicos",
+   "Farmácia Popular",
+   "vacinas",
+   "fila de cirurgias",
+   "dengue"
+  ],
+  "outros": [
+   "fraude no INSS",
+   "CPI do INSS",
+   "Mensalão",
+   "Petrolão",
+   "Lava Jato",
+   "emendas Pix",
+   "orçamento secreto",
+   "8 de janeiro",
+   "golpe de Estado",
+   "anistia",
+   "urnas eletrônicas",
+   "fraude eleitoral",
+   "pesquisas eleitorais",
+   "terras indígenas",
+   "desmatamento",
+   "queimadas",
+   "tarifaço Trump",
+   "Irã",
+   "Venezuela",
+   "Israel"
+  ]
+ },
+ "fonte_afirmacoes": "data/bloco1_classificacao.json (as 73 afirmações da Band; busca = reformulação neutra)",
+ "afirmacoes_band": [
+  {
+   "t": 1.6,
+   "quem": "Lula",
+   "busca": "Flávio, deputado estadual em 2009, foi o único de 49 deputados a votar contra ampliar em dois meses a licença-maternidade de servidoras."
+  },
+  {
+   "t": 63.0,
+   "quem": "Flávio",
+   "busca": "Roberta Luchsinger fez acusações contra Lula no dia anterior."
+  },
+  {
+   "t": 63.0,
+   "quem": "Flávio",
+   "busca": "Lula disse que não conhecia Roberta Luchsinger."
+  },
+  {
+   "t": 91.5,
+   "quem": "Lula",
+   "busca": "Roberta Luchsinger é parceira de um sócio de Flávio, chamado de \"careca\"."
+  },
+  {
+   "t": 94.3,
+   "quem": "Flávio",
+   "busca": "Roberta Luchsinger disse ser sócia do filho de Lula."
+  },
+  {
+   "t": 127.2,
+   "quem": "Flávio",
+   "busca": "O \"careca do INSS\" atuou no governo Lula."
+  },
+  {
+   "t": 127.2,
+   "quem": "Flávio",
+   "busca": "O \"careca do INSS\" fez pagamentos ao filho de Lula."
+  },
+  {
+   "t": 127.2,
+   "quem": "Flávio",
+   "busca": "O filho de Lula mora em bairro rico na Espanha, vizinho de Vini Júnior."
+  },
+  {
+   "t": 127.2,
+   "quem": "Flávio",
+   "busca": "Roberta Luchsinger disse saber quem sustenta o filho de Lula."
+  },
+  {
+   "t": 148.9,
+   "quem": "Lula",
+   "busca": "O filho de Lula abriu seus sigilos bancário e telefônico à investigação."
+  },
+  {
+   "t": 148.9,
+   "quem": "Lula",
+   "busca": "O governo Lula desmontou a quadrilha do INSS, prendeu integrantes e ressarciu aposentados."
+  },
+  {
+   "t": 188.7,
+   "quem": "Flávio",
+   "busca": "A Polícia Federal não fez diligências contra o filho de Lula."
+  },
+  {
+   "t": 205.1,
+   "quem": "Lula",
+   "busca": "O irmão de Flávio está nos Estados Unidos atuando contra o Brasil."
+  },
+  {
+   "t": 205.1,
+   "quem": "Lula",
+   "busca": "O irmão de Flávio pediu intervenção de Trump no Brasil."
+  },
+  {
+   "t": 205.1,
+   "quem": "Lula",
+   "busca": "Na manifestação bolsonarista do dia havia um torpedo americano."
+  },
+  {
+   "t": 256.5,
+   "quem": "Lula",
+   "busca": "O filho de Lula é alvo de três inquéritos."
+  },
+  {
+   "t": 256.5,
+   "quem": "Lula",
+   "busca": "O processo envolvendo o filho de Lula está com o ministro André Mendonça."
+  },
+  {
+   "t": 281.5,
+   "quem": "Lula",
+   "busca": "O esquema de fraude no INSS foi montado durante o governo Bolsonaro."
+  },
+  {
+   "t": 281.5,
+   "quem": "Lula",
+   "busca": "O governo recuperou 100 bilhões do esquema e pagou 3,5 bilhões aos aposentados."
+  },
+  {
+   "t": 303.3,
+   "quem": "Flávio",
+   "busca": "Roberta Luchsinger disse que o filho de Lula é seu sócio."
+  },
+  {
+   "t": 303.3,
+   "quem": "Flávio",
+   "busca": "\"Marcola\" abria portas de ministérios para o filho de Lula negociar."
+  },
+  {
+   "t": 331.3,
+   "quem": "Flávio",
+   "busca": "Aliados de Lula comemoraram o fim da CPI do INSS."
+  },
+  {
+   "t": 331.3,
+   "quem": "Flávio",
+   "busca": "Frei Chico, irmão de Lula, é vice-presidente de sindicato envolvido nos descontos do INSS."
+  },
+  {
+   "t": 378.0,
+   "quem": "Lula",
+   "busca": "Lula teve 56 milhões de votos."
+  },
+  {
+   "t": 387.1,
+   "quem": "Flávio",
+   "busca": "5 milhões de aposentados foram lesados no esquema do INSS."
+  },
+  {
+   "t": 446.2,
+   "quem": "Lula",
+   "busca": "Flávio fez 43 afirmações falsas sobre o caso Vorcaro."
+  },
+  {
+   "t": 446.2,
+   "quem": "Lula",
+   "busca": "Jair Bolsonaro fazia 11 afirmações falsas por dia."
+  },
+  {
+   "t": 482.5,
+   "quem": "Flávio",
+   "busca": "Lula é o único presente no auditório já condenado ou preso por corrupção e lavagem de dinheiro."
+  },
+  {
+   "t": 482.5,
+   "quem": "Flávio",
+   "busca": "Bolsonaro enviou, no início do governo, MP que incluía combate a fraudes no INSS."
+  },
+  {
+   "t": 482.5,
+   "quem": "Flávio",
+   "busca": "A bancada do PT propôs emenda à MP que favoreceu descontos de sindicatos no INSS."
+  },
+  {
+   "t": 482.5,
+   "quem": "Flávio",
+   "busca": "O Congresso eleito em 2026 é mais à direita que o anterior."
+  },
+  {
+   "t": 559.7,
+   "quem": "Lula",
+   "busca": "Flávio é alvo de vários inquéritos."
+  },
+  {
+   "t": 581.5,
+   "quem": "Flávio",
+   "busca": "Um áudio de Vorcaro menciona 30 milhões por fora para o Instituto Lula."
+  },
+  {
+   "t": 611.4,
+   "quem": "Lula",
+   "busca": "Flávio recebeu 134 milhões ligados a Vorcaro após dizer que não recebeu e que o valor foi para um fundo."
+  },
+  {
+   "t": 665.5,
+   "quem": "Flávio",
+   "busca": "Lula participou de reunião fechada com Haddad, Galípolo e Vorcaro."
+  },
+  {
+   "t": 694.9,
+   "quem": "Lula",
+   "busca": "Vorcaro tornou-se banqueiro durante o governo Bolsonaro."
+  },
+  {
+   "t": 694.9,
+   "quem": "Lula",
+   "busca": "Vorcaro está preso."
+  },
+  {
+   "t": 704.4,
+   "quem": "Lula",
+   "busca": "Vorcaro deu um golpe de 60 bilhões de reais."
+  },
+  {
+   "t": 745.3,
+   "quem": "Flávio",
+   "busca": "A prisão de Vorcaro foi determinada pelo ministro André Mendonça."
+  },
+  {
+   "t": 745.3,
+   "quem": "Flávio",
+   "busca": "Jaques Wagner e Rui Costa são citados em acusações ligadas a Vorcaro."
+  },
+  {
+   "t": 834.3,
+   "quem": "Flávio",
+   "busca": "Os 134 milhões foram destinados ao filme sobre Jair Bolsonaro."
+  },
+  {
+   "t": 834.3,
+   "quem": "Flávio",
+   "busca": "Lula reclamou recentemente que ninguém o chama de mito."
+  },
+  {
+   "t": 863.2,
+   "quem": "Lula",
+   "busca": "A diretora do filme sobre Bolsonaro disse não ter recebido nada."
+  },
+  {
+   "t": 890.0,
+   "quem": "Lula",
+   "busca": "Lula, presidente por 12 anos, tem apartamento de 190 m² avaliado em 1,5 milhão."
+  },
+  {
+   "t": 890.0,
+   "quem": "Lula",
+   "busca": "Flávio comprou casa de 10 milhões e pagou parte à vista com dinheiro do BRB, ligado ao caso Vorcaro."
+  },
+  {
+   "t": 910.7,
+   "quem": "Flávio",
+   "busca": "O governo Lula gasta mais de 350 bilhões visando à reeleição."
+  },
+  {
+   "t": 910.7,
+   "quem": "Flávio",
+   "busca": "Lula disputa sua sétima eleição presidencial."
+  },
+  {
+   "t": 910.7,
+   "quem": "Flávio",
+   "busca": "O Bolsa Família ficou sem reajuste durante os quatro anos do governo Lula."
+  },
+  {
+   "t": 910.7,
+   "quem": "Flávio",
+   "busca": "O reajuste recente do Bolsa Família equivale a R$ 3 por dia."
+  },
+  {
+   "t": 998.8,
+   "quem": "Lula",
+   "busca": "A reposição inflacionária do benefício é obrigação legal."
+  },
+  {
+   "t": 998.8,
+   "quem": "Lula",
+   "busca": "O governo Lula anistiou 12,7 bilhões em dívidas de MEIs."
+  },
+  {
+   "t": 1041.3,
+   "quem": "Flávio",
+   "busca": "Bolsonaro elevou o benefício mínimo do Bolsa Família para 600 reais."
+  },
+  {
+   "t": 1041.3,
+   "quem": "Flávio",
+   "busca": "Nos governos Lula anteriores, o benefício médio era de 190 reais; Bolsonaro triplicou o valor."
+  },
+  {
+   "t": 1088.2,
+   "quem": "Lula",
+   "busca": "Não há registro no Banco Central de pagamento ao filme."
+  },
+  {
+   "t": 1128.5,
+   "quem": "Lula",
+   "busca": "Flávio, como senador, interferiu para que policial que matou criança de cinco anos com tiro de fuzil não fosse preso."
+  },
+  {
+   "t": 1154.3,
+   "quem": "Flávio",
+   "busca": "73% dos presos que votaram escolheram Lula."
+  },
+  {
+   "t": 1177.7,
+   "quem": "Flávio",
+   "busca": "Jair Bolsonaro não pode votar para presidente."
+  },
+  {
+   "t": 1222.6,
+   "quem": "Flávio",
+   "busca": "Lula foi condenado em primeira e segunda instâncias, no STJ e no STF."
+  },
+  {
+   "t": 1277.9,
+   "quem": "Lula",
+   "busca": "Flávio defendeu retirar a marcação de identificação das munições."
+  },
+  {
+   "t": 1318.2,
+   "quem": "Lula",
+   "busca": "Flávio empregou a irmã e a mulher de homem ligado ao Escritório do Crime."
+  },
+  {
+   "t": 1327.6,
+   "quem": "Flávio",
+   "busca": "O governo Lula emprega condenados no Mensalão e no caso Petrobras."
+  },
+  {
+   "t": 1348.9,
+   "quem": "Lula",
+   "busca": "O governo Bolsonaro liberou mais de um milhão de armas, parte delas desviada ao crime organizado."
+  },
+  {
+   "t": 1348.9,
+   "quem": "Lula",
+   "busca": "O governo Bolsonaro liberou 1,1 bilhão de munições."
+  },
+  {
+   "t": 1431.7,
+   "quem": "Flávio",
+   "busca": "O número de armas e munições citado por Lula não existe."
+  },
+  {
+   "t": 1445.3,
+   "quem": "Flávio",
+   "busca": "O filho de Lula agrediu a própria mulher."
+  },
+  {
+   "t": 1601.3,
+   "quem": "Lula",
+   "busca": "O PL afirma que vai mudar desde já sua posição sobre o tema."
+  },
+  {
+   "t": 1607.4,
+   "quem": "Flávio",
+   "busca": "O governo Lula registra recordes de assassinatos e agressões de mulheres, fechamento de empresas e criminalidade."
+  },
+  {
+   "t": 1607.4,
+   "quem": "Flávio",
+   "busca": "A campanha de Lula foi condenada várias vezes pelo TSE por desinformação e teve propagandas retiradas."
+  },
+  {
+   "t": 1654.4,
+   "quem": "Flávio",
+   "busca": "Nicolás Maduro está preso."
+  },
+  {
+   "t": 1654.4,
+   "quem": "Flávio",
+   "busca": "Lula enviou o vice-presidente à posse do presidente do Irã."
+  },
+  {
+   "t": 1808.5,
+   "quem": "Flávio",
+   "busca": "Lula gastou 7 bilhões de reais em viagens com Janja."
+  },
+  {
+   "t": 1867.2,
+   "quem": "Lula",
+   "busca": "O governo Lula fez a maior demarcação de terras indígenas do país."
+  },
+  {
+   "t": 1867.2,
+   "quem": "Lula",
+   "busca": "O governo Lula criou o Pé-de-Meia para reduzir a evasão escolar."
+  }
+ ]
+}

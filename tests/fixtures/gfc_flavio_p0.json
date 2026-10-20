@@ -1,0 +1,195 @@
+{
+ "claims": [
+  {
+   "text": "IstoÉ publicou capa com Flávio Bolsonaro e título \"Nasce o anti-Lula\"",
+   "claimant": "Boato de internet",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "UOL Notícias",
+      "site": "noticias.uol.com.br"
+     },
+     "url": "https://noticias.uol.com.br/confere/ultimas-noticias/2026/10/20/istoe-nao-publicou-capa-com-flavio-bolsonaro-imagem-foi-alterada-por-ia.ghtm",
+     "title": "IstoÉ não publicou capa com Flávio Bolsonaro; imagem foi alterada ...",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Multidão lota 12 quarteirões da Paulista para ato de Flávio Bolsonaro",
+   "claimant": "Boato de internet",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "UOL Notícias",
+      "site": "noticias.uol.com.br"
+     },
+     "url": "https://noticias.uol.com.br/confere/ultimas-noticias/2026/10/20/falso-video-multidao-avenida-paulista-ato-flavio-bolsonaro.ghtm",
+     "title": "Vídeo de avenida Paulista cheia é de 2024, não de ato de Flávio no ...",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "O governador eleito do Maranhão, Eduardo Braide (PSD), anunciou apoio a Flávio Bolsonaro",
+   "claimant": "Easy Fatos",
+   "claimDate": "2026-10-20T15:43:22Z",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "Estadão",
+      "site": "estadao.com.br"
+     },
+     "url": "https://www.estadao.com.br/estadao-verifica/flso-governador-eleito-mranhao-apoio-flavio-bolsonaro/",
+     "title": "É falso que o governador eleito do Maranhão tenha declarado ...",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Imagem mostra Flávio Bolsonaro na capa da revista IstoÉ como o \"anti-Lula\"",
+   "claimant": "Várias fontes",
+   "claimDate": "2026-10-14T00:00:00Z",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "AFP Checamos",
+      "site": "checamos.afp.com"
+     },
+     "url": "https://checamos.afp.com/doc.afp.com.D3Q24CQ",
+     "title": "Revista IstoÉ não publicou capa com Flávio Bolsonaro como “anti-Lula”; posts manipulam edição de 2017",
+     "reviewDate": "2026-10-19T15:31:00Z",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Bloco do 22 com Flávio Bolsonaro em Minas Gerais no dia 15 de outubro",
+   "claimant": "Várias fontes",
+   "claimDate": "2026-10-16T00:00:00Z",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "AFP Checamos",
+      "site": "checamos.afp.com"
+     },
+     "url": "https://checamos.afp.com/doc.afp.com.D3RP263",
+     "title": "Registro do Círio de Nazaré é falsamente associado a manifestação pró-Bolsonaro em Minas",
+     "reviewDate": "2026-10-19T21:04:00Z",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Papa Leão 14 declarou apoio a Flávio Bolsonaro no segundo turno",
+   "claimant": "Boatos de internet",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "BOL - UOL",
+      "site": "bol.uol.com.br"
+     },
+     "url": "https://www.bol.uol.com.br/noticias/2026/10/16/e-falso-que-papa-leao-14-declarou-apoio-a-flavio-bolsonaro.ghtm",
+     "title": "É falso que Papa Leão 14 declarou apoio a Flávio Bolsonaro",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    },
+    {
+     "publisher": {
+      "name": "UOL Notícias",
+      "site": "noticias.uol.com.br"
+     },
+     "url": "https://noticias.uol.com.br/confere/ultimas-noticias/2026/10/16/e-falso-que-papa-leao-14-declarou-apoio-a-flavio-bolsonaro.ghtm",
+     "title": "É falso que Papa Leão 14 declarou apoio a Flávio Bolsonaro",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Flávio Bolsonaro diz que vai tirar a pensão de aposentados",
+   "claimant": "Várias fontes",
+   "claimDate": "2026-10-07T00:00:00Z",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "AFP Checamos",
+      "site": "checamos.afp.com"
+     },
+     "url": "https://checamos.afp.com/doc.afp.com.D3HE2WE",
+     "title": "Vídeo em que Flávio Bolsonaro fala em cortar aposentadorias e outros benefícios foi gerado por IA",
+     "reviewDate": "2026-10-16T17:23:00Z",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Assistente de inteligência artificial no WhatsApp faz artes para Lula e Flávio, sem distinção",
+   "claimant": "Boato de internet",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "BOL - UOL",
+      "site": "bol.uol.com.br"
+     },
+     "url": "https://www.bol.uol.com.br/noticias/2026/10/16/explica-meta-ia-geracao-de-fotos-lula-flavio.ghtm",
+     "title": "Meta AI gerou imagem com Flávio, mas recusou o mesmo pedido para Lula",
+     "textualRating": "Enganoso",
+     "languageCode": "pt"
+    },
+    {
+     "publisher": {
+      "name": "UOL Notícias",
+      "site": "noticias.uol.com.br"
+     },
+     "url": "https://noticias.uol.com.br/comprova/ultimas-noticias/2026/10/16/explica-meta-ia-geracao-de-fotos-lula-flavio.ghtm",
+     "title": "Meta AI gerou imagem com Flávio, mas recusou o mesmo pedido para Lula",
+     "textualRating": "Enganoso",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Meta AI faz camiseta de Flávio Bolsonaro, mas se recusa a fazer de Lula",
+   "claimant": "redes sociais",
+   "claimDate": "2026-10-13T00:00:00Z",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "Projeto Comprova",
+      "site": "projetocomprova.com.br"
+     },
+     "url": "https://projetocomprova.com.br/publica%C3%A7%C3%B5es/meta-ai-gerou-imagem-com-o-nome-de-flavio-mas-recusou-o-mesmo-pedido-relacionado-a-lula-entenda/",
+     "title": "Meta AI gerou imagem com o nome de Flávio, mas recusou o mesmo pedido relacionado a Lula; entenda",
+     "reviewDate": "2026-10-15T00:00:00Z",
+     "textualRating": "Falta contexto",
+     "languageCode": "pt"
+    }
+   ]
+  },
+  {
+   "text": "Flávio diz que irá cortar todos os benefícios sociais se for eleito",
+   "claimant": "Redes Sociais",
+   "claimDate": "2026-10-15T13:51:20Z",
+   "claimReview": [
+    {
+     "publisher": {
+      "name": "Estadão",
+      "site": "estadao.com.br"
+     },
+     "url": "https://www.estadao.com.br/estadao-verifica/publicacao-manipulou-entrevista-flavio-bolsonaro-cortar-programas-sociais/",
+     "title": "Entrevista de Flávio é manipulada para incluir falsa promessa de corte de programas sociais",
+     "textualRating": "Falso",
+     "languageCode": "pt"
+    }
+   ]
+  }
+ ],
+ "nextPageToken": "CAo"
+}
