@@ -142,6 +142,10 @@ def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base=""):
         })
         s.recebe_falas(falas, paralelo=paralelo)
 
+    candidatas = sum(q in CANDIDATOS for q, _, _ in falas)
+    if candidatas and len(s.erros()) >= candidatas:  # nenhuma chamada deu certo: não vale como rodada
+        sys.exit(f"{saida.name}: todas as chamadas falharam ({s.erros()[0]['mensagem'][:300]}); "
+                 f"apague {saida} e rode de novo")
     dados = s.exporta()
     (saida / "painel.json").write_text(json.dumps(dados, ensure_ascii=False, indent=1), encoding="utf-8")
     resumo = {
@@ -438,6 +442,12 @@ def main():
     dados = Path(a.dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data")
     saida = Path(a.saida) if a.saida else dados / "avaliacao"
     if a.comando == "rodar":
+        if not a.duble and not os.environ.get("ANTHROPIC_API_KEY"):  # num worktree o .env só existe no checkout principal
+            env = raiz_principal() / ".env"
+            for linha in env.read_text(encoding="utf-8").splitlines() if env.exists() else []:
+                nome, _, valor = linha.partition("=")
+                if nome.strip() == "ANTHROPIC_API_KEY" and valor.strip():
+                    os.environ["ANTHROPIC_API_KEY"] = valor.strip()
         avalia(dados, a.falas or dados / "bloco1_final.json", saida, chamar=Duble() if a.duble else None,
                paralelo=a.paralelo, origens=("revisao", "publicacao") if a.aceitar_publicacao else ("revisao",))
     else:

@@ -253,6 +253,17 @@ def test_relatorio_traz_ligacoes_e_precisao_por_faixa_de_nota_em_cada_base(avali
     assert "sem data de revisão" in texto
 
 
+def test_rodada_em_que_todas_as_chamadas_falham_nao_fica_valendo(dados, tmp_path):
+    def sem_chave(etapa, prompt, conteudo, schema):
+        raise TypeError("Could not resolve authentication method")
+
+    with pytest.raises(SystemExit, match="authentication"):
+        avalia(dados, dados / "falas.json", saida=tmp_path / "avaliacao", chamar=sem_chave)
+
+    assert not (tmp_path / "avaliacao" / "rodada_congelada" / "fila.json").exists()
+    assert not (tmp_path / "avaliacao" / "marcacao.xlsx").exists()
+
+
 def test_rodar_de_novo_nao_chama_o_claude_nem_apaga_a_marcacao(dados, avaliacao, tmp_path):
     pasta = marcada(avaliacao, tmp_path, TODAS_CERTAS)
     claude = Claude()
