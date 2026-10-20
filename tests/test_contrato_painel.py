@@ -1,4 +1,4 @@
-"""Contrato do arquivo de dados da página da Globo (docs/globo/data/painel.json).
+"""Contrato do arquivo de dados da página da Globo (docs/globo/data/painel.json; exemplo em tests/fixtures/).
 
 O ponto testado é `contrato_painel.valida(dados) -> list[str]`: lista vazia quando o arquivo segue o
 contrato, uma mensagem por problema (com o caminho do campo) quando não segue.
@@ -14,10 +14,12 @@ sys.path.insert(0, str(RAIZ / "scripts"))
 from contrato_painel import valida  # noqa: E402
 
 PAGINA = RAIZ / "docs" / "globo" / "data"
+# o exemplo fictício fica fora do site publicado (docs/), só nos testes
+ARQUIVOS = {"painel.json": PAGINA / "painel.json", "exemplo.json": RAIZ / "tests" / "fixtures" / "exemplo.json"}
 
 
 def carrega(nome):
-    return json.loads((PAGINA / nome).read_text(encoding="utf-8"))
+    return json.loads(ARQUIVOS[nome].read_text(encoding="utf-8"))
 
 
 def test_arquivo_vazio_de_antes_do_debate_segue_o_contrato():
@@ -55,6 +57,12 @@ def test_campo_com_nome_fora_do_contrato_e_apontado():
 
 def test_arquivo_de_exemplo_segue_o_contrato():
     assert valida(carrega("exemplo.json")) == []
+
+
+def test_site_publicado_nao_tem_dados_de_exemplo():
+    for arq in (RAIZ / "docs").rglob("*.json"):
+        dados = json.loads(arq.read_text(encoding="utf-8"))
+        assert not (isinstance(dados, dict) and dados.get("meta", {}).get("exemplo")), arq
 
 
 def test_ligacao_so_aceita_os_valores_combinados():
