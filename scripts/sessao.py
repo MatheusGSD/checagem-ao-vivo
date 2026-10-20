@@ -14,9 +14,12 @@ Uso (repassa as falas de referência do debate da Band, com o Claude de verdade)
   python -P scripts/sessao.py band [--falas data/bloco1_final.json] [--dados DADOS] [--saida PASTA]
 """
 import hashlib
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 RAIZ = Path(__file__).resolve().parent.parent
 PROMPTS = RAIZ / "prompts"
@@ -236,3 +239,84 @@ def _resumo(r):
 
 def sha256_prompt(nome):
     return hashlib.sha256((PROMPTS / nome).read_text(encoding="utf-8").encode()).hexdigest()
+
+
+# ---------- repasse das falas de referência da Band ----------
+
+def band(falas_json, pasta_base_checagens, saida, paralelo=3):
+    """Passa as falas de bloco1_final.json pela sessão, com o Claude de verdade, e grava em `saida`:
+    painel.json (arquivo de dados da página), fila.json (ligações propostas, descartes e erros),
+    eventos.jsonl (registro da sessão) e agente/ (cada chamada ao Claude)."""
+    import json
+    import threading
+
+    import agente
+    from base_checagens import Indice
+
+    saida = Path(saida)
+    if (saida / "eventos.jsonl").exists():
+        sys.exit(f"{saida} já tem um repasse; escolha outra pasta com --saida")
+    saida.mkdir(parents=True, exist_ok=True)
+    turnos = json.loads(Path(falas_json).read_text(encoding="utf-8"))["turns"]
+    t0 = turnos[0]["start"]
+    indice = Indice.da_pasta(Path(pasta_base_checagens))
+    print(f"base: {len(indice.registros)} checagens; falas: {len(turnos)}")
+
+    trava, uso = threading.Lock(), {"chamadas": 0, "entrada": 0, "saida": 0}
+
+    def chamar(etapa, prompt, conteudo, schema):
+        out, reg = agente.chama(etapa, prompt, conteudo, schema, logs=saida / "agente")
+        with trava:
+            uso["chamadas"] += 1
+            uso["entrada"] += reg["tokens"]["entrada"]
+            uso["saida"] += reg["tokens"]["saida"]
+        return out, reg
+
+    eventos = (saida / "eventos.jsonl").open("a", encoding="utf-8")
+
+    def registra(evento):
+        eventos.write(json.dumps(evento, ensure_ascii=False) + "\n")
+        eventos.flush()
+
+    s = Sessao(indice, chamar=chamar, ao_registrar=registra, meta={
+        "debate": "Debate do 2º turno · Band · 18/10/2026 · confronto livre (teste da sessão de checagem)",
+        "encerrado": True,
+    })
+    s.recebe_falas([(t["speaker"], round(t["start"] - t0, 1), t["text"]) for t in turnos], paralelo=paralelo)
+    eventos.close()
+
+    dados = s.exporta()
+    (saida / "painel.json").write_text(json.dumps(dados, ensure_ascii=False, indent=1), encoding="utf-8")
+    resumo = {
+        "falas": len(turnos), "falas_de_candidato": sum(t["speaker"] in CANDIDATOS for t in turnos),
+        "afirmacoes": sum(len(e["afirmacoes"]) for e in s.eventos if e["tipo"] == "afirmacoes"),
+        "ligacoes_propostas": len(s.fila()), "sem_par": len(dados["sem_par"]),
+        "descartados": len(s.descartados()), "erros": len(s.erros()),
+        "chamadas_claude": uso["chamadas"], "tokens": {"entrada": uso["entrada"], "saida": uso["saida"]},
+        "base": str(pasta_base_checagens), "checagens_na_base": len(indice.registros),
+    }
+    (saida / "fila.json").write_text(json.dumps({
+        "resumo": resumo, "fila": s.fila(), "descartados": s.descartados(), "erros": s.erros(),
+    }, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(json.dumps(resumo, ensure_ascii=False, indent=1))
+    print(f"-> {saida / 'painel.json'}, {saida / 'fila.json'}, {saida / 'eventos.jsonl'}")
+
+
+def main():
+    import argparse
+
+    from base_checagens import pasta_base, raiz_principal
+
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("comando", choices=["band"])
+    ap.add_argument("--falas", help="falas de referência (padrão: data/bloco1_final.json do checkout principal)")
+    ap.add_argument("--dados", help="pasta de dados da base (padrão: CHECAGEM_DADOS ou data/ do checkout principal)")
+    ap.add_argument("--saida", help="pasta de saída (padrão: data/sessao_band/ do checkout principal)")
+    ap.add_argument("--paralelo", type=int, default=3, help="falas analisadas ao mesmo tempo")
+    a = ap.parse_args()
+    dados = raiz_principal() / "data"
+    band(a.falas or dados / "bloco1_final.json", pasta_base(a.dados), a.saida or dados / "sessao_band", a.paralelo)
+
+
+if __name__ == "__main__":
+    main()
