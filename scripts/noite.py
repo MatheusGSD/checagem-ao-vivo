@@ -138,8 +138,13 @@ class Noite:
 
     def encerra(self):
         self._parar.set()
-        if self._linha:
-            self._linha.parar()
+        with self._trava:
+            linha = self._linha
+        if linha:
+            linha.parar()
+        for th in self._threads:  # a linha entrega a última fala (o que estava no Whisper) antes de parar
+            if th.name == "linha":
+                th.join(60)
         self._linha_acabou.set()
         if self._threads:  # comecou: a retomada termina antes de as análises fecharem
             self._pronto.wait(60)
@@ -533,15 +538,17 @@ def main(argv=None):
           + (f" · publicador -> {a.remoto}/{a.ramo}" if publicador else " · sem publicar"), flush=True)
     noite.comeca()
     print(f"tela de aprovação: http://127.0.0.1:{noite.tela.server_address[1]}/", flush=True)
+    _ctrl_break_encerra()
     try:
         if a.cmd == "ao-vivo":
             _terminal_ao_vivo(noite)
         else:
-            noite.espera()
+            while not noite.espera(timeout=1):  # com timeout: o Ctrl+C chega no Windows
+                pass
             print("a gravação acabou: painel completo em " + str(pasta / "painel.json"), flush=True)
             if not a.sair_no_fim:
                 print("a tela segue aberta para a fila. Ctrl+C encerra.", flush=True)
-                threading.Event().wait()
+                _espera_ctrl_c()
     except KeyboardInterrupt:
         pass
     print("encerrando: parando o áudio, esperando as análises em curso e o último envio...", flush=True)
@@ -559,6 +566,23 @@ def _marca_inicio_pela_gravacao(noite, gravacao):
         noite.marca_zero(comecou + timedelta(seconds=zero))
 
 
+def _espera_ctrl_c():
+    while True:
+        time.sleep(1)
+
+
+def _ctrl_break_encerra():
+    """Ctrl+Break (ou fechar a janela do console) encerra limpo, como o Ctrl+C."""
+    import signal
+
+    def interrompe(*_):
+        raise KeyboardInterrupt
+
+    for nome in ("SIGBREAK", "SIGTERM"):
+        if hasattr(signal, nome):
+            signal.signal(getattr(signal, nome), interrompe)
+
+
 def _terminal_ao_vivo(noite):
     """Enter marca o 00:00; depois disso, remarcar exige digitar 'remarcar'. Ctrl+C encerra."""
     print("Capturando o som do computador. Enter marca o 00:00 (abertura do mediador); "
@@ -567,7 +591,7 @@ def _terminal_ao_vivo(noite):
         try:
             texto = input().strip().lower()
         except EOFError:  # sem terminal: espera o Ctrl+C
-            threading.Event().wait()
+            _espera_ctrl_c()
         inicio = noite._inicio()
         if inicio is None or texto == "remarcar":
             noite.marca_zero()
