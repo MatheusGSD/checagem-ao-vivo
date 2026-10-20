@@ -9,7 +9,7 @@ Regras gerais:
 - Datas de checagem: `"AAAA-MM-DD"` ou `null` quando a fonte não traz data.
 - Minutagem: `minutagem_s`, segundos (inteiro ou decimal, ≥ 0) contados do 00:00 marcado pelo operador na abertura do mediador.
 - `quem`: `"Lula"` ou `"Flávio"`. Falas da mediação não entram.
-- Exemplo completo: `docs/globo/data/exemplo.json` (fictício; a página o abre com `?exemplo`).
+- Exemplo completo: `tests/fixtures/exemplo.json`, com dados fictícios, fora do site publicado. Para ver a página com ele sem publicar nada, sirva a raiz do repositório (`python -m http.server 8000`) e abra `http://localhost:8000/docs/globo/?dados=../../tests/fixtures/exemplo.json`. O parâmetro `?dados=` só aceita um caminho relativo para um `.json` do mesmo site; qualquer outra coisa cai em `data/painel.json`.
 
 ## Raiz
 
@@ -32,11 +32,13 @@ Regras gerais:
 | `exemplo` | booleano | `true` só em dados fictícios; a página mostra um aviso |
 | `encerrado` | booleano | `true` depois do debate; a página para de buscar atualizações |
 | `fontes` | lista de `{nome, url}` | canais de coleta da base |
-| `agencias_incluidas` | lista de `{nome, via}` | agências na base e por qual canal |
+| `agencias_incluidas` | lista de `{nome, via}` | agências na base, pelo nome exibido, e por qual canal |
 | `agencias_excluidas` | lista de `{nome, motivo}` | agências fora da base e por quê |
 | `modelo` | texto | modelo do Claude usado, ex. `"claude-opus-5-5"` |
 | `prompts` | lista de `{arquivo, sha256}` | prompts fixos e o hash SHA-256 do conteúdo |
 | `limiar_automatico` | número de 0 a 1, ou `null` | nota mínima para publicar sem aprovação; `null` = publicação automática desligada |
+
+As duas listas de agências saem de `agencias_do_painel(registros)` em `scripts/agencias.py`, a partir da política versionada em `data/agencias.json` (agências excluídas com o motivo e nome exibido de cada agência, que unifica grafias como "Agência Publica" e "Agência Pública"; o rótulo nunca muda).
 
 ## Ligação
 
@@ -57,7 +59,7 @@ Regras gerais:
 
 | campo | tipo | o que é |
 |---|---|---|
-| `agencia` | texto | nome da agência como ela se apresenta |
+| `agencia` | texto | nome exibido da agência (`agencia` do registro da base, já com as grafias unificadas por `data/agencias.json`) |
 | `data` | `"AAAA-MM-DD"` ou `null` | data da checagem |
 | `rotulo` | texto | rótulo exibido, sem tradução nem conversão |
 | `fonte_rotulo` | `"selo_da_pagina"` ou `"dados_da_agencia"` | `selo_da_pagina`: selo visível na página da agência, conferido pelo operador. `dados_da_agencia`: rótulo como veio nos dados (ClaimReview `textualRating` ou prefixo do título do Fato ou Fake); a página mostra "rótulo conforme dados da agência" |
