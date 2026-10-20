@@ -135,6 +135,7 @@ function cartaoFila(p) {
       <span>nota <span class="nota">${num(p.nota)}</span></span><span>proposta ${hora(p.proposta_em)}</span></div>
     <p class="fala">${destaca(p.fala, p.trecho)}</p>
     <p class="reform"><b>Afirmação:</b> ${esc(p.reformulacao)}</p>
+    ${p.ja_publicadas.length ? `<p class="reform"><b>Já no painel</b> (publicada sozinha com ${p.ja_publicadas.length} checagem${p.ja_publicadas.length > 1 ? "s" : ""}): aprovar acrescenta estas à mesma ligação; recusar não a tira do painel.</p>` : ""}
     ${p.checagens.map((c, i) => `
       <div class="checagem" data-url="${esc(c.url)}">
         <div class="cab"><label><input type="checkbox" class="manter" checked> <span class="agencia">${esc(c.agencia)}</span></label>
@@ -249,8 +250,10 @@ async function atualiza(forca) {
   sincroniza($("fila"), e.fila, (p) => p.id, cartaoFila, "Nada esperando aprovação.");
   const pubs = [...e.publicadas].sort((a, b) => b.minutagem_s - a.minutagem_s);
   sincroniza($("publicadas"), pubs, (l) => l.id, cartaoPublicada, "Nenhuma ligação publicada.");
-  sincroniza($("correcoes"), [...e.correcoes].reverse(), (c) => c.ligacao_id, (c) => linha(
-    `<b>${esc(c.ligacao_id)}</b> retirada às ${hora(c.em)} — ${esc(c.motivo)}<br><span class="frase">“${esc(c.retirado.trecho)}”</span>`), "Nenhuma.");
+  sincroniza($("correcoes"), [...e.correcoes].reverse(), (c) => `${c.tipo}:${c.ligacao_id}:${c.em}:${c.url || ""}`,
+    (c) => linha(c.tipo === "rotulo"
+      ? `<b>${esc(c.ligacao_id)}</b> rótulo corrigido às ${hora(c.em)} — ${esc(c.agencia)}: “${esc(c.rotulo_anterior)}” → “${esc(c.rotulo)}”`
+      : `<b>${esc(c.ligacao_id)}</b> retirada às ${hora(c.em)} — ${esc(c.motivo)}<br><span class="frase">“${esc(c.retirado.trecho)}”</span>`), "Nenhuma.");
   sincroniza($("recusadas"), [...e.recusadas].reverse(), (p) => p.id, (p) => linha(
     `<b>${esc(p.id)}</b> ${minutagem(p.minutagem_s)} ${esc(p.quem)} — “${esc(p.trecho)}”${p.motivo_recusa ? ` <i>(${esc(p.motivo_recusa)})</i>` : ""}`), "Nenhuma.");
   sincroniza($("sem-par"), [...e.sem_par].reverse(), (a) => a.minutagem_s + a.trecho, (a) => linha(
