@@ -7,12 +7,17 @@ cada ação como POST /acao/<nome> com corpo JSON.
 
 Uso:
   python -P scripts/aprovacao.py [--dados DADOS] [--pasta PASTA] [--porta 8765] [--sem-retomar]
+                                 [--publicar [--repo PASTA] [--remoto origin] [--ramo main] [--intervalo 60]]
 
   DADOS: --dados, CHECAGEM_DADOS ou data/ do checkout principal (base em DADOS/checagens, limiar em
          DADOS/avaliacao/limiar.json).
   PASTA: pasta da sessão, com o registro eventos.jsonl (padrão DADOS/sessao_globo). Se o registro
          existe, a sessão é reconstruída a partir dele; análises interrompidas por um travamento são
          terminadas em segundo plano (chamam o Claude), a menos que se passe --sem-retomar.
+  --publicar: liga o publicador (scripts/publicador.py): cada mudança pública vai para
+         docs/globo/data/painel.json do repositório (padrão: este) e, em commits agrupados, para o
+         ramo do remoto (padrão origin/main, servido pelo GitHub Pages). Falhas aparecem na faixa de
+         erros da tela. Ctrl+C faz o último envio antes de sair.
 
 Em código (integração ao vivo): `servidor = serve(sessao, porta)` sobe a tela numa thread e
 devolve o servidor (servidor.server_address, servidor.shutdown()).
@@ -142,15 +147,36 @@ def main():
     ap.add_argument("--pasta", help="pasta da sessão, com eventos.jsonl (padrão: DADOS/sessao_globo)")
     ap.add_argument("--porta", type=int, default=PORTA)
     ap.add_argument("--sem-retomar", action="store_true", help="não termina análises interrompidas")
+    ap.add_argument("--publicar", action="store_true", help="envia o painel ao GitHub Pages (publicador.py)")
+    ap.add_argument("--repo", help="repositório do site (padrão: este)")
+    ap.add_argument("--remoto", default="origin", help="remoto do site (padrão: origin)")
+    ap.add_argument("--ramo", default="main", help="ramo publicado pelo Pages (padrão: main)")
+    ap.add_argument("--intervalo", type=float, default=60, help="segundos mínimos entre pushes (padrão: 60)")
     a = ap.parse_args()
     dados = Path(a.dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data")
     pasta = Path(a.pasta) if a.pasta else dados / "sessao_globo"
     limiar = le_limiar(dados)
     indice = Indice.da_pasta(pasta_base(dados))
-    sessao = Sessao.abre(pasta, indice, meta={"limiar_automatico": limiar})
+    publicador = None
+    if a.publicar:
+        from publicador import RAIZ as REPO_PADRAO
+        from publicador import Publicador
+
+        publicador = Publicador(
+            a.repo or REPO_PADRAO, a.remoto, a.ramo, intervalo=a.intervalo,
+            ao_erro=lambda m: sessao.registra_erro("publicar", m),
+            ao_publicar=lambda c: print(f"[publicador] {datetime.now():%H:%M:%S} {c[:8]} → {a.remoto}/{a.ramo}",
+                                        flush=True))
+    sessao = Sessao.abre(pasta, indice, meta={"limiar_automatico": limiar},
+                         ao_mudar_publicado=publicador.notifica if publicador else None)
+    if publicador:
+        publicador.notifica(sessao.exporta())  # a sessão não avisa o estado inicial
     print(f"base: {len(indice.registros)} checagens · registro: {pasta / 'eventos.jsonl'} "
           f"({len(sessao.eventos)} eventos) · publicação automática: "
           + (f"nota ≥ {limiar} depois de 10 min" if limiar is not None else "desligada"), flush=True)
+    if publicador:
+        print(f"publicador: {publicador.repo / publicador.arquivo} → {a.remoto}/{a.ramo}, "
+              f"no máximo um push a cada {a.intervalo:g} s", flush=True)
     if not a.sem_retomar:
         threading.Thread(target=sessao.retoma_analises, daemon=True).start()
     servidor = serve(sessao, a.porta)
@@ -159,6 +185,10 @@ def main():
         threading.Event().wait()
     except KeyboardInterrupt:
         servidor.shutdown()
+        if publicador:
+            print("enviando o último painel...", flush=True)
+            if not publicador.encerra():
+                print("ATENÇÃO: o último painel não foi enviado (ver erros acima)", flush=True)
         print(f"encerrada às {datetime.now():%H:%M:%S}")
 
 
