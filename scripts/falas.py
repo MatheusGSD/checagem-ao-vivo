@@ -43,6 +43,7 @@ PROMPT = "Debate presidencial, segundo turno. Lula e Flávio Bolsonaro."
 JANELA_VOZ_S = 3.0  # quem fala é decidido em janelas de pelo menos ~3 s (relatório do ticket 08)
 MAX_FALA_S = 60.0
 SILENCIO_S = 6.0  # silêncio que fecha a fala em andamento (intervalo, fim de bloco)
+ATRASO_ECONOMIA_S = 30.0  # acima deste atraso do transcritor, quem fala usa o método mais barato
 LOTE_MAX_S = 28.0  # o Whisper processa 30 s por vez: segmentos acumulados vão juntos até esse limite
 
 
@@ -306,6 +307,13 @@ def janelas_de_palavras(palavras, minimo=JANELA_VOZ_S, resto=1.5):
     return jan
 
 
+def _pulado(palavras, dur):
+    """Segmento que o Whisper parece ter pulado: sem palavras, ou com palavras em menos de 30% dele."""
+    if dur < 1.0:
+        return False
+    return not palavras or (dur >= 5.0 and palavras[-1][1] - palavras[0][0] < 0.3 * dur)
+
+
 def _texto(palavras):
     return "".join(w for _, _, w in palavras).strip()
 
@@ -320,20 +328,21 @@ def atribui_janelas(sinal, palavras, reconhecedor):
     return out
 
 
-def atribui_viterbi(sinal, palavras, reconhecedor, janela=1.5, passo=0.5, troca=0.6, limiar_curto=0.40):
+def atribui_viterbi(sinal, palavras, reconhecedor, janela=1.5, passo=0.5, troca=0.5, limiar_curto=0.35,
+                    minimo_s=JANELA_VOZ_S):
     """Quem fala palavra a palavra: semelhanças em janelas deslizantes de 1,5 s (passo 0,5 s), suavizadas
     por Viterbi com custo `troca` por mudança de locutor (Mediação vale `limiar_curto`, o limiar para
-    trechos curtos). As palavras seguidas com o mesmo locutor viram um pedaço. Segmentos curtos (< 3 s)
-    são classificados inteiros, como em atribui_janelas."""
+    trechos curtos). As palavras seguidas com o mesmo locutor viram um pedaço. Segmentos de menos de
+    `minimo_s` vão para atribui_janelas."""
     if not palavras:
         return []
     dur = len(sinal) / TAXA
-    if dur < 2 * JANELA_VOZ_S:
+    if dur < minimo_s:
         return atribui_janelas(sinal, palavras, reconhecedor)
     nomes = list(reconhecedor.perfis) + [MEDIACAO]
     inicios = np.arange(0.0, max(dur - janela, 0.0) + 1e-9, passo)
     pont = []
-    for a in inicios:
+    for a in inicios:  # (embeddings em lote não ficaram mais rápidos nesta CPU)
         emb = reconhecedor.embedding(sinal[int(a * TAXA): int((a + janela) * TAXA)])
         pont.append([float(reconhecedor.perfis[k] @ emb) for k in nomes[:-1]] + [limiar_curto])
     pont = np.array(pont)
@@ -379,7 +388,7 @@ class LinhaDeFalas:
     Whisper custa quase o mesmo para 3 s ou 30 s, então a linha se ajusta sozinha à carga da CPU."""
 
     def __init__(self, fonte, transcritor=None, reconhecedor=None, zero=None, max_fala_s=MAX_FALA_S,
-                 silencio_s=SILENCIO_S, registro=None, vad_silencio_ms=500, vad_max_s=20.0, atribuicao="janelas"):
+                 silencio_s=SILENCIO_S, registro=None, vad_silencio_ms=500, vad_max_s=12.0, atribuicao="viterbi"):
         from vad import Chunker, SegmentAssembler, SileroVad
         from vozes import Reconhecedor
 
@@ -513,14 +522,24 @@ class LinhaDeFalas:
             t += (len(sinal) + len(pausa)) / TAXA
         palavras = self.transcritor.palavras(np.concatenate(partes))
         c1 = time.perf_counter()
+        # atrasado demais (CPU disputada): quem fala pelas janelas fixas, ~4x mais baratas
+        atrasado = self._ao_vivo() and             self.fonte.posicao() - (lote[-1][1] + len(lote[-1][2]) / TAXA) > ATRASO_ECONOMIA_S
+        atribui = atribui_janelas if atrasado else self.atribui
         pedacos = []
         for k, (a, b, ini) in enumerate(deslocs):
             sinal = lote[k][2]
             ws = [(max(0.0, s - a), max(0.0, min(e, b) - a), w) for s, e, w in palavras if a - 0.15 <= s < b]
+            if len(lote) > 1 and _pulado(ws, len(sinal) / TAXA):
+                # o Whisper às vezes pula o começo do lote (o 1º texto sai muitos segundos depois): o
+                # segmento sozinho costuma sair inteiro
+                sozinho = self.transcritor.palavras(sinal)
+                self._log({"evento": "repeticao", "inicio": round(ini, 3), "antes": len(ws), "depois": len(sozinho)})
+                if len(sozinho) > len(ws):
+                    ws = sozinho
             self._log({"evento": "segmento", "inicio": round(ini, 3), "dur": round(len(sinal) / TAXA, 3),
                        "palavras": [[round(s, 2), round(e, 2), w] for s, e, w in ws]})
             pedacos.append([])
-            for quem, s, e, texto, sem in self.atribui(sinal, ws, self.reconhecedor):
+            for quem, s, e, texto, sem in atribui(sinal, ws, self.reconhecedor):
                 p = Pedaco(quem, round(ini + s, 3), round(ini + e, 3), texto)
                 pedacos[-1].append(p)
                 self._log({"evento": "pedaco", **asdict(p), "semelhanca": sem})
@@ -532,16 +551,20 @@ class LinhaDeFalas:
         st["segundos_de_audio"] += dur
         st["segundos_de_cpu"] += c2 - c0
         self._log({"evento": "lote", "segmentos": len(lote), "audio_s": round(dur, 2),
-                   "whisper_s": round(c1 - c0, 2), "voz_s": round(c2 - c1, 2),
+                   "whisper_s": round(c1 - c0, 2), "voz_s": round(c2 - c1, 2), "economia": atrasado,
                    "atraso_s": round(self.fonte.posicao() - fim_audio, 2)})
         return pedacos
 
     def _entrega(self, falas):
         for f in falas:
-            if getattr(self.fonte, "ritmo", None) == 1.0:
+            if self._ao_vivo():
                 f.atraso_s = round(self.fonte.posicao() - (f.fim_s + self.fechador.zero), 2)
             self._log({"evento": "fala", **asdict(f)})
             self._saida.put(f)
+
+    def _ao_vivo(self):
+        """Fonte no ritmo real (loopback ou arquivo com ritmo=1): atraso tem sentido."""
+        return getattr(self.fonte, "ritmo", None) == 1.0
 
     def _log(self, d):
         if self.registro:

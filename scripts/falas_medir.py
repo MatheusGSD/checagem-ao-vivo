@@ -34,7 +34,7 @@ ZERO_BAND = 15581.2  # abertura do mediador na gravação (1ª palavra do Escrib
 CLASSES = ("Lula", "Flávio", "Mediação")
 
 
-def rodar(dados, nome, inicio, fim, ritmo, atribuicao="janelas"):
+def rodar(dados, nome, inicio, fim, ritmo, atribuicao="viterbi"):
     saida = dados / "falas" / f"{nome}.jsonl"
     saida.parent.mkdir(parents=True, exist_ok=True)
     if saida.exists():
@@ -113,7 +113,8 @@ def pct(x):
     return f"{100 * x:.1f}%"
 
 
-def medir(dados, nomes):
+def medir(dados, nomes, janela=None):
+    """janela=(a, b): mede só as falas que começam em [a, b) s da gravação, contra a referência de [a, b)."""
     linhas = []
     w = linhas.append
     for nome in nomes:
@@ -121,6 +122,10 @@ def medir(dados, nomes):
         rod = reg["rodada"][0]
         ini, fim, ritmo, zero = rod["inicio"], rod["fim"], rod["ritmo"], rod["zero"]
         falas = reg.get("fala", [])
+        lotes = reg.get("lote", [])
+        if janela:
+            falas = [f for f in falas if janela[0] <= f["inicio_s"] + zero < janela[1]]
+            ini, fim = max(ini, janela[0]), min(fim, janela[1])
         ref_full = referencia(dados, ini, fim)
         ref = [(p, q) for _, p, q, _ in ref_full]
         hip = [(vozes._norm(x), f["quem"]) for f in falas for x in f["texto"].split() if vozes._norm(x)]
@@ -132,7 +137,6 @@ def medir(dados, nomes):
         if "fim_rodada" not in reg:
             raise SystemExit(f"{nome}: a rodada não terminou (sem evento fim_rodada)")
         fr = reg["fim_rodada"][-1]
-        lotes = reg.get("lote", [])
         cpu = sum(x["whisper_s"] + x["voz_s"] for x in lotes)
         dur = fim - ini
         w(f"### {nome}: {ini:.0f}–{fim:.0f} s da gravação ({dur / 60:.1f} min), "
@@ -147,7 +151,8 @@ def medir(dados, nomes):
         tref = np.array([t for t, *_ in ref_full])
         orfas = [f for f in falas if f["quem"] in ("Lula", "Flávio")
                  and not ((tref >= f["inicio_s"] + zero - 1) & (tref <= f["fim_s"] + zero + 1)).any()]
-        w(f"- Falas de candidato sem fala de referência no intervalo: {len(orfas)}"
+        w(f"- Falas de candidato sem nenhuma palavra da referência no intervalo (a referência pula algumas falas "
+          f"sobrepostas; ver a lista): {len(orfas)}"
           + (": " + "; ".join(f"{f['inicio_s']:.0f} s {f['quem']} «{f['texto'][:60]}»" for f in orfas[:6])
              if orfas else "") + ".")
         atr = [f["atraso_s"] for f in falas if f.get("atraso_s") is not None]
@@ -182,14 +187,15 @@ def main():
     r.add_argument("--inicio", type=float, required=True)
     r.add_argument("--fim", type=float, required=True)
     r.add_argument("--ritmo", type=float, default=1.0)
-    r.add_argument("--atribuicao", default="janelas", choices=("janelas", "viterbi"))
+    r.add_argument("--atribuicao", default="viterbi", choices=("janelas", "viterbi"))
     m = sub.add_parser("medir")
     m.add_argument("nomes", nargs="+")
+    m.add_argument("--janela", type=float, nargs=2, help="mede só [A, B) s da gravação")
     a = ap.parse_args()
     if a.cmd == "rodar":
         rodar(a.dados, a.nome, a.inicio, a.fim, a.ritmo, a.atribuicao)
     else:
-        medir(a.dados, a.nomes)
+        medir(a.dados, a.nomes, a.janela)
 
 
 if __name__ == "__main__":
