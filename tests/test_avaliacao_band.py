@@ -128,6 +128,22 @@ def test_base_congelada_so_tem_checagens_revisadas_antes_do_debate_da_band(tmp_p
     assert resumo["excluidas_sem_data_de_revisao"] == 3
     assert resumo["excluidas_revisadas_depois_do_corte"] == 2
     assert json.loads((tmp_path / "congelada" / "congelamento.json").read_text(encoding="utf-8")) == resumo
+    assert resumo["excluidas_sem_data_de_revisao_por_agencia"] == {"Aos Fatos": 3}
+
+
+def test_base_congelada_pode_aceitar_tambem_a_data_de_publicacao(tmp_path):
+    # UOL e BOL nunca trazem data de revisão; a data de publicação vem da URL
+    registros = [registro("https://a/revisada", "2026-10-10", "revisao"),
+                 registro("https://uol/2025/03/01/x", "2025-03-01", "publicacao"),
+                 registro("https://uol/2026/10/20/y", "2026-10-20", "publicacao"),
+                 registro("https://estadao/z", "2024-01-01", "afirmacao")]
+    grava_base(tmp_path / "completa", registros, np.eye(4, 8))
+
+    resumo = congela(tmp_path / "completa", tmp_path / "congelada", origens=("revisao", "publicacao"))
+
+    assert [r["id"] for r in Indice.da_pasta(tmp_path / "congelada").registros] == [
+        "https://a/revisada", "https://uol/2025/03/01/x"]
+    assert (resumo["excluidas_sem_data_de_revisao"], resumo["excluidas_revisadas_depois_do_corte"]) == (1, 1)
 
 
 def test_duas_rodadas_guardadas_em_separado_com_o_registro_da_sessao(avaliacao):

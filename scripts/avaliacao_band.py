@@ -7,7 +7,10 @@ Claude de verdade, contra duas versões da base, e mede quando a publicação au
 
 Uso:
   python -P scripts/avaliacao_band.py rodar [--dados DADOS] [--falas F] [--saida PASTA] [--duble]
-        congela a base, roda a sessão contra as duas versões e grava a planilha de marcação
+                                            [--aceitar-publicacao]
+        congela a base, roda a sessão contra as duas versões e grava a planilha de marcação;
+        --duble ensaia sem chamar o Claude; --aceitar-publicacao deixa entrar na base congelada
+        também checagens só com data de publicação (UOL e BOL nunca trazem data de revisão)
   python -P scripts/avaliacao_band.py relatorio [--dados DADOS] [--saida PASTA] [--minimo 15]
         depois que o operador marcou a planilha: precisão por faixa de nota e o limiar escolhido
 
@@ -39,10 +42,13 @@ def _ultimo_dia_inteiro_antes(corte):
     return (corte.astimezone(timezone.utc).date() - timedelta(days=1)).isoformat()
 
 
-def congela(origem, destino, corte=CORTE):
+def congela(origem, destino, corte=CORTE, origens=("revisao",)):
     """Grava em `destino` a base congelada derivada da base em `origem` (base.json e vetores):
-    só checagens com data de revisão de um dia inteiro anterior ao corte. Devolve o resumo, que
-    também fica em destino/congelamento.json."""
+    só checagens com data de revisão de um dia inteiro anterior ao corte. Com `origens` incluindo
+    "publicacao", a data de publicação (a da URL, no caso do UOL) também vale. Devolve o resumo,
+    que também fica em destino/congelamento.json."""
+    from collections import Counter
+
     import numpy as np
 
     from base_checagens import le_base
@@ -54,8 +60,9 @@ def congela(origem, destino, corte=CORTE):
         sys.exit(f"vetores fora de ordem com a base em {origem}: rode `base_checagens.py reconstruir`")
     X = np.load(origem / "vetores.npy")
     limite = _ultimo_dia_inteiro_antes(corte)
-    com_revisao = [k for k, r in enumerate(registros) if r.get("data_origem") == "revisao" and r.get("data")]
-    ficam = [k for k in com_revisao if registros[k]["data"] <= limite]
+    com_data = [k for k, r in enumerate(registros) if r.get("data_origem") in origens and r.get("data")]
+    ficam = [k for k in com_data if registros[k]["data"] <= limite]
+    sem_data = set(range(len(registros))) - set(com_data)
 
     destino.mkdir(parents=True, exist_ok=True)
     congelados = [registros[k] for k in ficam]
@@ -67,12 +74,14 @@ def congela(origem, destino, corte=CORTE):
                                                      ensure_ascii=False), encoding="utf-8")
     resumo = {
         "corte": corte.isoformat(),
-        "regra": f"data de revisão (dia UTC) até {limite}; o dia do corte, sem hora, fica de fora",
+        "regra": f"data de {' ou de '.join(origens)} (dia UTC) até {limite}; o dia do corte, sem hora, fica de fora",
         "base_completa": str(origem),
         "checagens_na_base_completa": len(registros),
         "checagens_na_base_congelada": len(ficam),
-        "excluidas_sem_data_de_revisao": len(registros) - len(com_revisao),
-        "excluidas_revisadas_depois_do_corte": len(com_revisao) - len(ficam),
+        "excluidas_sem_data_de_revisao": len(sem_data),
+        "excluidas_sem_data_de_revisao_por_agencia": dict(Counter(
+            registros[k].get("agencia") for k in sorted(sem_data)).most_common()),
+        "excluidas_revisadas_depois_do_corte": len(com_data) - len(ficam),
     }
     (destino / "congelamento.json").write_text(json.dumps(resumo, ensure_ascii=False, indent=1), encoding="utf-8")
     return resumo
@@ -345,7 +354,8 @@ def _relatorio_md(avaliacao, r, agora):
         out += ["## Bases", "",
                 f"- completa: {c['checagens_na_base_completa']} checagens",
                 f"- congelada (revisadas antes de {c['corte']}): {c['checagens_na_base_congelada']} checagens",
-                f"  - excluídas sem data de revisão: {c['excluidas_sem_data_de_revisao']}",
+                f"  - excluídas sem data de revisão: {c['excluidas_sem_data_de_revisao']} (" +
+                ", ".join(f"{ag} {n}" for ag, n in c.get("excluidas_sem_data_de_revisao_por_agencia", {}).items()) + ")",
                 f"  - excluídas revisadas depois do corte (ou no dia do corte, que não tem hora): "
                 f"{c['excluidas_revisadas_depois_do_corte']}",
                 f"  - regra: {c['regra']}", ""]
@@ -376,13 +386,13 @@ def _relatorio_md(avaliacao, r, agora):
 
 # ---------- tudo junto ----------
 
-def avalia(dados, falas_json, saida=None, chamar=None, paralelo=3):
+def avalia(dados, falas_json, saida=None, chamar=None, paralelo=3, origens=("revisao",)):
     """Congela a base de DADOS/checagens, roda a sessão contra as duas versões e grava a planilha."""
     dados = Path(dados)
     saida = Path(saida) if saida else dados / "avaliacao"
     completa = dados / "checagens"
     if not (saida / "base_congelada" / "congelamento.json").exists():  # uma vez só: a rodada usa esta
-        print(json.dumps(congela(completa, saida / "base_congelada"), ensure_ascii=False, indent=1))
+        print(json.dumps(congela(completa, saida / "base_congelada", origens=origens), ensure_ascii=False, indent=1))
     falas = le_falas(falas_json)
     for base, pasta in (("congelada", saida / "base_congelada"), ("completa", completa)):
         rodada(falas, pasta, saida / f"rodada_{base}", chamar=chamar, paralelo=paralelo, nome_base=base)
@@ -416,6 +426,8 @@ def main():
     ap.add_argument("--falas", help="falas de referência (padrão: DADOS/bloco1_final.json)")
     ap.add_argument("--saida", help="pasta da avaliação (padrão: DADOS/avaliacao)")
     ap.add_argument("--duble", action="store_true", help="ensaio com um Claude de mentira (sem chamadas)")
+    ap.add_argument("--aceitar-publicacao", action="store_true",
+                    help="na base congelada, aceitar também a data de publicação (UOL/BOL não têm data de revisão)")
     ap.add_argument("--paralelo", type=int, default=3, help="falas analisadas ao mesmo tempo")
     ap.add_argument("--minimo", type=int, default=MINIMO, help="ligações acima do limiar, todas certas")
     a = ap.parse_args()
@@ -423,7 +435,7 @@ def main():
     saida = Path(a.saida) if a.saida else dados / "avaliacao"
     if a.comando == "rodar":
         avalia(dados, a.falas or dados / "bloco1_final.json", saida, chamar=Duble() if a.duble else None,
-               paralelo=a.paralelo)
+               paralelo=a.paralelo, origens=("revisao", "publicacao") if a.aceitar_publicacao else ("revisao",))
     else:
         relatorio(saida, minimo=a.minimo)
 
