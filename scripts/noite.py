@@ -38,7 +38,7 @@ import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -241,6 +241,7 @@ class Noite:
             self._n_falas += 1
             self._ultimo_sinal = time.monotonic()
             self._ultima_fala = _agora()
+        self._log(_texto_da_fala(fala))
         self._pronto.wait()
         self._analises.submit(self._recebe, fala.quem, fala.inicio_s, fala.texto)
 
@@ -327,3 +328,253 @@ def _difere_do_remoto(publicador, dados):
 
 def _agora():
     return datetime.now(BRASILIA).isoformat(timespec="milliseconds")
+
+
+def _texto_da_fala(f):
+    m, seg = divmod(int(f.inicio_s), 60)
+    atraso = f" (+{f.atraso_s:.0f} s)" if f.atraso_s is not None else ""
+    return f"[{m // 60:d}:{m % 60:02d}:{seg:02d}] {f.quem}{atraso}: {f.texto}"
+
+
+# ---------------------------------------------------------------- linhas de verdade (scripts/falas.py)
+
+def zero_da_gravacao(wav, inicio=None):
+    """O 00:00 em segundos da gravação `wav`: o `zero_s` marcado no .json ao lado ou, se a gravação começou
+    depois do 00:00 (a linha caiu e recomeçou), o deslocamento entre o início da sessão (`inicio`,
+    datetime) e o `comecou_em` do .json (horário de Brasília). None se não há como saber."""
+    info = Path(wav).with_suffix(".json")
+    if not info.exists():
+        return None
+    d = json.loads(info.read_text(encoding="utf-8"))
+    if d.get("zero_s") is not None:
+        return float(d["zero_s"])
+    if inicio is None or not d.get("comecou_em"):
+        return None
+    comecou = datetime.fromisoformat(d["comecou_em"])
+    if comecou.tzinfo is None:
+        comecou = comecou.replace(tzinfo=BRASILIA)
+    return round((inicio - comecou).total_seconds(), 3)
+
+
+class LinhaAoVivo:
+    """Loopback do som do Windows, gravado em <pasta>/gravacoes/gravacao-HHMMSS.wav (uma gravação nova a
+    cada recomeço), com o 00:00 dado em horário de Brasília."""
+
+    def __init__(self, pasta, transcritor, reconhecedor, dispositivo=None):
+        from falas import FonteLoopback, LinhaDeFalas
+
+        gravacao = Path(pasta) / "gravacoes" / f"gravacao-{datetime.now(BRASILIA):%H%M%S}.wav"
+        self.fonte = FonteLoopback(gravacao, dispositivo)
+        self.linha = LinhaDeFalas(self.fonte, transcritor, reconhecedor, registro=Path(pasta) / "linha.jsonl")
+
+    def marcar_zero(self, instante):
+        # o relógio da fonte segue o de parede (o loopback preenche com silêncio quando nada toca)
+        self.linha.marcar_zero(self.fonte.posicao() - (datetime.now(BRASILIA) - instante).total_seconds())
+
+    def parar(self):
+        self.linha.parar()
+
+    def __iter__(self):
+        return iter(self.linha)
+
+
+class LinhaDeArquivos:
+    """Uma ou mais gravações em sequência, cada uma com o seu 00:00, entregando só as falas que terminam
+    depois de `desde` (s desde o 00:00). O 00:00 já vem de cada arquivo: marcar_zero não muda nada."""
+
+    def __init__(self, gravacoes, transcritor, reconhecedor, desde=None, ritmo=None, registro=None):
+        """gravacoes: [(caminho, zero_s, inicio_s ou None, fim_s ou None)]. ritmo: 1 = tempo real; None =
+        o mais rápido que a CPU der."""
+        self.gravacoes, self.desde, self.ritmo = gravacoes, desde, ritmo
+        self.transcritor, self.reconhecedor, self.registro = transcritor, reconhecedor, registro
+        self._atual = None
+        self._parar = threading.Event()
+
+    def marcar_zero(self, instante):
+        pass
+
+    def parar(self):
+        self._parar.set()
+        if self._atual:
+            self._atual.parar()
+
+    def __iter__(self):
+        from falas import FonteArquivo, LinhaDeFalas
+
+        for caminho, zero, inicio, fim in self.gravacoes:
+            if self._parar.is_set():
+                return
+            comeco = max(inicio or 0.0, zero + self.desde if self.desde is not None else 0.0)
+            if fim is not None and comeco >= fim:
+                continue
+            self._atual = LinhaDeFalas(FonteArquivo(caminho, comeco, fim, self.ritmo), self.transcritor,
+                                       self.reconhecedor, zero=zero, registro=self.registro)
+            for fala in self._atual:
+                if self.desde is None or fala.fim_s > self.desde:
+                    yield fala
+
+
+# ---------------------------------------------------------------- linha de comando
+
+def _carrega_modelos(a, dados):
+    from falas import Transcritor
+    from vozes import Reconhecedor
+
+    print("carregando Whisper, perfis de voz e Silero...", flush=True)
+    return Transcritor(prompt=a.prompt, vocabulario=a.vocabulario), Reconhecedor.carregar(dados / "vozes")
+
+
+def _gravacoes(a, pasta, inicio):
+    """[(caminho, zero, inicio, fim)] do comando arquivo ou pos-debate."""
+    if a.cmd == "arquivo":
+        return [(a.audio, a.zero, a.inicio, a.fim)]
+    arquivos = [Path(g) for g in a.gravacoes] or sorted((pasta / "gravacoes").glob("*.wav"))
+    if not arquivos:
+        sys.exit(f"nenhuma gravação: passe o arquivo ou confira {pasta / 'gravacoes'}")
+    out = []
+    for g in arquivos:
+        zero = a.zero if a.zero is not None and len(arquivos) == 1 else zero_da_gravacao(g, inicio)
+        if zero is None:
+            sys.exit(f"{g}: sem 00:00 (nem zero_s no .json, nem 00:00 na sessão); passe --zero S")
+        out.append((g, zero, None, None))
+    return out
+
+
+def main(argv=None):
+    import argparse
+
+    import agente
+    import base_checagens
+    from base_checagens import Indice, pasta_base, raiz_principal
+    from falas import PROMPT
+    from sessao import le_limiar
+
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    av = sub.add_parser("ao-vivo", help="loopback do som do Windows; Enter marca o 00:00")
+    av.add_argument("--dispositivo", type=int, help="índice do PyAudio (padrão: loopback da saída padrão)")
+    ar = sub.add_parser("arquivo", help="um arquivo de áudio no lugar do som do Windows (ensaio)")
+    ar.add_argument("audio")
+    ar.add_argument("--zero", type=float, required=True, help="00:00 em segundos do arquivo")
+    ar.add_argument("--inicio", type=float, help="começa neste segundo do arquivo")
+    ar.add_argument("--fim", type=float, help="termina neste segundo do arquivo")
+    ar.add_argument("--ritmo", type=float, default=1.0, help="1 = tempo real (padrão); 0 = o mais rápido possível")
+    pd = sub.add_parser("pos-debate", help="a sessão sobre a(s) gravação(ões), no ritmo da CPU, com meta.encerrado")
+    pd.add_argument("gravacoes", nargs="*", help="padrão: PASTA/gravacoes/*.wav")
+    pd.add_argument("--zero", type=float, help="00:00 em segundos da gravação (só com uma gravação sem .json)")
+    for p in (av, ar, pd):
+        p.add_argument("--dados", help="pasta de dados (padrão: CHECAGEM_DADOS ou data/ do checkout principal)")
+        p.add_argument("--pasta", help="pasta da sessão (padrão: DADOS/sessao_globo)")
+        p.add_argument("--porta", type=int, default=8765, help="porta da tela de aprovação (padrão 8765)")
+        p.add_argument("--prompt", default=PROMPT, help="prompt inicial do Whisper")
+        p.add_argument("--vocabulario", default=str(Path(__file__).resolve().parent.parent / "data" / "vocabulario.json"),
+                       help="nomes do debate para o Whisper (JSON com 'termos')")
+        p.add_argument("--paralelo", type=int, default=3, help="falas analisadas ao mesmo tempo (padrão 3)")
+        p.add_argument("--sem-base", action="store_true", help="não atualiza a base durante a noite")
+        p.add_argument("--intervalo-base", type=float, default=600, help="segundos entre atualizações (padrão 600)")
+        p.add_argument("--publicar", action="store_true", help="envia o painel ao site (publicador.py)")
+        p.add_argument("--repo", help="repositório do site (padrão: este)")
+        p.add_argument("--remoto", default="origin")
+        p.add_argument("--ramo", default="main")
+        p.add_argument("--intervalo", type=float, default=60, help="segundos mínimos entre pushes (padrão 60)")
+        p.add_argument("--sair-no-fim", action="store_true",
+                       help="arquivo/pos-debate: sai quando a gravação acaba (padrão: a tela segue aberta para a fila)")
+    a = ap.parse_args(argv)
+
+    dados = Path(a.dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data")
+    pasta = Path(a.pasta) if a.pasta else dados / "sessao_globo"
+    limiar = le_limiar(dados)
+    indice = Indice.da_pasta(pasta_base(dados))
+    transcritor, reconhecedor = _carrega_modelos(a, dados)
+
+    publicador = None
+    sessao_ref = {}
+    if a.publicar:
+        from publicador import RAIZ as REPO_PADRAO
+        from publicador import Publicador
+
+        publicador = Publicador(a.repo or REPO_PADRAO, a.remoto, a.ramo, intervalo=a.intervalo,
+                                ao_erro=lambda m: sessao_ref["s"].registra_erro("publicar", m),
+                                ao_publicar=lambda c: print(f"[publicador] {datetime.now(BRASILIA):%H:%M:%S} "
+                                                            f"{c[:8]} -> {a.remoto}/{a.ramo}", flush=True))
+
+    def chamar(etapa, prompt, conteudo, schema):
+        return agente.chama(etapa, prompt, conteudo, schema, logs=pasta / "agente")
+
+    atualiza_base = None
+    if not a.sem_base:
+        termos = base_checagens.termos_de_busca(Path(base_checagens.RAIZ) / "data" / "buscas_checagens.json")
+        atualiza_base = lambda ao_erro: base_checagens.atualiza(  # noqa: E731
+            pasta_base(dados), termos, base_checagens.chave_google(), dias=1, log=lambda m: print(f"[base] {m}", flush=True),
+            ao_erro=ao_erro)
+
+    if a.cmd == "ao-vivo":
+        fabrica = lambda desde: LinhaAoVivo(pasta, transcritor, reconhecedor, a.dispositivo)  # noqa: E731
+    else:
+        gravacoes_ref = {}
+
+        def fabrica(desde):
+            if "g" not in gravacoes_ref:
+                gravacoes_ref["g"] = _gravacoes(a, pasta, noite._inicio())
+            return LinhaDeArquivos(gravacoes_ref["g"], transcritor, reconhecedor, desde,
+                                   ritmo=(a.ritmo or None) if a.cmd == "arquivo" else None,
+                                   registro=pasta / "linha.jsonl")
+
+    noite = Noite(pasta, indice, fabrica, chamar=chamar, meta={"limiar_automatico": limiar,
+                                                               **({"encerrado": True} if a.cmd == "pos-debate" else {})},
+                  paralelo=a.paralelo, recomeca_se_acabar=a.cmd == "ao-vivo", atualiza_base=atualiza_base,
+                  intervalo_base=a.intervalo_base, porta=a.porta, publicador=publicador,
+                  alerta_sem_fala_s=180 if a.cmd == "ao-vivo" else None, log=lambda m: print(m, flush=True))
+    sessao_ref["s"] = noite.sessao
+    if a.cmd == "pos-debate" and noite._inicio() is None:
+        _marca_inicio_pela_gravacao(noite, _gravacoes(a, pasta, None)[0])
+    print(f"sessão: {pasta} ({len(noite.sessao.eventos)} eventos no registro) · base: {len(indice.registros)} checagens · "
+          "publicação automática: " + (f"nota >= {limiar} depois de 10 min" if limiar is not None else "desligada")
+          + (f" · publicador -> {a.remoto}/{a.ramo}" if publicador else " · sem publicar"), flush=True)
+    noite.comeca()
+    print(f"tela de aprovação: http://127.0.0.1:{noite.tela.server_address[1]}/", flush=True)
+    try:
+        if a.cmd == "ao-vivo":
+            _terminal_ao_vivo(noite)
+        else:
+            noite.espera()
+            print("a gravação acabou: painel completo em " + str(pasta / "painel.json"), flush=True)
+            if not a.sair_no_fim:
+                print("a tela segue aberta para a fila. Ctrl+C encerra.", flush=True)
+                threading.Event().wait()
+    except KeyboardInterrupt:
+        pass
+    print("encerrando: parando o áudio, esperando as análises em curso e o último envio...", flush=True)
+    noite.encerra()
+    print(f"encerrada às {datetime.now(BRASILIA):%H:%M:%S}", flush=True)
+
+
+def _marca_inicio_pela_gravacao(noite, gravacao):
+    """Pós-debate numa pasta nova: o 00:00 da sessão é o horário em que a gravação chegou ao zero."""
+    caminho, zero, _, _ = gravacao
+    info = Path(caminho).with_suffix(".json")
+    if info.exists() and (comecou := json.loads(info.read_text(encoding="utf-8")).get("comecou_em")):
+        comecou = datetime.fromisoformat(comecou)
+        comecou = comecou if comecou.tzinfo else comecou.replace(tzinfo=BRASILIA)
+        noite.marca_zero(comecou + timedelta(seconds=zero))
+
+
+def _terminal_ao_vivo(noite):
+    """Enter marca o 00:00; depois disso, remarcar exige digitar 'remarcar'. Ctrl+C encerra."""
+    print("Capturando o som do computador. Enter marca o 00:00 (abertura do mediador); "
+          "o botão da tela faz o mesmo. Ctrl+C encerra.", flush=True)
+    while True:
+        try:
+            texto = input().strip().lower()
+        except EOFError:  # sem terminal: espera o Ctrl+C
+            threading.Event().wait()
+        inicio = noite._inicio()
+        if inicio is None or texto == "remarcar":
+            noite.marca_zero()
+            print(f"00:00 marcado às {noite._inicio():%H:%M:%S}.", flush=True)
+        else:
+            print(f"00:00 já marcado às {inicio:%H:%M:%S}. Para remarcar agora, digite 'remarcar' e Enter.", flush=True)
+
+
+if __name__ == "__main__":
+    main()

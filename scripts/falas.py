@@ -15,7 +15,7 @@ Uso como biblioteca (a sessão, ticket 10):
 
 Linha de comando:
     python -P scripts/falas.py loopback --gravar G.wav [--saida F.jsonl]   # Enter marca o 00:00; Ctrl+C encerra
-    python -P scripts/falas.py gravar --gravar G.wav                        # só grava (notebook reserva); Ctrl+C
+    python -P scripts/falas.py gravar --gravar G.wav [--segundos N]         # só grava (notebook reserva); Ctrl+C
     python -P scripts/falas.py arquivo AUDIO [--inicio S] [--fim S] [--zero S] [--ritmo 1|0] [--saida F.jsonl]
 """
 import argparse
@@ -605,6 +605,7 @@ def main(argv=None):
     gr = sub.add_parser("gravar", help="só grava o som do Windows (sem transcrever); Ctrl+C encerra")
     gr.add_argument("--gravar", required=True)
     gr.add_argument("--dispositivo", type=int)
+    gr.add_argument("--segundos", type=float, help="para sozinho depois de N s (teste do notebook reserva)")
     a = ap.parse_args(argv)
     if a.cmd == "gravar":
         fonte = FonteLoopback(a.gravar, a.dispositivo)
@@ -612,7 +613,8 @@ def main(argv=None):
         blocos = fonte.blocos()
         try:
             for _ in blocos:
-                pass
+                if a.segundos and fonte.posicao() >= a.segundos:
+                    break
         except KeyboardInterrupt:
             pass
         finally:

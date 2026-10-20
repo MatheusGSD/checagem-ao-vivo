@@ -15,7 +15,7 @@ import pytest
 
 from base_checagens import Indice
 from falas import Fala
-from noite import Noite
+from noite import Noite, zero_da_gravacao
 from publicador import ARQUIVO, Publicador
 from test_publicador import commits, git, remoto  # noqa: F401 - remoto é fixture
 from test_sessao import (CHECAGEM_DA_NOITE, DESEMPREGO, FALA_13, FALA_DESEMPREGO, FALA_MEDIACAO, FALA_PIX, FIXTURES,
@@ -236,6 +236,18 @@ def test_ao_vivo_muito_tempo_sem_fala_depois_do_00_00_avisa_uma_vez_na_tela(indi
 
     [erro] = noite.sessao.erros()
     assert erro["etapa"] == "audio" and "nenhuma fala" in erro["mensagem"]
+
+
+def test_00_00_de_cada_gravacao_vem_do_json_ao_lado_ou_do_inicio_da_sessao(tmp_path):
+    marcada = tmp_path / "gravacao-2120.wav"
+    marcada.with_suffix(".json").write_text(json.dumps({"comecou_em": "2026-10-23T21:10:00.000", "zero_s": 612.5}))
+    recomecada = tmp_path / "gravacao-2205.wav"  # a linha caiu e recomeçou: o 00:00 ficou antes da gravação
+    recomecada.with_suffix(".json").write_text(json.dumps({"comecou_em": "2026-10-23T22:05:00.000"}))
+    sem_json = tmp_path / "reserva.wav"
+
+    assert zero_da_gravacao(marcada, INICIO) == 612.5
+    assert zero_da_gravacao(recomecada, INICIO) == -45 * 60.0
+    assert zero_da_gravacao(sem_json, INICIO) is None
 
 
 def test_a_base_atualiza_em_segundo_plano_e_liga_o_que_estava_sem_par(registros, tmp_path):
