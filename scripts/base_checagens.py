@@ -2,8 +2,9 @@
 Fact Check (claims:search, languageCode=pt), com vetores multilingual-e5-small da frase checada.
 
 Uso:
-  python -P scripts/base_checagens.py coletar [--dias N] [--so N]   busca cada termo de
-        data/buscas_checagens.json, pagina até esgotar, grava as respostas brutas e refaz a base
+  python -P scripts/base_checagens.py coletar [--dias N] [--so N] [--so-novas]   busca cada termo de
+        data/buscas_checagens.json (e as variantes curtas), pagina até esgotar, grava as respostas
+        brutas e refaz a base, sem as agências excluídas em data/agencias.json
   python -P scripts/base_checagens.py reconstruir    refaz base e vetores a partir das respostas brutas
   python -P scripts/base_checagens.py relatorio      registros por agência e por mês, sem data de revisão
   python -P scripts/base_checagens.py consultar "frase" [...] [-n 8]   checagens mais parecidas
@@ -28,6 +29,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from agencias import carrega as politica_de_agencias, separa  # noqa: E402
 from checagens import junta, normaliza  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -73,6 +75,7 @@ def termos_de_busca(arquivo):
     d = json.loads(Path(arquivo).read_text(encoding="utf-8"))
     termos = d["nomes"] + d["temas_telao"] + d["regioes"] + [t for lst in d["assuntos"].values() for t in lst]
     termos += [a["busca"] for a in d["afirmacoes_band"]]
+    termos += [v for vs in d.get("variantes_curtas", {}).values() for v in vs]  # depois das originais
     return list(dict.fromkeys(termos))
 
 
@@ -135,10 +138,13 @@ def le_brutos(pasta):
 
 
 def reconstroi(pasta):
-    """Base = todas as respostas brutas normalizadas e juntadas por URL."""
-    registros = junta(r for pag in le_brutos(pasta)
-                      for r in normaliza(pag["fonte"], pag["resposta"], pag["coletado_em"], pag["busca"]))
-    (pasta / "base.json").write_text(json.dumps({"atualizado_em": agora(), "registros": registros},
+    """Base = todas as respostas brutas normalizadas e juntadas por URL, menos as agências excluídas
+    em data/agencias.json (contadas em "fora_da_base") e com o nome exibido de cada agência."""
+    registros, fora = separa(junta(r for pag in le_brutos(pasta)
+                                   for r in normaliza(pag["fonte"], pag["resposta"], pag["coletado_em"], pag["busca"])),
+                             politica_de_agencias())
+    (pasta / "base.json").write_text(json.dumps({"atualizado_em": agora(), "registros": registros,
+                                                 "fora_da_base": Counter(r["agencia"] for r in fora)},
                                                 ensure_ascii=False, indent=1), encoding="utf-8")
     return registros
 
@@ -258,15 +264,19 @@ def relatorio(registros, termos_afirmacoes=()):
                    f"nenhuma data: {origem['nenhuma']})"]
     linhas.append("  por agência: " + ", ".join(f"{ag} {n}" for ag, n in Counter(
         r["agencia"] for r in registros if r["data_origem"] != "revisao").most_common()))
-    if termos_afirmacoes:
+    if termos_afirmacoes:  # cada afirmação: a busca original ou [original, variantes curtas...]
         achadas = Counter(b for r in registros for b in r["buscas"])
-        com = [t for t in termos_afirmacoes if achadas[t]]
-        linhas += ["", f"Afirmações da Band com algum resultado na busca: {len(com)} de {len(termos_afirmacoes)}"]
+        grupos = [[t] if isinstance(t, str) else t for t in termos_afirmacoes]
+        com = [g for g in grupos if any(achadas[t] for t in g)]
+        linhas += ["", f"Afirmações da Band com algum resultado na busca: {len(com)} de {len(grupos)}"]
     return "\n".join(linhas) + "\n"
 
 
-def termos_afirmacoes(arquivo):
-    return [a["busca"] for a in json.loads(Path(arquivo).read_text(encoding="utf-8"))["afirmacoes_band"]]
+def afirmacoes_com_variantes(arquivo):
+    """Uma lista por afirmação da Band: a busca original e as variantes curtas dela."""
+    d = json.loads(Path(arquivo).read_text(encoding="utf-8"))
+    variantes = d.get("variantes_curtas", {})
+    return [[a["busca"], *variantes.get(a["busca"], [])] for a in d["afirmacoes_band"]]
 
 
 def main():
@@ -277,6 +287,7 @@ def main():
     ap.add_argument("--buscas", default=RAIZ / "data" / "buscas_checagens.json")
     ap.add_argument("--dias", type=int, help="só checagens dos últimos N dias (maxAgeDays)")
     ap.add_argument("--so", type=int, help="só os N primeiros termos (teste)")
+    ap.add_argument("--so-novas", action="store_true", help="só os termos que nunca foram buscados (sem resposta bruta)")
     ap.add_argument("-n", type=int, default=8)
     a = ap.parse_args()
     pasta = pasta_base(a.dados)
@@ -291,6 +302,9 @@ def main():
 
     if a.comando == "coletar":
         termos = termos_de_busca(a.buscas)[: a.so]
+        if a.so_novas:
+            ja = {pag["busca"] for pag in le_brutos(pasta)}
+            termos = [t for t in termos if t not in ja]
         inicio = agora()
         saida = pasta / "brutos" / "google_api" / f"{inicio.replace(':', '-')}.jsonl"
         print(f"coleta: {len(termos)} buscas → {saida}")
@@ -301,7 +315,10 @@ def main():
         registros = reconstroi(pasta)
         print(f"base: {len(registros)} registros; {atualiza_indice(pasta, registros)} vetores novos")
 
-    texto = relatorio(le_base(pasta), termos_afirmacoes(a.buscas))
+    texto = relatorio(le_base(pasta), afirmacoes_com_variantes(a.buscas))
+    fora = json.loads((pasta / "base.json").read_text(encoding="utf-8")).get("fora_da_base") or {}
+    if fora:
+        texto += "\nFora da base (data/agencias.json): " + ", ".join(f"{ag} {n}" for ag, n in fora.items()) + "\n"
     (pasta / "relatorio.txt").write_text(texto, encoding="utf-8")
     print(texto)
 

@@ -1,0 +1,27 @@
+{
+  "descricao": "Política de agências da base de checagens (lida por scripts/agencias.py). 'excluidas': agências fora da base, com o motivo que a página mostra; casam pelo nome como a fonte entrega ('nomes_na_fonte') ou pelo site da checagem ('sites'). 'nomes_exibidos': grafias diferentes da mesma agência → nome mostrado; o nome como veio fica no registro (agencia_na_fonte) e o rótulo nunca muda. 'vias': como cada canal de coleta aparece na página.",
+  "excluidas": [
+    {
+      "nome": "Observador",
+      "motivo": "Checador de Portugal. O foco do painel são os checadores brasileiros; o Observador só aparece nos resultados porque a API do Google filtra por idioma (português), não por país.",
+      "nomes_na_fonte": ["Observador"],
+      "sites": ["observador.pt"]
+    },
+    {
+      "nome": "Lupa",
+      "motivo": "Não publica dados estruturados (ClaimReview) e não autorizou a coleta até 22/10.",
+      "nota": "Padrão até a Lupa autorizar por escrito; com a autorização, sai desta lista.",
+      "nomes_na_fonte": ["Lupa", "Agência Lupa"],
+      "sites": ["lupa.news", "lupa.uol.com.br"]
+    }
+  ],
+  "nomes_exibidos": {
+    "Agência Publica": "Agência Pública",
+    "BOL - UOL": "BOL",
+    "Acervo - Estadão": "Estadão"
+  },
+  "vias": {
+    "google_api": "ClaimReview na API do Google",
+    "google_explorer": "ClaimReview no Fact Check Explorer do Google"
+  }
+}

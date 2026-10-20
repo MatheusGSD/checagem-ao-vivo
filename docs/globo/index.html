@@ -263,9 +263,16 @@ document.getElementById("tema-btn").addEventListener("click", () => {
 escuroSistema.addEventListener?.("change", aplicaTema);
 aplicaTema();
 
-// ?exemplo abre os dados fictícios de teste; sem parâmetro, os dados do debate
-const EXEMPLO = new URLSearchParams(location.search).has("exemplo");
-const ARQUIVO = EXEMPLO ? "data/exemplo.json" : "data/painel.json";
+// ?dados=CAMINHO abre outro arquivo .json do mesmo site, por caminho relativo (prévia local com o
+// exemplo de teste: ver formato-dos-dados.md); sem parâmetro, ou com caminho de outro site, os dados do debate
+function arquivoDados() {
+  const p = new URLSearchParams(location.search).get("dados");
+  // só caminho relativo: nada de esquema (https:, data:), barra inicial (//outro.site) nem contrabarra
+  if (!p || /^[a-z][a-z0-9+.-]*:|^\/|\\/i.test(p) || !/\.json$/i.test(p)) return "data/painel.json";
+  try { return new URL(p, location.href).origin === location.origin ? p : "data/painel.json"; }
+  catch (e) { return "data/painel.json"; }
+}
+const ARQUIVO = arquivoDados();
 const INTERVALO = 30000;
 document.getElementById("baixar").href = ARQUIVO;
 
