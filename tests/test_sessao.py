@@ -375,6 +375,76 @@ def test_publicacao_automatica_leva_so_as_checagens_acima_do_limiar(indice):
     assert [c["url"] for c in lig["checagens"]] == [PIX_ESTADAO]
 
 
+def test_checagens_abaixo_do_limiar_numa_ligacao_publicada_sozinha_esperam_o_operador_na_fila(indice):
+    relogio = Relogio(INICIO + timedelta(minutes=40))
+    s = sessao_com_limiar(indice, Claude({FALA_PIX: [PIX]}), relogio, 0.93)
+
+    s.recebe_fala("Flávio", 2400.0, FALA_PIX)  # Estadão 0.95 sai sozinha; AFP 0.9 fica
+
+    [lig] = s.exporta()["ligacoes"]
+    [resto] = s.fila()
+    assert resto["id"] == lig["id"]
+    assert [(c["url"], c["nota"]) for c in resto["checagens"]] == [(PIX_AFP, 0.9)]
+    assert resto["nota"] == 0.9
+    assert resto["ja_publicadas"] == [PIX_ESTADAO]
+
+
+def test_aprovar_o_resto_de_uma_ligacao_publicada_sozinha_acrescenta_a_checagem_a_mesma_ligacao(indice):
+    relogio = Relogio(INICIO + timedelta(minutes=40))
+    s = sessao_com_limiar(indice, Claude({FALA_PIX: [PIX]}), relogio, 0.93)
+    s.recebe_fala("Flávio", 2400.0, FALA_PIX)
+    [resto] = s.fila()
+    relogio.adianta(minutes=2)
+
+    s.aprova(resto["id"], selos={PIX_AFP: "Falso"})
+
+    assert s.fila() == []
+    [lig] = s.exporta()["ligacoes"]
+    assert (lig["id"], lig["origem"], lig["publicada_em"]) == (resto["id"], "automatica", "2026-10-23T22:00:00-03:00")
+    assert [(c["url"], c["rotulo"], c["fonte_rotulo"]) for c in lig["checagens"]] == [
+        (PIX_ESTADAO, "Enganoso", "dados_da_agencia"), (PIX_AFP, "Falso", "selo_da_pagina")]
+    with pytest.raises(ValueError):
+        s.aprova(resto["id"])
+
+    copia = Sessao.reconstroi(indice, json.loads(json.dumps(s.eventos)), chamar=Claude({}), relogio=relogio,
+                              meta={"limiar_automatico": 0.93})
+    assert estado(copia) == estado(s)
+
+
+def test_recusar_o_resto_de_uma_ligacao_publicada_sozinha_mantem_a_ligacao_so_com_o_que_saiu(indice):
+    relogio = Relogio(INICIO + timedelta(minutes=40))
+    s = sessao_com_limiar(indice, Claude({FALA_PIX: [PIX]}), relogio, 0.93)
+    s.recebe_fala("Flávio", 2400.0, FALA_PIX)
+    [resto] = s.fila()
+
+    s.recusa(resto["id"], "a da AFP trata de outra coisa")
+
+    assert s.fila() == []
+    [lig] = s.exporta()["ligacoes"]
+    assert [c["url"] for c in lig["checagens"]] == [PIX_ESTADAO]
+    [recusada] = s.recusadas()
+    assert (recusada["id"], recusada["motivo_recusa"]) == (resto["id"], "a da AFP trata de outra coisa")
+    assert [c["url"] for c in recusada["checagens"]] == [PIX_AFP]
+    assert s.exporta()["correcoes"] == []
+
+    copia = Sessao.reconstroi(indice, json.loads(json.dumps(s.eventos)), chamar=Claude({}), relogio=relogio,
+                              meta={"limiar_automatico": 0.93})
+    assert estado(copia) == estado(s)
+
+
+def test_despublicar_uma_ligacao_publicada_sozinha_tira_o_resto_dela_da_fila(indice):
+    relogio = Relogio(INICIO + timedelta(minutes=40))
+    s = sessao_com_limiar(indice, Claude({FALA_PIX: [PIX]}), relogio, 0.93)
+    s.recebe_fala("Flávio", 2400.0, FALA_PIX)
+    [resto] = s.fila()
+
+    s.despublica(resto["id"], "Ligação errada.")
+
+    assert s.fila() == []
+    with pytest.raises(ValueError):
+        s.aprova(resto["id"])
+
+
 def test_sem_00_00_marcado_nada_e_publicado_sozinho(indice):
     s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX]}), relogio=Relogio(INICIO + timedelta(hours=1)),
                meta={"limiar_automatico": 0.5})
@@ -519,14 +589,15 @@ def noite_movimentada(indice, relogio, ao_registrar=None, claude=None):
     s.recebe_fala("Mediação", 0.0, FALA_MEDIACAO)
     s.recebe_fala("Lula", 300.0, FALA_DESEMPREGO)  # aquecimento: fila
     relogio.adianta(minutes=15)
-    s.recebe_fala("Flávio", 900.0, FALA_PIX)  # Estadão 0.95: sai sozinha
+    s.recebe_fala("Flávio", 900.0, FALA_PIX)  # Estadão 0.95: sai sozinha; AFP 0.9 fica na fila
     s.recebe_fala("Flávio", 950.0, FALA_GASOLINA)  # sem par
     s.recebe_fala("Lula", 1000.0, FALA_LICENCA)  # 0.7: fila
-    desemprego, licenca = (p["id"] for p in s.fila())
+    desemprego, licenca = (p["id"] for p in s.fila() if not p["ja_publicadas"])
     s.aprova(desemprego, selos={DESEMPREGO_2025: "Verdadeiro, mas"})
     s.recusa(licenca)
     pix = next(lig["id"] for lig in s.exporta()["ligacoes"] if lig["origem"] == "automatica")
-    s.despublica(pix, "Ligação errada.")
+    s.despublica(pix, "Ligação errada.")  # o resto do Pix sai da fila junto
+    assert s.fila() == []
     return s
 
 

@@ -135,6 +135,7 @@ function cartaoFila(p) {
       <span>nota <span class="nota">${num(p.nota)}</span></span><span>proposta ${hora(p.proposta_em)}</span></div>
     <p class="fala">${destaca(p.fala, p.trecho)}</p>
     <p class="reform"><b>Afirmação:</b> ${esc(p.reformulacao)}</p>
+    ${p.ja_publicadas.length ? `<p class="reform"><b>Já no painel</b> (publicada sozinha com ${p.ja_publicadas.length} checagem${p.ja_publicadas.length > 1 ? "s" : ""}): aprovar acrescenta estas à mesma ligação; recusar não a tira do painel.</p>` : ""}
     ${p.checagens.map((c, i) => `
       <div class="checagem" data-url="${esc(c.url)}">
         <div class="cab"><label><input type="checkbox" class="manter" checked> <span class="agencia">${esc(c.agencia)}</span></label>

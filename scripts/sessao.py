@@ -97,6 +97,8 @@ class Sessao:
         self._descartados = []
         self._erros = []
         self._situacao = {}  # id da ligação -> "publicada", "recusada" ou "despublicada" (sem = pendente)
+        self._aguardando = {}  # id -> URLs das checagens que esperam a decisão do operador (a fila)
+        self._recusas = {}  # id -> {"urls": checagens recusadas, "motivo": motivo ou None}
         self._publicadas = {}  # id -> ligação no formato do arquivo de dados, na ordem de publicação
         self._correcoes = []
         self._inicio = None  # 00:00 marcado pelo operador (marca_inicio)
@@ -177,14 +179,28 @@ class Sessao:
         return {"id": f"f{len(self._falas) + 1:04d}", "quem": quem, "inicio_s": inicio_s, "texto": texto}
 
     def fila(self):
-        """Ligações propostas à espera do operador, na ordem em que foram propostas."""
+        """Ligações propostas à espera do operador, na ordem em que foram propostas, só com as
+        checagens que esperam decisão (`nota` é a maior delas). Numa ligação publicada sozinha só com
+        parte das checagens, o resto espera aqui com o mesmo id; `ja_publicadas` lista as URLs que já
+        estão no painel (vazia nas demais)."""
         with self._trava:
-            return [copy.deepcopy(p) for p in self._propostas if p["id"] not in self._situacao]
+            fila = []
+            for p in self._propostas:
+                if (urls := self._aguardando.get(p["id"])) is None:
+                    continue
+                checagens = [c for c in p["checagens"] if c["url"] in urls]
+                publicada = self._publicadas.get(p["id"], {"checagens": []})
+                fila.append(copy.deepcopy({**p, "checagens": checagens, "nota": max(c["nota"] for c in checagens),
+                                           "ja_publicadas": [c["url"] for c in publicada["checagens"]]}))
+            return fila
 
     def recusadas(self):
-        """Ligações propostas que o operador recusou, com o motivo (se ele deu um)."""
+        """Ligações propostas que o operador recusou, só com as checagens recusadas e o motivo (se ele
+        deu um). Recusar o resto de uma ligação publicada sozinha não tira a ligação do painel."""
         with self._trava:
-            return [copy.deepcopy(p) for p in self._propostas if self._situacao.get(p["id"]) == "recusada"]
+            return [copy.deepcopy({**p, "checagens": [c for c in p["checagens"] if c["url"] in r["urls"]],
+                                   "motivo_recusa": r["motivo"]})
+                    for p in self._propostas if (r := self._recusas.get(p["id"]))]
 
     def descartados(self):
         """Afirmações extraídas e descartadas (trecho que não aparece letra a letra na fala), com o motivo."""
@@ -209,7 +225,8 @@ class Sessao:
     def aprova(self, ligacao_id, selos=None, manter=None):
         """Publica uma ligação da fila. selos = {URL da checagem: selo visível na página da agência};
         o selo tem prioridade sobre o rótulo dos dados da agência, e checagem sem selo informado sai
-        com o rótulo dos dados. manter = URLs das checagens que entram (padrão: todas)."""
+        com o rótulo dos dados. manter = URLs das checagens que entram (padrão: todas as da fila).
+        Se a ligação já saiu sozinha com parte das checagens, as aprovadas entram nela."""
         with self._trava:
             p = self._pendente(ligacao_id)
             urls = [c["url"] for c in p["checagens"]]
@@ -292,12 +309,12 @@ class Sessao:
         return dados
 
     def _pendente(self, ligacao_id):
-        p = next((p for p in self._propostas if p["id"] == ligacao_id), None)
-        if p is None:
+        """A ligação como está na fila (só com as checagens que esperam decisão)."""
+        if not any(p["id"] == ligacao_id for p in self._propostas):
             raise AcaoInvalida(f"ligação inexistente: {ligacao_id}")
-        if ligacao_id in self._situacao:
-            raise AcaoInvalida(f"{ligacao_id} já foi {self._situacao[ligacao_id]}")
-        return p
+        if ligacao_id not in self._aguardando:
+            raise AcaoInvalida(f"{ligacao_id} não está na fila: já foi {self._situacao[ligacao_id]}")
+        return next(p for p in self.fila() if p["id"] == ligacao_id)
 
     def _publicada(self, ligacao_id):
         if ligacao_id not in self._publicadas:
@@ -421,6 +438,7 @@ class Sessao:
                 "ligada_depois": bool(e.get("tardia")),
                 "checagens": [{**c["checagem"], "nota": c["nota"], "motivo": c["motivo"]} for c in e["confirmadas"]],
             })
+            self._aguardando[self._propostas[-1]["id"]] = [c["checagem"]["url"] for c in e["confirmadas"]]
 
     def _aplica_publicacao(self, e):
         """Eventos do 00:00, das ações do operador e da publicação automática."""
@@ -431,22 +449,30 @@ class Sessao:
             p = next(p for p in self._propostas if p["id"] == ident)
             selos = e.get("selos", {})
             self._situacao[ident] = "publicada"
-            self._publicadas[ident] = {
+            lig = self._publicadas.setdefault(ident, {  # aprovar o resto de uma automática: entra nela
                 "id": ident, "minutagem_s": p["minutagem_s"], "quem": p["quem"], "trecho": p["trecho"],
                 "reformulacao": p["reformulacao"], "tipo": p["tipo"],
                 "origem": "aprovada" if tipo == "aprovacao" else "automatica", "publicada_em": e["em"],
-                "ligada_depois": bool(p.get("ligada_depois", False)),
-                "checagens": [{"agencia": c["agencia"], "data": c["data"],
-                               "rotulo": selos.get(c["url"]) or c["rotulo"],
-                               "fonte_rotulo": "selo_da_pagina" if c["url"] in selos else "dados_da_agencia",
-                               "url": c["url"]}
-                              for c in p["checagens"] if c["url"] in e["checagens"]],
-            }
+                "ligada_depois": bool(p.get("ligada_depois", False)), "checagens": [],
+            })
+            novas = {c["url"]: {"agencia": c["agencia"], "data": c["data"],
+                                "rotulo": selos.get(c["url"]) or c["rotulo"],
+                                "fonte_rotulo": "selo_da_pagina" if c["url"] in selos else "dados_da_agencia",
+                                "url": c["url"]}
+                     for c in p["checagens"] if c["url"] in e["checagens"]}
+            ja = {c["url"]: c for c in lig["checagens"]}
+            lig["checagens"] = [ja.get(c["url"]) or novas[c["url"]] for c in p["checagens"]
+                                if c["url"] in ja or c["url"] in novas]  # na ordem da proposta
+            # a automática deixa o resto na fila; a aprovação decide tudo o que esperava
+            resto = [u for u in self._aguardando.pop(ident, []) if u not in novas]
+            if tipo == "publicacao_automatica" and resto:
+                self._aguardando[ident] = resto
         elif tipo == "recusa":
-            self._situacao[ident] = "recusada"
-            next(p for p in self._propostas if p["id"] == ident)["motivo_recusa"] = e["motivo"]
+            self._situacao.setdefault(ident, "recusada")  # o resto de uma automática: ela segue publicada
+            self._recusas[ident] = {"urls": self._aguardando.pop(ident), "motivo": e["motivo"]}
         elif tipo == "despublicacao":
             self._situacao[ident] = "despublicada"
+            self._aguardando.pop(ident, None)  # o resto que esperava na fila sai junto
             retirada = self._publicadas.pop(ident)
             self._correcoes.append({"em": e["em"], "ligacao_id": ident, "motivo": e["motivo"], "retirado": retirada})
         elif tipo == "correcao_rotulo":
