@@ -497,7 +497,7 @@ def test_despublicar_tira_a_ligacao_da_lista_e_cria_a_correcao_com_horario_e_mot
 
     dados = s.exporta()
     assert [lig["id"] for lig in dados["ligacoes"]] == [desemprego]
-    assert dados["correcoes"] == [{"em": "2026-10-23T21:53:00-03:00", "ligacao_id": pix,
+    assert dados["correcoes"] == [{"tipo": "despublicacao", "em": "2026-10-23T21:53:00-03:00", "ligacao_id": pix,
                                    "motivo": "A checagem da AFP trata da taxa do Pix, não da criação.",
                                    "retirado": publicada}]
     assert valida(dados) == []
@@ -543,6 +543,46 @@ def test_corrigir_rotulo_de_ligacao_publicada_troca_o_rotulo_exibido_pelo_selo(i
     assert {c["url"]: (c["rotulo"], c["fonte_rotulo"]) for c in lig["checagens"]} == {
         PIX_ESTADAO: ("Falso", "selo_da_pagina"), PIX_AFP: ("Não é bem assim", "dados_da_agencia")}
     assert lig["origem"] == "automatica"
+
+
+def test_corrigir_rotulo_de_ligacao_publicada_entra_nas_correcoes_com_o_rotulo_antigo_e_o_novo(indice):
+    relogio = Relogio(INICIO + timedelta(minutes=40))
+    s = sessao_com_limiar(indice, Claude({FALA_PIX: [PIX]}), relogio, 0.8)
+    s.recebe_fala("Flávio", 2400.0, FALA_PIX)
+    [lig] = s.exporta()["ligacoes"]
+    relogio.adianta(minutes=1)
+    s.corrige_rotulo(lig["id"], PIX_ESTADAO, "Falso")
+    relogio.adianta(minutes=1)
+
+    s.corrige_rotulo(lig["id"], PIX_ESTADAO, "Enganoso")  # o operador errou o selo e corrige de novo
+
+    dados = s.exporta()
+    assert dados["correcoes"] == [
+        {"tipo": "rotulo", "em": "2026-10-23T22:01:00-03:00", "ligacao_id": lig["id"], "minutagem_s": 2400.0,
+         "quem": "Flávio", "agencia": "Estadão", "url": PIX_ESTADAO,
+         "rotulo_anterior": "Enganoso", "fonte_rotulo_anterior": "dados_da_agencia",
+         "rotulo": "Falso", "fonte_rotulo": "selo_da_pagina"},
+        {"tipo": "rotulo", "em": "2026-10-23T22:02:00-03:00", "ligacao_id": lig["id"], "minutagem_s": 2400.0,
+         "quem": "Flávio", "agencia": "Estadão", "url": PIX_ESTADAO,
+         "rotulo_anterior": "Falso", "fonte_rotulo_anterior": "selo_da_pagina",
+         "rotulo": "Enganoso", "fonte_rotulo": "selo_da_pagina"},
+    ]
+    assert [lig["id"] for lig in dados["ligacoes"]] == [lig["id"]]  # a ligação continua publicada
+    assert valida(dados) == []
+
+
+def test_corrigir_para_o_mesmo_selo_que_ja_esta_no_painel_nao_vale(indice):
+    s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX]}), relogio=relogio)
+    s.recebe_fala("Flávio", 1800.0, FALA_PIX)
+    ident = s.fila()[0]["id"]
+    s.aprova(ident, selos={PIX_ESTADAO: "Falso"})
+    n = len(s.eventos)
+
+    with pytest.raises(ValueError):
+        s.corrige_rotulo(ident, PIX_ESTADAO, " Falso ")
+
+    assert len(s.eventos) == n
+    assert s.exporta()["correcoes"] == []
 
 
 def test_o_publicador_e_avisado_a_cada_mudanca_do_conteudo_publico(indice):

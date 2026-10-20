@@ -252,7 +252,7 @@ class Sessao:
 
     def despublica(self, ligacao_id, motivo):
         """Tira uma ligação publicada do painel. Nada é apagado: ela entra nas correções com o horário,
-        o motivo e a ligação como estava publicada."""
+        o motivo e a ligação como estava publicada. Se o resto dela esperava na fila, sai da fila."""
         with self._trava:
             self._publicada(ligacao_id)
             if not (motivo or "").strip():
@@ -261,13 +261,16 @@ class Sessao:
 
     def corrige_rotulo(self, ligacao_id, url, rotulo):
         """Troca o rótulo exibido de uma checagem de uma ligação publicada pelo selo visível na página
-        da agência."""
+        da agência. A troca entra nas correções públicas com o horário e o rótulo antigo e o novo."""
         with self._trava:
             lig = self._publicada(ligacao_id)
-            if url not in [c["url"] for c in lig["checagens"]]:
+            c = next((c for c in lig["checagens"] if c["url"] == url), None)
+            if c is None:
                 raise AcaoInvalida(f"{ligacao_id}: checagem que não está na ligação: {url}")
             if not (rotulo or "").strip():
                 raise AcaoInvalida("informe o selo visível na página da agência")
+            if (c["rotulo"], c["fonte_rotulo"]) == (rotulo.strip(), "selo_da_pagina"):
+                raise AcaoInvalida(f"{ligacao_id}: o painel já mostra o selo “{c['rotulo']}” para essa checagem")
             self._registra({"tipo": "correcao_rotulo", "ligacao_id": ligacao_id, "url": url, "rotulo": rotulo.strip()})
 
     def registra_erro(self, etapa, mensagem):
@@ -474,9 +477,15 @@ class Sessao:
             self._situacao[ident] = "despublicada"
             self._aguardando.pop(ident, None)  # o resto que esperava na fila sai junto
             retirada = self._publicadas.pop(ident)
-            self._correcoes.append({"em": e["em"], "ligacao_id": ident, "motivo": e["motivo"], "retirado": retirada})
+            self._correcoes.append({"tipo": "despublicacao", "em": e["em"], "ligacao_id": ident,
+                                    "motivo": e["motivo"], "retirado": retirada})
         elif tipo == "correcao_rotulo":
-            c = next(c for c in self._publicadas[ident]["checagens"] if c["url"] == e["url"])
+            lig = self._publicadas[ident]
+            c = next(c for c in lig["checagens"] if c["url"] == e["url"])
+            self._correcoes.append({
+                "tipo": "rotulo", "em": e["em"], "ligacao_id": ident, "minutagem_s": lig["minutagem_s"],
+                "quem": lig["quem"], "agencia": c["agencia"], "url": c["url"], "rotulo_anterior": c["rotulo"],
+                "fonte_rotulo_anterior": c["fonte_rotulo"], "rotulo": e["rotulo"], "fonte_rotulo": "selo_da_pagina"})
             c.update(rotulo=e["rotulo"], fonte_rotulo="selo_da_pagina")
 
     def _inicio_debate(self):

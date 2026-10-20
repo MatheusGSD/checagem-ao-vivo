@@ -103,5 +103,24 @@ def test_correcao_guarda_horario_motivo_e_a_ligacao_retirada_inteira():
                "correcoes[0].retirado.checagens")
 
 
+def test_correcao_de_rotulo_guarda_horario_ligacao_e_o_rotulo_antigo_e_o_novo_com_a_fonte():
+    [rotulo] = [c for c in carrega("exemplo.json")["correcoes"] if c["tipo"] == "rotulo"]
+    i = carrega("exemplo.json")["correcoes"].index(rotulo)
+
+    def mexe(f):
+        return problemas_com(lambda d: f(d["correcoes"][i]), "exemplo.json")
+
+    assert tem(mexe(lambda c: c.pop("rotulo_anterior")), f"correcoes[{i}].rotulo_anterior")
+    assert tem(mexe(lambda c: c.update(fonte_rotulo="claimreview")), f"correcoes[{i}].fonte_rotulo")
+    assert tem(mexe(lambda c: c.update(fonte_rotulo_anterior=None)), f"correcoes[{i}].fonte_rotulo_anterior")
+    # campos de uma despublicação não cabem numa correção de rótulo
+    assert tem(mexe(lambda c: c.update(motivo="selo errado")), f"correcoes[{i}].motivo")
+
+
+def test_correcao_diz_se_e_despublicacao_ou_rotulo():
+    assert tem(problemas_com(lambda d: d["correcoes"][0].update(tipo="edicao"), "exemplo.json"), "correcoes[0].tipo")
+    assert tem(problemas_com(lambda d: d["correcoes"][0].pop("tipo"), "exemplo.json"), "correcoes[0].tipo")
+
+
 def test_identificador_de_ligacao_nao_se_repete():
     assert tem(problemas_com(lambda d: d["ligacoes"][1].update(id="lig-0004"), "exemplo.json"), "ligacoes[1].id")
