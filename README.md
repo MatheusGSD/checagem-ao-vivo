@@ -47,6 +47,12 @@ python -P scripts/base_checagens.py consultar "Bolsonaro triplicou o Bolsa Famí
 python -P -m pytest -q                                 # testes
 ```
 
+**Sessão de checagem:** `scripts/sessao.py` recebe as falas fechadas (quem, início em segundos desde o 00:00, texto). Para cada fala de candidato, o Claude (`claude-opus-5-5`, pela função `chama` de `scripts/agente.py`) extrai as afirmações checáveis com o prompt fixo `prompts/extrair_afirmacoes.md`, que usa o mesmo critério do `classificar.md`. Cada trecho é conferido letra a letra contra a fala, e o que não bate é descartado e registrado. As falas da mediação não passam pela extração. A base é consultada por sentido: até 8 checagens candidatas por afirmação, e só de 2025 em diante quando a afirmação é um número. Depois o Claude confirma, com `prompts/confirmar_ligacao.md`, quais candidatas tratam da mesma afirmação, com nota de 0 a 1 e motivo. As ligações confirmadas vão para a fila do operador. Sem nenhuma confirmada, a afirmação fica "sem par". O estado é exportado no formato de `docs/globo/formato-dos-dados.md`. Toda mudança de estado é um evento, que leva junto a resposta do Claude.
+
+```sh
+python -P scripts/sessao.py band    # repassa as 150 falas da Band; grava data/sessao_band/{painel,fila}.json, eventos.jsonl e agente/
+```
+
 ## Limitações
 
 - O tempo de fala é medido no áudio, com pausas e apartes, e não no relógio oficial. O gráfico do relógio escalona cada candidato para 15 min. A estimativa deixa 1min07 para Lula quando o tempo de Flávio acaba, e a mediação anunciou 1min08.
