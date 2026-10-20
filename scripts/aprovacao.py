@@ -1,0 +1,166 @@
+"""Tela de aprovação: página local, servida pela máquina do operador, que mostra a fila e o estado da
+sessão de checagem em tempo real e envia as ações do operador (aprovar com selo, recusar,
+despublicar com motivo, corrigir rótulo, marcar o 00:00).
+
+Só escuta em 127.0.0.1. A página (scripts/aprovacao.html) busca GET /estado a cada ~1,5 s e manda
+cada ação como POST /acao/<nome> com corpo JSON.
+
+Uso:
+  python -P scripts/aprovacao.py [--dados DADOS] [--pasta PASTA] [--porta 8765] [--sem-retomar]
+
+  DADOS: --dados, CHECAGEM_DADOS ou data/ do checkout principal (base em DADOS/checagens, limiar em
+         DADOS/avaliacao/limiar.json).
+  PASTA: pasta da sessão, com o registro eventos.jsonl (padrão DADOS/sessao_globo). Se o registro
+         existe, a sessão é reconstruída a partir dele; análises interrompidas por um travamento são
+         terminadas em segundo plano (chamam o Claude), a menos que se passe --sem-retomar.
+
+Em código (integração ao vivo): `servidor = serve(sessao, porta)` sobe a tela numa thread e
+devolve o servidor (servidor.server_address, servidor.shutdown()).
+"""
+import json
+import sys
+import threading
+from datetime import datetime
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import urlsplit
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from sessao import AcaoInvalida  # noqa: E402
+
+PAGINA = Path(__file__).resolve().parent / "aprovacao.html"
+HOST = "127.0.0.1"
+PORTA = 8765
+
+
+def estado(sessao):
+    """O que a tela mostra: fila, publicadas, correções, recusadas, sem par, descartes e erros."""
+    versao = len(sessao.eventos)  # lida antes: um evento no meio só faz a próxima busca redesenhar
+    dados = sessao.exporta()
+    return {
+        "versao": versao,
+        "agora": dados["meta"]["atualizado_em"],
+        "meta": {k: dados["meta"][k] for k in ("titulo", "debate", "inicio_debate", "limiar_automatico")},
+        "fila": sessao.fila(),
+        "publicadas": dados["ligacoes"],
+        "correcoes": dados["correcoes"],
+        "sem_par": dados["sem_par"],
+        "recusadas": sessao.recusadas(),
+        "descartados": sessao.descartados(),
+        "erros": sessao.erros(),
+    }
+
+
+def _acoes(sessao):
+    return {
+        "aprovar": lambda c: sessao.aprova(c["ligacao_id"], selos=c.get("selos"), manter=c.get("manter")),
+        "recusar": lambda c: sessao.recusa(c["ligacao_id"], c.get("motivo")),
+        "despublicar": lambda c: sessao.despublica(c["ligacao_id"], c.get("motivo")),
+        "rotulo": lambda c: sessao.corrige_rotulo(c["ligacao_id"], c["url"], c.get("rotulo")),
+        "inicio": lambda c: sessao.marca_inicio(c.get("instante")),
+    }
+
+
+def _handler(sessao):
+    acoes = _acoes(sessao)
+
+    class Tela(BaseHTTPRequestHandler):
+        server_version = "TelaDeAprovacao"
+
+        def log_message(self, formato, *args):  # só ações e erros vão para o terminal
+            if self.command == "POST" or (args and str(args[1])[:1] in "45"):
+                sys.stderr.write(f"[tela] {self.command} {self.path} {args[1] if len(args) > 1 else ''}\n")
+
+        def _origem_local(self):
+            """Só a própria tela: barra outro site aberto no navegador do operador (Origin) e DNS
+            rebinding (Host)."""
+            porta = self.server.server_address[1]
+            locais = {f"127.0.0.1:{porta}", f"localhost:{porta}"}
+            if self.headers.get("Host") not in locais:
+                return False
+            origem = self.headers.get("Origin")
+            return origem is None or urlsplit(origem).netloc in locais
+
+        def _responde(self, codigo, corpo, tipo="application/json; charset=utf-8"):
+            dados = corpo if isinstance(corpo, bytes) else json.dumps(corpo, ensure_ascii=False).encode()
+            self.send_response(codigo)
+            self.send_header("Content-Type", tipo)
+            self.send_header("Content-Length", str(len(dados)))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Frame-Options", "DENY")
+            self.end_headers()
+            self.wfile.write(dados)
+
+        def do_GET(self):
+            if not self._origem_local():
+                return self._responde(403, {"erro": "só a tela local"})
+            caminho = urlsplit(self.path).path
+            if caminho == "/":
+                return self._responde(200, PAGINA.read_bytes(), "text/html; charset=utf-8")
+            if caminho == "/estado":
+                return self._responde(200, estado(sessao))
+            if caminho == "/favicon.ico":
+                return self._responde(204, b"", "image/x-icon")
+            self._responde(404, {"erro": "não existe"})
+
+        def do_POST(self):
+            if not self._origem_local():
+                return self._responde(403, {"erro": "só a tela local"})
+            nome = urlsplit(self.path).path.removeprefix("/acao/")
+            if nome not in acoes:
+                return self._responde(404, {"erro": f"ação desconhecida: {nome}"})
+            if not (self.headers.get("Content-Type") or "").startswith("application/json"):
+                return self._responde(415, {"erro": "corpo deve ser JSON"})
+            try:
+                corpo = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
+                acoes[nome](corpo)
+            except (AcaoInvalida, KeyError, TypeError, ValueError) as e:
+                return self._responde(400, {"erro": str(e) if not isinstance(e, KeyError) else f"falta {e}"})
+            self._responde(200, {"ok": True, "versao": len(sessao.eventos)})
+
+    return Tela
+
+
+def serve(sessao, porta=PORTA):
+    """Sobe a tela numa thread e devolve o servidor. porta=0 escolhe uma livre."""
+    servidor = ThreadingHTTPServer((HOST, porta), _handler(sessao))
+    servidor.daemon_threads = True
+    threading.Thread(target=servidor.serve_forever, name="tela-de-aprovacao", daemon=True).start()
+    return servidor
+
+
+def main():
+    import argparse
+    import os
+
+    from base_checagens import Indice, pasta_base, raiz_principal
+    from sessao import Sessao, le_limiar
+
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--dados", help="pasta de dados (padrão: CHECAGEM_DADOS ou data/ do checkout principal)")
+    ap.add_argument("--pasta", help="pasta da sessão, com eventos.jsonl (padrão: DADOS/sessao_globo)")
+    ap.add_argument("--porta", type=int, default=PORTA)
+    ap.add_argument("--sem-retomar", action="store_true", help="não termina análises interrompidas")
+    a = ap.parse_args()
+    dados = Path(a.dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data")
+    pasta = Path(a.pasta) if a.pasta else dados / "sessao_globo"
+    limiar = le_limiar(dados)
+    indice = Indice.da_pasta(pasta_base(dados))
+    sessao = Sessao.abre(pasta, indice, meta={"limiar_automatico": limiar})
+    print(f"base: {len(indice.registros)} checagens · registro: {pasta / 'eventos.jsonl'} "
+          f"({len(sessao.eventos)} eventos) · publicação automática: "
+          + (f"nota ≥ {limiar} depois de 10 min" if limiar is not None else "desligada"), flush=True)
+    if not a.sem_retomar:
+        threading.Thread(target=sessao.retoma_analises, daemon=True).start()
+    servidor = serve(sessao, a.porta)
+    print(f"tela de aprovação: http://127.0.0.1:{servidor.server_address[1]}/  (Ctrl+C encerra)", flush=True)
+    try:
+        threading.Event().wait()
+    except KeyboardInterrupt:
+        servidor.shutdown()
+        print(f"encerrada às {datetime.now():%H:%M:%S}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aprovação · checagem ao vivo</title>
+<style>
+  :root {
+    --fundo: #f4f2ee; --cartao: #fff; --tinta: #1d1d1b; --suave: #6b675f; --linha: #ddd8cf;
+    --lula: #b3261e; --flavio: #1f4e9c; --ok: #1b6e3c; --alerta: #a3470b; --erro: #b3261e;
+    --marca: #fff1a8; --foco: #1f4e9c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fundo); color: var(--tinta);
+         font: 15px/1.45 system-ui, "Segoe UI", Roboto, sans-serif; }
+  header { position: sticky; top: 0; z-index: 2; background: var(--tinta); color: #fff;
+           display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: center; padding: 10px 18px; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 650; }
+  header .item { font-size: 13px; color: #d9d5cc; }
+  header .item b { color: #fff; font-weight: 600; }
+  header button { background: #fff; color: var(--tinta); }
+  #conexao { width: 10px; height: 10px; border-radius: 50%; background: #3cb371; display: inline-block; }
+  #conexao.fora { background: #e04a3f; }
+  main { padding: 14px 18px 40px; display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 18px; }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); margin: 4px 0 10px; }
+  h2 .n { background: var(--tinta); color: #fff; border-radius: 10px; padding: 0 8px; margin-left: 6px; }
+  .vazio { color: var(--suave); font-style: italic; padding: 8px 0; }
+  .cartao { background: var(--cartao); border: 1px solid var(--linha); border-radius: 8px; padding: 12px 14px;
+            margin-bottom: 12px; }
+  .cartao.novo { animation: chega 1.6s ease-out; }
+  @keyframes chega { from { box-shadow: 0 0 0 3px var(--marca); } to { box-shadow: none; } }
+  .topo { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: 13px; color: var(--suave); }
+  .quem { font-weight: 700; }
+  .quem.Lula { color: var(--lula); } .quem.Flávio { color: var(--flavio); }
+  .nota { font-weight: 700; color: var(--tinta); }
+  .selo-origem { font-size: 11px; font-weight: 700; text-transform: uppercase; border-radius: 4px; padding: 1px 6px; }
+  .selo-origem.aprovada { background: #e0efe5; color: var(--ok); }
+  .selo-origem.automatica { background: #fbe9da; color: var(--alerta); }
+  .fala { margin: 8px 0 4px; }
+  .fala mark { background: var(--marca); padding: 0 1px; }
+  .reform { font-size: 14px; color: var(--suave); margin: 0 0 8px; }
+  .reform b { color: var(--tinta); font-weight: 600; }
+  .checagem { border-top: 1px dashed var(--linha); padding: 8px 0 4px; display: grid; gap: 4px; }
+  .checagem .cab { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+  .agencia { font-weight: 700; }
+  .rotulo { font-weight: 600; }
+  .fonte-rotulo { font-size: 12px; color: var(--suave); }
+  .frase, .motivo { font-size: 13px; color: var(--suave); }
+  .motivo { font-style: italic; }
+  a.abre { font-weight: 600; color: var(--foco); }
+  label.selo { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+  input[type=text] { font: inherit; font-size: 14px; padding: 5px 8px; border: 1px solid #bdb7ab; border-radius: 5px;
+                     min-width: 0; flex: 1; }
+  input[type=text]:focus, button:focus-visible { outline: 2px solid var(--foco); outline-offset: 1px; }
+  .acoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+  button { font: inherit; font-size: 14px; font-weight: 600; border: 1px solid #bdb7ab; background: #fff;
+           border-radius: 5px; padding: 5px 12px; cursor: pointer; }
+  button.aprovar { background: var(--ok); border-color: var(--ok); color: #fff; }
+  button.perigo { color: var(--erro); border-color: var(--erro); }
+  button:disabled { opacity: .45; cursor: default; }
+  #erros { grid-column: 1 / -1; }
+  #erros .erro { background: #fdecea; border: 1px solid #f1b8b2; color: #7a1a13; border-radius: 6px;
+                 padding: 6px 10px; margin-bottom: 6px; font-size: 13px; }
+  #aviso { grid-column: 1 / -1; display: none; background: #fdecea; color: #7a1a13; border-radius: 6px; padding: 8px 12px; }
+  details { margin-top: 18px; }
+  details summary { cursor: pointer; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); }
+  .linha { font-size: 13px; border-bottom: 1px solid var(--linha); padding: 6px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="titulo">Aprovação · checagem ao vivo</h1>
+  <span class="item"><span id="conexao" title="conexão com a sessão"></span> <b id="relogio">--:--:--</b></span>
+  <span class="item">00:00: <b id="inicio">não marcado</b> <button id="marcar" type="button">Marcar 00:00 agora</button></span>
+  <span class="item">Automática: <b id="auto">desligada</b></span>
+  <span class="item">fila <b id="n-fila">0</b> · publicadas <b id="n-pub">0</b> · correções <b id="n-cor">0</b> · sem par <b id="n-sp">0</b></span>
+</header>
+<main>
+  <div id="aviso" role="alert"></div>
+  <section id="erros" aria-live="polite"></section>
+  <section>
+    <h2>Fila <span class="n" id="n-fila2">0</span></h2>
+    <div id="fila"></div>
+  </section>
+  <section>
+    <h2>Publicadas <span class="n" id="n-pub2">0</span></h2>
+    <div id="publicadas"></div>
+    <details open><summary>Correções (<span id="n-cor2">0</span>)</summary><div id="correcoes"></div></details>
+    <details><summary>Recusadas (<span id="n-rec">0</span>)</summary><div id="recusadas"></div></details>
+    <details><summary>Sem par (<span id="n-sp2">0</span>)</summary><div id="sem-par"></div></details>
+    <details><summary>Descartadas (<span id="n-desc">0</span>)</summary><div id="descartados"></div></details>
+  </section>
+</main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const link = (u) => /^https?:\/\//i.test(u || "") ? esc(u) : "#";
+const num = (x) => (x == null ? "" : Number(x).toLocaleString("pt-BR", {maximumFractionDigits: 2}));
+function minutagem(s) {
+  s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
+  const p = (n) => String(n).padStart(2, "0");
+  return h ? `${h}:${p(m)}:${p(ss)}` : `${p(m)}:${p(ss)}`;
+}
+const hora = (iso) => iso ? new Date(iso).toLocaleTimeString("pt-BR", {timeZone: "America/Sao_Paulo"}) : "";
+function destaca(fala, trecho) {
+  const i = fala.indexOf(trecho);
+  if (i < 0) return esc(fala);
+  return esc(fala.slice(0, i)) + "<mark>" + esc(trecho) + "</mark>" + esc(fala.slice(i + trecho.length));
+}
+
+async function acao(nome, corpo, botao) {
+  if (botao) botao.disabled = true;
+  try {
+    const r = await fetch("/acao/" + nome, {method: "POST", headers: {"Content-Type": "application/json"},
+                                           body: JSON.stringify(corpo)});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.erro || r.statusText);
+    aviso("");
+    await atualiza(true);
+  } catch (e) {
+    aviso("Ação não feita: " + e.message);
+    if (botao) botao.disabled = false;
+  }
+}
+function aviso(txt) { $("aviso").textContent = txt; $("aviso").style.display = txt ? "block" : "none"; }
+
+function cartaoFila(p) {
+  const el = document.createElement("article");
+  el.className = "cartao novo";
+  el.innerHTML = `
+    <div class="topo"><span>${esc(p.id)}</span><span>${minutagem(p.minutagem_s)}</span>
+      <span class="quem ${esc(p.quem)}">${esc(p.quem)}</span><span>${p.tipo === "numero" ? "número" : "fato perene"}</span>
+      <span>nota <span class="nota">${num(p.nota)}</span></span><span>proposta ${hora(p.proposta_em)}</span></div>
+    <p class="fala">${destaca(p.fala, p.trecho)}</p>
+    <p class="reform"><b>Afirmação:</b> ${esc(p.reformulacao)}</p>
+    ${p.checagens.map((c, i) => `
+      <div class="checagem" data-url="${esc(c.url)}">
+        <div class="cab"><label><input type="checkbox" class="manter" checked> <span class="agencia">${esc(c.agencia)}</span></label>
+          <span>${esc(c.data || "sem data")}</span>
+          <span>dados: <span class="rotulo">${esc(c.rotulo || "sem rótulo")}</span></span>
+          <span>nota <span class="nota">${num(c.nota)}</span></span>
+          <a class="abre" href="${link(c.url)}" target="_blank" rel="noopener noreferrer">abrir checagem ↗</a></div>
+        <div class="frase">Checado: ${esc(c.frase)}</div>
+        <div class="motivo">${esc(c.motivo)}</div>
+        <label class="selo">Selo visível na página
+          <input type="text" class="selo" placeholder="vazio = “${esc(c.rotulo || "")}” dos dados da agência"></label>
+      </div>`).join("")}
+    <div class="acoes">
+      <button type="button" class="aprovar">Aprovar</button>
+      <input type="text" class="motivo-recusa" placeholder="motivo da recusa (opcional)">
+      <button type="button" class="perigo recusar">Recusar</button>
+    </div>`;
+  el.querySelector(".aprovar").onclick = (ev) => {
+    const selos = {}, manter = [];
+    el.querySelectorAll(".checagem").forEach((d) => {
+      const url = d.dataset.url;
+      if (d.querySelector(".manter").checked) manter.push(url);
+      const s = d.querySelector("input.selo").value.trim();
+      if (s) selos[url] = s;
+    });
+    acao("aprovar", {ligacao_id: p.id, selos, manter}, ev.target);
+  };
+  el.querySelector(".recusar").onclick = (ev) =>
+    acao("recusar", {ligacao_id: p.id, motivo: el.querySelector(".motivo-recusa").value}, ev.target);
+  return el;
+}
+
+function cartaoPublicada(l) {
+  const el = document.createElement("article");
+  el.className = "cartao novo";
+  el.innerHTML = `
+    <div class="topo"><span>${esc(l.id)}</span><span>${minutagem(l.minutagem_s)}</span>
+      <span class="quem ${esc(l.quem)}">${esc(l.quem)}</span>
+      <span class="selo-origem ${esc(l.origem)}">${l.origem === "automatica" ? "automática" : "aprovada"}</span>
+      <span>publicada ${hora(l.publicada_em)}</span>${l.ligada_depois ? "<span>ligada depois</span>" : ""}</div>
+    <p class="fala">“${esc(l.trecho)}”</p>
+    ${l.checagens.map((c) => `
+      <div class="checagem" data-url="${esc(c.url)}">
+        <div class="cab"><span class="agencia">${esc(c.agencia)}</span><span>${esc(c.data || "sem data")}</span>
+          <span class="rotulo">${esc(c.rotulo)}</span>
+          <span class="fonte-rotulo">${c.fonte_rotulo === "selo_da_pagina" ? "selo da página" : "rótulo conforme dados da agência"}</span>
+          <a class="abre" href="${link(c.url)}" target="_blank" rel="noopener noreferrer">abrir checagem ↗</a></div>
+        <label class="selo">Corrigir rótulo <input type="text" class="novo-rotulo" placeholder="selo visível na página">
+          <button type="button" class="corrige">Corrigir</button></label>
+      </div>`).join("")}
+    <div class="acoes">
+      <input type="text" class="motivo-despub" placeholder="motivo (aparece nas correções)">
+      <button type="button" class="perigo despublicar" disabled>Despublicar</button>
+    </div>`;
+  el.querySelectorAll(".checagem").forEach((d) => {
+    d.querySelector(".corrige").onclick = (ev) => {
+      const rotulo = d.querySelector(".novo-rotulo").value.trim();
+      if (rotulo) acao("rotulo", {ligacao_id: l.id, url: d.dataset.url, rotulo}, ev.target);
+    };
+  });
+  const motivo = el.querySelector(".motivo-despub"), botao = el.querySelector(".despublicar");
+  motivo.oninput = () => { botao.disabled = !motivo.value.trim(); };
+  botao.onclick = () => {
+    if (confirm(`Despublicar ${l.id}? Ela sai do painel e entra nas correções.`))
+      acao("despublicar", {ligacao_id: l.id, motivo: motivo.value}, botao);
+  };
+  return el;
+}
+
+// redesenha só os cartões que mudaram: o que o operador está digitando num cartão não se perde
+const cartoes = new Map();
+function sincroniza(caixa, itens, chave, desenha, vazio) {
+  const vistos = new Set();
+  itens.forEach((it, i) => {
+    const k = caixa.id + ":" + chave(it), assinatura = JSON.stringify(it);
+    vistos.add(k);
+    let c = cartoes.get(k);
+    if (!c || c.assinatura !== assinatura) {
+      const el = desenha(it);
+      if (c) { c.el.replaceWith(el); el.classList.remove("novo"); }
+      c = {el, assinatura}; cartoes.set(k, c);
+    }
+    if (caixa.children[i] !== c.el) caixa.insertBefore(c.el, caixa.children[i] || null);
+  });
+  for (const [k, c] of cartoes) if (k.startsWith(caixa.id + ":") && !vistos.has(k)) { c.el.remove(); cartoes.delete(k); }
+  [...caixa.children].forEach((el) => { if (el.classList.contains("vazio")) el.remove(); });
+  if (!itens.length) caixa.innerHTML = `<div class="vazio">${vazio}</div>`;
+}
+const linha = (html) => { const d = document.createElement("div"); d.className = "linha"; d.innerHTML = html; return d; };
+
+let versao = -1, primeira = true;
+async function atualiza(forca) {
+  let e;
+  try {
+    const r = await fetch("/estado", {cache: "no-store"});
+    e = await r.json();
+    $("conexao").classList.remove("fora");
+  } catch (err) { $("conexao").classList.add("fora"); return; }
+  if (e.versao === versao && !forca) return;
+  versao = e.versao;
+  document.title = `(${e.fila.length}) Aprovação · checagem ao vivo`;
+  $("inicio").textContent = e.meta.inicio_debate ? hora(e.meta.inicio_debate) : "não marcado";
+  $("marcar").textContent = e.meta.inicio_debate ? "Remarcar 00:00 agora" : "Marcar 00:00 agora";
+  $("auto").textContent = e.meta.limiar_automatico == null ? "desligada"
+    : `nota ≥ ${num(e.meta.limiar_automatico)} depois de 10 min`;
+  for (const [ids, n] of [[["n-fila", "n-fila2"], e.fila.length], [["n-pub", "n-pub2"], e.publicadas.length],
+                          [["n-cor", "n-cor2"], e.correcoes.length], [["n-sp", "n-sp2"], e.sem_par.length],
+                          [["n-rec"], e.recusadas.length], [["n-desc"], e.descartados.length]])
+    ids.forEach((id) => { $(id).textContent = n; });
+  $("erros").innerHTML = e.erros.slice(-6).reverse().map((x) =>
+    `<div class="erro"><b>${esc(x.etapa)}</b> ${hora(x.em)}${x.quem ? ` · ${esc(x.quem)} ${minutagem(x.minutagem_s)}` : ""} — ${esc(x.mensagem)}</div>`).join("");
+  sincroniza($("fila"), e.fila, (p) => p.id, cartaoFila, "Nada esperando aprovação.");
+  const pubs = [...e.publicadas].sort((a, b) => b.minutagem_s - a.minutagem_s);
+  sincroniza($("publicadas"), pubs, (l) => l.id, cartaoPublicada, "Nenhuma ligação publicada.");
+  sincroniza($("correcoes"), [...e.correcoes].reverse(), (c) => c.ligacao_id, (c) => linha(
+    `<b>${esc(c.ligacao_id)}</b> retirada às ${hora(c.em)} — ${esc(c.motivo)}<br><span class="frase">“${esc(c.retirado.trecho)}”</span>`), "Nenhuma.");
+  sincroniza($("recusadas"), [...e.recusadas].reverse(), (p) => p.id, (p) => linha(
+    `<b>${esc(p.id)}</b> ${minutagem(p.minutagem_s)} ${esc(p.quem)} — “${esc(p.trecho)}”${p.motivo_recusa ? ` <i>(${esc(p.motivo_recusa)})</i>` : ""}`), "Nenhuma.");
+  sincroniza($("sem-par"), [...e.sem_par].reverse(), (a) => a.minutagem_s + a.trecho, (a) => linha(
+    `${minutagem(a.minutagem_s)} <span class="quem ${esc(a.quem)}">${esc(a.quem)}</span> — ${esc(a.reformulacao)}`), "Nenhuma.");
+  sincroniza($("descartados"), [...e.descartados].reverse(), (d) => d.id, (d) => linha(
+    `${minutagem(d.minutagem_s)} ${esc(d.quem)} — “${esc(d.trecho)}” <i>(${esc(d.motivo)})</i>`), "Nenhuma.");
+  if (primeira) { document.querySelectorAll(".novo").forEach((x) => x.classList.remove("novo")); primeira = false; }
+}
+
+$("marcar").onclick = (ev) => {
+  if (confirm("Marcar o 00:00 do debate agora (abertura do mediador)?")) acao("inicio", {}, ev.target).then(() => { ev.target.disabled = false; });
+};
+const tique = () => { $("relogio").textContent = new Date().toLocaleTimeString("pt-BR", {timeZone: "America/Sao_Paulo"}); };
+tique();
+setInterval(tique, 500);
+atualiza(true);
+setInterval(atualiza, 1500);
+</script>
+</body>
+</html>
