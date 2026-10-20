@@ -9,19 +9,27 @@ conferidas de novo contra os registros novos (ligação tardia). O estado sai no
 dados da página (docs/globo/formato-dos-dados.md).
 
 Todo o estado muda por eventos (`Sessao.eventos`, também entregues a `ao_registrar`), que levam o que
-o Claude respondeu: repetir os eventos reconstrói o estado sem chamar o Claude de novo.
+o Claude respondeu: repetir os eventos reconstrói o estado sem chamar o Claude de novo
+(`Sessao.reconstroi`; `Sessao.abre` faz isso a partir de <pasta>/eventos.jsonl e continua gravando lá).
+
+O operador aprova (informando o selo visível na página da agência), recusa, despublica com motivo e
+corrige o rótulo. Com limiar (`meta["limiar_automatico"]`, lido de <dados>/avaliacao/limiar.json por
+`le_limiar`) e mais de 10 min passados desde o 00:00, a ligação com nota ≥ limiar é publicada sozinha.
 
 Uso (repassa as falas de referência do debate da Band, com o Claude de verdade):
   python -P scripts/sessao.py band [--falas data/bloco1_final.json] [--dados DADOS] [--saida PASTA]
 """
+import copy
 import hashlib
+import json
+import os
 import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from checagens import FOF_AGENCIA  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
 PROMPTS = RAIZ / "prompts"
@@ -33,6 +41,8 @@ CANDIDATOS = ("Lula", "Flávio")
 N_CANDIDATAS = 8
 CONFIRMACOES_EM_PARALELO = 4
 NUMERO_DESDE = "2025-01-01"  # afirmações numéricas só ligam com checagens a partir desta data
+AQUECIMENTO_S = 600  # nos primeiros 10 min desde o 00:00 nada é publicado sozinho
+EVENTOS_DE_PUBLICACAO = ("inicio", "aprovacao", "publicacao_automatica", "recusa", "despublicacao", "correcao_rotulo")
 
 TXT = {"type": "string"}
 ESQUEMA_EXTRACAO = {
@@ -57,30 +67,83 @@ def _chamar_padrao(etapa, prompt, conteudo, schema):
     return agente.chama(etapa, prompt, conteudo, schema)
 
 
+class AcaoInvalida(ValueError):
+    """Ação do operador que não vale no estado atual (ligação inexistente, já decidida, sem motivo...).
+    Nada é registrado."""
+
+
 class Sessao:
-    def __init__(self, indice, chamar=None, relogio=None, ao_registrar=None, meta=None):
+    def __init__(self, indice, chamar=None, relogio=None, ao_registrar=None, meta=None,
+                 ao_mudar_publicado=None):
         """indice: base_checagens.Indice. chamar(etapa, prompt, conteudo, schema) -> (saída, registro),
         por padrão agente.chama. relogio() -> datetime com fuso. ao_registrar(evento) recebe cada
-        evento assim que acontece (para o registro só de acréscimo). meta: campos de `meta` do
-        arquivo de dados que mudam o padrão (título, debate, início do debate, agências...)."""
+        evento assim que acontece, antes de ele valer (para o registro só de acréscimo). meta: campos
+        de `meta` do arquivo de dados que mudam o padrão (título, debate, início do debate,
+        limiar_automatico...). ao_mudar_publicado(dados) recebe o arquivo de dados exportado sempre
+        que o conteúdo público muda (tudo menos `meta.atualizado_em`): é o gancho do publicador.
+        Ele roda com a sessão travada; deve ser rápido e não chamar ações da sessão."""
         self.indice = indice
         self._meta = meta or {}
         self._chamar = chamar or _chamar_padrao
         self._relogio = relogio or (lambda: datetime.now(BRASILIA))
         self._ao_registrar = ao_registrar
+        self._ao_mudar_publicado = ao_mudar_publicado
+        self._trava = threading.RLock()  # falas, tela de aprovação e publicador rodam em threads
+        self._publico = None  # último conteúdo público avisado a ao_mudar_publicado
         self.eventos = []
         self._falas = []
         self._propostas = []
         self._sem_par = []
         self._descartados = []
         self._erros = []
+        self._situacao = {}  # id da ligação -> "publicada", "recusada" ou "despublicada" (sem = pendente)
+        self._publicadas = {}  # id -> ligação no formato do arquivo de dados, na ordem de publicação
+        self._correcoes = []
+        self._inicio = None  # 00:00 marcado pelo operador (marca_inicio)
+        self._marca_publico()
+
+    def _marca_publico(self):
+        """O conteúdo público atual passa a ser a referência de ao_mudar_publicado (o publicador grava
+        o estado inicial por conta própria, ao começar)."""
+        if self._ao_mudar_publicado:
+            self._publico = self._conteudo_publico(self.exporta())
+
+    @classmethod
+    def reconstroi(cls, indice, eventos, **kw):
+        """A sessão no estado em que `eventos` a deixaram, sem chamar o Claude e sem repassar os
+        eventos a `ao_registrar` nem decidir publicações de novo (o que foi publicado sozinho está
+        nos eventos). kw: os mesmos argumentos do construtor, para os eventos seguintes."""
+        s = cls(indice, **kw)
+        for e in eventos:
+            s.eventos.append(e)
+            s._aplica(e)
+        s._marca_publico()
+        return s
+
+    @classmethod
+    def abre(cls, pasta, indice, **kw):
+        """Sessão gravada em <pasta>/eventos.jsonl (uma linha JSON por evento, só de acréscimo): se o
+        arquivo existe, reconstrói o estado a partir dele; cada evento novo é gravado (com flush e
+        fsync) antes de valer. Uma última linha cortada por um travamento é descartada."""
+        arquivo = Path(pasta) / "eventos.jsonl"
+        arquivo.parent.mkdir(parents=True, exist_ok=True)
+        eventos = le_eventos(arquivo)
+        registro = arquivo.open("a", encoding="utf-8")
+
+        def grava(evento):
+            registro.write(json.dumps(evento, ensure_ascii=False) + "\n")
+            registro.flush()
+            os.fsync(registro.fileno())
+
+        return cls.reconstroi(indice, eventos, ao_registrar=grava, **kw)
 
     # ---------- interface ----------
 
     def recebe_fala(self, quem, inicio_s, texto):
         """Uma fala fechada: quem ("Lula", "Flávio" ou outro), início em segundos desde o 00:00 e texto."""
-        fala = self._nova_fala(quem, inicio_s, texto)
-        self._registra({"tipo": "fala", "fala": fala})  # registrada antes das chamadas ao Claude
+        with self._trava:
+            fala = self._nova_fala(quem, inicio_s, texto)
+            self._registra({"tipo": "fala", "fala": fala})  # registrada antes das chamadas ao Claude
         for evento in self._analisa(fala):
             self._registra(evento)
 
@@ -115,30 +178,131 @@ class Sessao:
 
     def fila(self):
         """Ligações propostas à espera do operador, na ordem em que foram propostas."""
-        return [dict(p) for p in self._propostas]
+        with self._trava:
+            return [copy.deepcopy(p) for p in self._propostas if p["id"] not in self._situacao]
+
+    def recusadas(self):
+        """Ligações propostas que o operador recusou, com o motivo (se ele deu um)."""
+        with self._trava:
+            return [copy.deepcopy(p) for p in self._propostas if self._situacao.get(p["id"]) == "recusada"]
 
     def descartados(self):
         """Afirmações extraídas e descartadas (trecho que não aparece letra a letra na fala), com o motivo."""
         return [dict(d) for d in self._descartados]
 
     def erros(self):
-        """Chamadas ao Claude que falharam (recusa, corte, rede), com a fala e a mensagem."""
-        return [dict(e) for e in self._erros]
+        """Falhas registradas: chamadas ao Claude (recusa, corte, rede), com a fala e a mensagem, e erros
+        de fora da sessão (publicação, transcrição...) entregues por `registra_erro`."""
+        with self._trava:
+            return [dict(e) for e in self._erros]
+
+    def marca_inicio(self, instante=None):
+        """O 00:00 do debate (abertura do mediador), por padrão agora. Vai para `meta.inicio_debate` e
+        conta os 10 min de aquecimento da publicação automática. Marcar de novo corrige a marcação."""
+        instante = instante or self._relogio()
+        if isinstance(instante, str):
+            instante = datetime.fromisoformat(instante)
+        if instante.tzinfo is None:
+            raise AcaoInvalida("o 00:00 precisa de fuso horário")
+        self._registra({"tipo": "inicio", "instante": instante.isoformat(timespec="seconds")})
+
+    def aprova(self, ligacao_id, selos=None, manter=None):
+        """Publica uma ligação da fila. selos = {URL da checagem: selo visível na página da agência};
+        o selo tem prioridade sobre o rótulo dos dados da agência, e checagem sem selo informado sai
+        com o rótulo dos dados. manter = URLs das checagens que entram (padrão: todas)."""
+        with self._trava:
+            p = self._pendente(ligacao_id)
+            urls = [c["url"] for c in p["checagens"]]
+            manter = list(urls if manter is None else manter)
+            selos = {u: s.strip() for u, s in (selos or {}).items() if s and s.strip()}
+            if fora := [u for u in [*manter, *selos] if u not in urls]:
+                raise AcaoInvalida(f"{ligacao_id}: checagem que não está na ligação: {fora[0]}")
+            if not manter:
+                raise AcaoInvalida(f"{ligacao_id}: escolha ao menos uma checagem (ou recuse a ligação)")
+            sem_rotulo = [c["url"] for c in p["checagens"]
+                          if c["url"] in manter and c["url"] not in selos and not (c.get("rotulo") or "").strip()]
+            if sem_rotulo:
+                raise AcaoInvalida(f"{ligacao_id}: a checagem {sem_rotulo[0]} não tem rótulo nos dados; informe o selo")
+            self._registra({"tipo": "aprovacao", "ligacao_id": ligacao_id,
+                            "checagens": [u for u in urls if u in manter],
+                            "selos": {u: s for u, s in selos.items() if u in manter}})
+
+    def recusa(self, ligacao_id, motivo=None):
+        """Tira uma ligação da fila sem publicar."""
+        with self._trava:
+            self._pendente(ligacao_id)
+            self._registra({"tipo": "recusa", "ligacao_id": ligacao_id, "motivo": (motivo or "").strip() or None})
+
+    def despublica(self, ligacao_id, motivo):
+        """Tira uma ligação publicada do painel. Nada é apagado: ela entra nas correções com o horário,
+        o motivo e a ligação como estava publicada."""
+        with self._trava:
+            self._publicada(ligacao_id)
+            if not (motivo or "").strip():
+                raise AcaoInvalida("despublicar exige um motivo, que aparece nas correções")
+            self._registra({"tipo": "despublicacao", "ligacao_id": ligacao_id, "motivo": motivo.strip()})
+
+    def corrige_rotulo(self, ligacao_id, url, rotulo):
+        """Troca o rótulo exibido de uma checagem de uma ligação publicada pelo selo visível na página
+        da agência."""
+        with self._trava:
+            lig = self._publicada(ligacao_id)
+            if url not in [c["url"] for c in lig["checagens"]]:
+                raise AcaoInvalida(f"{ligacao_id}: checagem que não está na ligação: {url}")
+            if not (rotulo or "").strip():
+                raise AcaoInvalida("informe o selo visível na página da agência")
+            self._registra({"tipo": "correcao_rotulo", "ligacao_id": ligacao_id, "url": url, "rotulo": rotulo.strip()})
+
+    def registra_erro(self, etapa, mensagem):
+        """Erro de fora da sessão (publicação, transcrição, API do Google...) para a tela do operador.
+        Fica no registro de eventos como os erros do Claude."""
+        self._registra({"tipo": "erro", "etapa": etapa, "fala_id": None, "quem": None, "minutagem_s": None,
+                        "mensagem": str(mensagem)})
+
+    def retoma_analises(self):
+        """Termina as análises que um travamento interrompeu: falas de candidato registradas sem
+        extração e afirmações extraídas sem confirmação. Só elas voltam ao Claude."""
+        with self._trava:
+            feitas = {e.get("fala_id") for e in self.eventos if e["tipo"] in ("afirmacoes", "erro")}
+            confirmadas = {e["afirmacao"]["id"] for e in self.eventos
+                           if e["tipo"] in ("confirmacao", "erro") and e.get("afirmacao")}
+            falas = [f for f in self._falas if f["quem"] in CANDIDATOS and f["id"] not in feitas]
+            afirmacoes = [a for e in self.eventos if e["tipo"] == "afirmacoes"
+                          for a in e["afirmacoes"] if a["id"] not in confirmadas]
+        for a in afirmacoes:
+            self._registra(self._confirma(a))
+        for fala in falas:
+            for evento in self._analisa(fala):
+                self._registra(evento)
 
     def exporta(self):
         """O estado no formato do arquivo de dados da página (docs/globo/formato-dos-dados.md)."""
         from contrato_painel import valida
 
-        dados = {
-            "versao_contrato": 1,
-            "meta": {**self._meta_padrao(), **self._meta, "atualizado_em": self._agora()},
-            "ligacoes": [],
-            "sem_par": [{k: a[k] for k in ("minutagem_s", "quem", "trecho", "reformulacao")} for a in self._sem_par],
-            "correcoes": [],
-        }
+        with self._trava:
+            dados = copy.deepcopy({
+                "versao_contrato": 1,
+                "meta": {**self._meta_padrao(), **self._meta, **self._meta_eventos(), "atualizado_em": self._agora()},
+                "ligacoes": list(self._publicadas.values()),
+                "sem_par": [{k: a[k] for k in ("minutagem_s", "quem", "trecho", "reformulacao")} for a in self._sem_par],
+                "correcoes": self._correcoes,
+            })
         if problemas := valida(dados):
             raise ValueError("arquivo de dados fora do contrato:\n" + "\n".join(problemas))
         return dados
+
+    def _pendente(self, ligacao_id):
+        p = next((p for p in self._propostas if p["id"] == ligacao_id), None)
+        if p is None:
+            raise AcaoInvalida(f"ligação inexistente: {ligacao_id}")
+        if ligacao_id in self._situacao:
+            raise AcaoInvalida(f"{ligacao_id} já foi {self._situacao[ligacao_id]}")
+        return p
+
+    def _publicada(self, ligacao_id):
+        if ligacao_id not in self._publicadas:
+            raise AcaoInvalida(f"{ligacao_id} não está publicada")
+        return self._publicadas[ligacao_id]
 
     # ---------- análise (chama o Claude; não muda o estado) ----------
 
@@ -195,13 +359,46 @@ class Sessao:
     # ---------- estado (só muda por eventos) ----------
 
     def _registra(self, evento):
-        evento = {"n": len(self.eventos) + 1, "em": self._agora(), **evento}
-        self.eventos.append(evento)
-        if self._ao_registrar:
-            self._ao_registrar(evento)
-        self._aplica(evento)
+        with self._trava:
+            evento = {"n": len(self.eventos) + 1, "em": self._agora(), **evento}
+            self.eventos.append(evento)
+            if self._ao_registrar:
+                self._ao_registrar(evento)
+            propostas = len(self._propostas)
+            self._aplica(evento)
+            for p in self._propostas[propostas:]:  # ligação nova: a política decide se sai sozinha
+                self._politica(p)
+            self._avisa_publicado()
+
+    def _politica(self, p):
+        """Publicação automática: com limiar, depois dos 10 min de aquecimento, vão as checagens com
+        nota ≥ limiar (e rótulo nos dados), com o rótulo dos dados da agência. O resto fica na fila."""
+        limiar, inicio = self._meta.get("limiar_automatico"), self._inicio_debate()
+        if limiar is None or inicio is None:
+            return
+        if (self._relogio() - datetime.fromisoformat(inicio)).total_seconds() <= AQUECIMENTO_S:
+            return
+        urls = [c["url"] for c in p["checagens"] if c["nota"] >= limiar and (c.get("rotulo") or "").strip()]
+        if urls:
+            self._registra({"tipo": "publicacao_automatica", "ligacao_id": p["id"], "checagens": urls,
+                            "limiar": limiar})
+
+    def _avisa_publicado(self):
+        if not self._ao_mudar_publicado:
+            return
+        dados = self.exporta()
+        if (publico := self._conteudo_publico(dados)) != self._publico:
+            self._publico = publico
+            self._ao_mudar_publicado(dados)
+
+    @staticmethod
+    def _conteudo_publico(dados):
+        return json.dumps({**dados, "meta": {k: v for k, v in dados["meta"].items() if k != "atualizado_em"}},
+                          sort_keys=True, ensure_ascii=False)
 
     def _aplica(self, e):
+        if e["tipo"] in EVENTOS_DE_PUBLICACAO:
+            return self._aplica_publicacao(e)
         if e["tipo"] == "fala":
             self._falas.append(e["fala"])
         elif e["tipo"] == "erro":
@@ -225,14 +422,60 @@ class Sessao:
                 "checagens": [{**c["checagem"], "nota": c["nota"], "motivo": c["motivo"]} for c in e["confirmadas"]],
             })
 
+    def _aplica_publicacao(self, e):
+        """Eventos do 00:00, das ações do operador e da publicação automática."""
+        tipo, ident = e["tipo"], e.get("ligacao_id")
+        if tipo == "inicio":
+            self._inicio = e["instante"]
+        elif tipo in ("aprovacao", "publicacao_automatica"):
+            p = next(p for p in self._propostas if p["id"] == ident)
+            selos = e.get("selos", {})
+            self._situacao[ident] = "publicada"
+            self._publicadas[ident] = {
+                "id": ident, "minutagem_s": p["minutagem_s"], "quem": p["quem"], "trecho": p["trecho"],
+                "reformulacao": p["reformulacao"], "tipo": p["tipo"],
+                "origem": "aprovada" if tipo == "aprovacao" else "automatica", "publicada_em": e["em"],
+                "ligada_depois": bool(p.get("ligada_depois", False)),
+                "checagens": [{"agencia": c["agencia"], "data": c["data"],
+                               "rotulo": selos.get(c["url"]) or c["rotulo"],
+                               "fonte_rotulo": "selo_da_pagina" if c["url"] in selos else "dados_da_agencia",
+                               "url": c["url"]}
+                              for c in p["checagens"] if c["url"] in e["checagens"]],
+            }
+        elif tipo == "recusa":
+            self._situacao[ident] = "recusada"
+            next(p for p in self._propostas if p["id"] == ident)["motivo_recusa"] = e["motivo"]
+        elif tipo == "despublicacao":
+            self._situacao[ident] = "despublicada"
+            retirada = self._publicadas.pop(ident)
+            self._correcoes.append({"em": e["em"], "ligacao_id": ident, "motivo": e["motivo"], "retirado": retirada})
+        elif tipo == "correcao_rotulo":
+            c = next(c for c in self._publicadas[ident]["checagens"] if c["url"] == e["url"])
+            c.update(rotulo=e["rotulo"], fonte_rotulo="selo_da_pagina")
+
+    def _inicio_debate(self):
+        return self._inicio or self._meta.get("inicio_debate")
+
+    def _meta_eventos(self):
+        return {"inicio_debate": self._inicio} if self._inicio else {}
+
     def _fala(self, fala_id):
         return next(f for f in self._falas if f["id"] == fala_id)
 
     def _agora(self):
         return self._relogio().isoformat(timespec="seconds")
 
+    def _agencias(self):
+        """meta.agencias_incluidas e agencias_excluidas pela política de data/agencias.json; refeitas
+        só quando a base muda de tamanho."""
+        from agencias import agencias_do_painel
+
+        n = len(self.indice.registros)
+        if getattr(self, "_agencias_cache", (None,))[0] != n:
+            self._agencias_cache = (n, agencias_do_painel(self.indice.registros))
+        return self._agencias_cache[1]
+
     def _meta_padrao(self):
-        agencias = sorted({r["agencia"] for r in self.indice.registros if r.get("agencia")})
         fof = any((r.get("fonte_coleta") or "").startswith("fato_ou_fake") for r in self.indice.registros)
         return {
             "titulo": "Lula × Flávio: o que as agências já checaram",
@@ -244,13 +487,10 @@ class Sessao:
                         "url": "https://developers.google.com/fact-check/tools/api"}]
                       + ([{"nome": "RSS e sitemap do Fato ou Fake (g1)", "url": "https://g1.globo.com/fato-ou-fake/"}]
                          if fof else []),
-            "agencias_incluidas": [{"nome": a, "via": "RSS e sitemap do g1" if a == FOF_AGENCIA
-                                    else "ClaimReview na API do Google"} for a in agencias],
-            "agencias_excluidas": [{"nome": "Lupa", "motivo": "Não publica ClaimReview e não autorizou a coleta "
-                                                              "das checagens até agora."}],
+            **self._agencias(),
             "modelo": MODELO,
             "prompts": [{"arquivo": f"prompts/{p}", "sha256": sha256_prompt(p)} for p in (EXTRAIR, CONFIRMAR)],
-            "limiar_automatico": None,  # publicação automática desligada nesta etapa
+            "limiar_automatico": None,  # desligada, a menos que meta traga o limiar (le_limiar)
         }
 
 
@@ -266,6 +506,39 @@ def _resumo(r):
 
 def sha256_prompt(nome):
     return hashlib.sha256((PROMPTS / nome).read_text(encoding="utf-8").encode()).hexdigest()
+
+
+# ---------- persistência e limiar ----------
+
+def le_eventos(arquivo):
+    """Os eventos de um registro .jsonl (vazio se o arquivo não existe). Uma última linha incompleta,
+    de um travamento no meio da gravação, é cortada do arquivo para o registro seguir só de acréscimo."""
+    arquivo = Path(arquivo)
+    if not arquivo.exists():
+        return []
+    bruto = arquivo.read_bytes()
+    linhas = bruto.split(b"\n")
+    eventos = [json.loads(linha) for linha in linhas[:-1] if linha.strip()]
+    if linhas[-1].strip():  # sem o \n final: gravação interrompida
+        with arquivo.open("r+b") as f:
+            f.truncate(len(bruto) - len(linhas[-1]))
+    return eventos
+
+
+def le_limiar(dados=None):
+    """Limiar da publicação automática em <dados>/avaliacao/limiar.json ({"limiar": número ou null,
+    "origem", "em"}), escrito pela avaliação da Band. Sem arquivo ou com null: None (desligada).
+    dados: --dados, a variável CHECAGEM_DADOS ou a pasta data/ do checkout principal."""
+    from base_checagens import raiz_principal
+
+    pasta = Path(dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data")
+    arquivo = pasta / "avaliacao" / "limiar.json"
+    if not arquivo.exists():
+        return None
+    limiar = json.loads(arquivo.read_text(encoding="utf-8")).get("limiar")
+    if limiar is not None and not (isinstance(limiar, (int, float)) and 0 <= limiar <= 1):
+        raise ValueError(f"{arquivo}: limiar deve ser um número entre 0 e 1 ou null, veio {limiar!r}")
+    return limiar
 
 
 # ---------- repasse das falas de referência da Band ----------
