@@ -67,6 +67,11 @@ def lista_de(campos, minimo=0):
     return ("lista", campos, minimo)
 
 
+def variantes(campo, por_valor):
+    """Objeto de mais de uma forma: o valor de `campo` escolhe os campos (por_valor[valor])."""
+    return ("variantes", campo, por_valor)
+
+
 META = {
     "titulo": texto,
     "debate": texto,
@@ -81,12 +86,13 @@ META = {
     "prompts": lista_de({"arquivo": texto, "sha256": texto}),
     "limiar_automatico": ou_nulo(nota),  # null = publicação automática desligada
 }
+# selo conferido pelo operador na página da agência, ou rótulo como veio nos dados da agência
+FONTE_ROTULO = um_de("selo_da_pagina", "dados_da_agencia")
 CHECAGEM = {
     "agencia": texto,
     "data": ou_nulo(dia),  # algumas checagens vêm sem data
     "rotulo": texto,
-    # selo conferido pelo operador na página da agência, ou rótulo como veio nos dados da agência
-    "fonte_rotulo": um_de("selo_da_pagina", "dados_da_agencia"),
+    "fonte_rotulo": FONTE_ROTULO,
     "url": texto,
 }
 LIGACAO = {
@@ -107,12 +113,27 @@ SEM_PAR = {
     "trecho": texto,
     "reformulacao": texto,
 }
-CORRECAO = {
+DESPUBLICACAO = {
+    "tipo": um_de("despublicacao"),
     "em": instante,
     "ligacao_id": texto,
     "motivo": texto,
     "retirado": LIGACAO,  # a ligação como estava publicada
 }
+CORRECAO_ROTULO = {  # o rótulo exibido de uma checagem de ligação publicada foi trocado
+    "tipo": um_de("rotulo"),
+    "em": instante,
+    "ligacao_id": texto,
+    "minutagem_s": segundos,
+    "quem": um_de("Lula", "Flávio"),
+    "agencia": texto,
+    "url": texto,  # a checagem
+    "rotulo_anterior": texto,
+    "fonte_rotulo_anterior": FONTE_ROTULO,
+    "rotulo": texto,
+    "fonte_rotulo": FONTE_ROTULO,
+}
+CORRECAO = variantes("tipo", {"despublicacao": DESPUBLICACAO, "rotulo": CORRECAO_ROTULO})
 RAIZ = {
     "versao_contrato": um_de(VERSAO),
     "meta": META,
@@ -140,6 +161,12 @@ def valida(dados):
                     confere(valor[nome], sub, c)
             for nome in sorted(valor.keys() - tipo.keys()):
                 erro(f"{caminho}.{nome}" if caminho else nome, "campo fora do contrato")
+        elif isinstance(tipo, tuple) and tipo[0] == "variantes":
+            if not isinstance(valor, dict):
+                return erro(caminho, "deve ser um objeto")
+            if (forma := tipo[2].get(valor.get(tipo[1]))) is None:
+                return erro(f"{caminho}.{tipo[1]}", f"deve ser um de: {', '.join(tipo[2])}")
+            confere(valor, forma, caminho)
         elif isinstance(tipo, tuple):  # lista_de(...)
             if not isinstance(valor, list):
                 return erro(caminho, "deve ser uma lista")

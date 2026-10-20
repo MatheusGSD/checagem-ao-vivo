@@ -11,10 +11,14 @@ dados da página (docs/globo/formato-dos-dados.md).
 Todo o estado muda por eventos (`Sessao.eventos`, também entregues a `ao_registrar`), que levam o que
 o Claude respondeu: repetir os eventos reconstrói o estado sem chamar o Claude de novo
 (`Sessao.reconstroi`; `Sessao.abre` faz isso a partir de <pasta>/eventos.jsonl e continua gravando lá).
+O que um travamento deixou pela metade (fala sem extração, afirmação sem confirmação, atualização da
+base sem todas as reconferências) é terminado por `retoma_analises`.
 
 O operador aprova (informando o selo visível na página da agência), recusa, despublica com motivo e
-corrige o rótulo. Com limiar (`meta["limiar_automatico"]`, lido de <dados>/avaliacao/limiar.json por
-`le_limiar`) e mais de 10 min passados desde o 00:00, a ligação com nota ≥ limiar é publicada sozinha.
+corrige o rótulo (despublicar e corrigir o rótulo entram nas correções públicas). Com limiar
+(`meta["limiar_automatico"]`, lido de <dados>/avaliacao/limiar.json por `le_limiar`) e mais de 10 min
+passados desde o 00:00, as checagens com nota ≥ limiar são publicadas sozinhas; as demais da mesma
+ligação esperam o operador na fila.
 
 Uso (repassa as falas de referência do debate da Band, com o Claude de verdade):
   python -P scripts/sessao.py band [--falas data/bloco1_final.json] [--dados DADOS] [--saida PASTA]
@@ -35,7 +39,8 @@ RAIZ = Path(__file__).resolve().parent.parent
 PROMPTS = RAIZ / "prompts"
 EXTRAIR = "extrair_afirmacoes.md"
 CONFIRMAR = "confirmar_ligacao.md"
-MODELO = "claude-opus-5-5"
+# modelo da extração e da confirmação; o limiar da avaliação da Band só vale para o modelo avaliado
+MODELO = os.environ.get("CHECAGEM_MODELO", "claude-sonnet-5-5")
 BRASILIA = timezone(timedelta(hours=-3))
 CANDIDATOS = ("Lula", "Flávio")
 N_CANDIDATAS = 8
@@ -64,7 +69,7 @@ ESQUEMA_CONFIRMACAO = {
 def _chamar_padrao(etapa, prompt, conteudo, schema):
     import agente
 
-    return agente.chama(etapa, prompt, conteudo, schema)
+    return agente.chama(etapa, prompt, conteudo, schema, modelo=MODELO)
 
 
 class AcaoInvalida(ValueError):
@@ -97,8 +102,15 @@ class Sessao:
         self._descartados = []
         self._erros = []
         self._situacao = {}  # id da ligação -> "publicada", "recusada" ou "despublicada" (sem = pendente)
+        self._aguardando = {}  # id -> URLs das checagens que esperam a decisão do operador (a fila)
+        self._recusas = {}  # id -> {"urls": checagens recusadas, "motivo": motivo ou None}
         self._publicadas = {}  # id -> ligação no formato do arquivo de dados, na ordem de publicação
         self._correcoes = []
+        # n do evento "base" -> {"registros": ids novos, "afirmacoes": sem par a reconferir}, até o
+        # "base_conferida" (sobra aqui o que um travamento interrompeu)
+        self._reconferir = {}
+        self._reconferindo = set()  # bases sendo reconferidas agora (não é estado do registro)
+        self._ultima_base = None
         self._inicio = None  # 00:00 marcado pelo operador (marca_inicio)
         self._marca_publico()
 
@@ -165,26 +177,56 @@ class Sessao:
         novos = list({r["id"]: r for r in registros if r["id"] not in ja}.values())
         if not novos:
             return
-        self._registra({"tipo": "base", "registros": novos})  # registrada antes das chamadas ao Claude
-        ids = {r["id"] for r in novos}
-        with ThreadPoolExecutor(max_workers=CONFIRMACOES_EM_PARALELO) as ex:
-            eventos = list(ex.map(lambda a: self._confirma(a, entre=ids), list(self._sem_par)))
-        for evento in eventos:
-            if evento["tipo"] != "confirmacao" or evento["candidatas"]:  # sem candidata nova: nada mudou
-                self._registra({**evento, "tardia": True})
+        base = self._registra({"tipo": "base", "registros": novos})  # registrada antes das chamadas ao Claude
+        self._reconfere(base["n"])
+
+    def _reconfere(self, n):
+        """Reconfere contra os registros da base n as afirmações que estavam sem par quando ela chegou
+        e que ainda não foram reconferidas nem ganharam par, e registra "base_conferida" no fim."""
+        with self._trava:
+            # a retomada e a atualização ao vivo não reconferem a mesma base ao mesmo tempo
+            if (pendente := self._reconferir.get(n)) is None or n in self._reconferindo:
+                return
+            self._reconferindo.add(n)
+            sem_par = {a["id"] for a in self._sem_par}
+            ids, afirmacoes = pendente["registros"], [a for a in pendente["afirmacoes"] if a["id"] in sem_par]
+        try:
+            with ThreadPoolExecutor(max_workers=CONFIRMACOES_EM_PARALELO) as ex:
+                eventos = list(ex.map(lambda a: self._confirma(a, entre=ids), afirmacoes))
+            for evento in eventos:
+                if evento["tipo"] != "confirmacao" or evento["candidatas"]:  # sem candidata nova: nada mudou
+                    self._registra({**evento, "tardia": True, "base_n": n})
+            self._registra({"tipo": "base_conferida", "base_n": n})
+        finally:
+            with self._trava:
+                self._reconferindo.discard(n)
 
     def _nova_fala(self, quem, inicio_s, texto):
         return {"id": f"f{len(self._falas) + 1:04d}", "quem": quem, "inicio_s": inicio_s, "texto": texto}
 
     def fila(self):
-        """Ligações propostas à espera do operador, na ordem em que foram propostas."""
+        """Ligações propostas à espera do operador, na ordem em que foram propostas, só com as
+        checagens que esperam decisão (`nota` é a maior delas). Numa ligação publicada sozinha só com
+        parte das checagens, o resto espera aqui com o mesmo id; `ja_publicadas` lista as URLs que já
+        estão no painel (vazia nas demais)."""
         with self._trava:
-            return [copy.deepcopy(p) for p in self._propostas if p["id"] not in self._situacao]
+            fila = []
+            for p in self._propostas:
+                if (urls := self._aguardando.get(p["id"])) is None:
+                    continue
+                checagens = [c for c in p["checagens"] if c["url"] in urls]
+                publicada = self._publicadas.get(p["id"], {"checagens": []})
+                fila.append(copy.deepcopy({**p, "checagens": checagens, "nota": max(c["nota"] for c in checagens),
+                                           "ja_publicadas": [c["url"] for c in publicada["checagens"]]}))
+            return fila
 
     def recusadas(self):
-        """Ligações propostas que o operador recusou, com o motivo (se ele deu um)."""
+        """Ligações propostas que o operador recusou, só com as checagens recusadas e o motivo (se ele
+        deu um). Recusar o resto de uma ligação publicada sozinha não tira a ligação do painel."""
         with self._trava:
-            return [copy.deepcopy(p) for p in self._propostas if self._situacao.get(p["id"]) == "recusada"]
+            return [copy.deepcopy({**p, "checagens": [c for c in p["checagens"] if c["url"] in r["urls"]],
+                                   "motivo_recusa": r["motivo"]})
+                    for p in self._propostas if (r := self._recusas.get(p["id"]))]
 
     def descartados(self):
         """Afirmações extraídas e descartadas (trecho que não aparece letra a letra na fala), com o motivo."""
@@ -209,7 +251,8 @@ class Sessao:
     def aprova(self, ligacao_id, selos=None, manter=None):
         """Publica uma ligação da fila. selos = {URL da checagem: selo visível na página da agência};
         o selo tem prioridade sobre o rótulo dos dados da agência, e checagem sem selo informado sai
-        com o rótulo dos dados. manter = URLs das checagens que entram (padrão: todas)."""
+        com o rótulo dos dados. manter = URLs das checagens que entram (padrão: todas as da fila).
+        Se a ligação já saiu sozinha com parte das checagens, as aprovadas entram nela."""
         with self._trava:
             p = self._pendente(ligacao_id)
             urls = [c["url"] for c in p["checagens"]]
@@ -235,7 +278,7 @@ class Sessao:
 
     def despublica(self, ligacao_id, motivo):
         """Tira uma ligação publicada do painel. Nada é apagado: ela entra nas correções com o horário,
-        o motivo e a ligação como estava publicada."""
+        o motivo e a ligação como estava publicada. Se o resto dela esperava na fila, sai da fila."""
         with self._trava:
             self._publicada(ligacao_id)
             if not (motivo or "").strip():
@@ -244,13 +287,16 @@ class Sessao:
 
     def corrige_rotulo(self, ligacao_id, url, rotulo):
         """Troca o rótulo exibido de uma checagem de uma ligação publicada pelo selo visível na página
-        da agência."""
+        da agência. A troca entra nas correções públicas com o horário e o rótulo antigo e o novo."""
         with self._trava:
             lig = self._publicada(ligacao_id)
-            if url not in [c["url"] for c in lig["checagens"]]:
+            c = next((c for c in lig["checagens"] if c["url"] == url), None)
+            if c is None:
                 raise AcaoInvalida(f"{ligacao_id}: checagem que não está na ligação: {url}")
             if not (rotulo or "").strip():
                 raise AcaoInvalida("informe o selo visível na página da agência")
+            if (c["rotulo"], c["fonte_rotulo"]) == (rotulo.strip(), "selo_da_pagina"):
+                raise AcaoInvalida(f"{ligacao_id}: o painel já mostra o selo “{c['rotulo']}” para essa checagem")
             self._registra({"tipo": "correcao_rotulo", "ligacao_id": ligacao_id, "url": url, "rotulo": rotulo.strip()})
 
     def registra_erro(self, etapa, mensagem):
@@ -261,7 +307,12 @@ class Sessao:
 
     def retoma_analises(self):
         """Termina as análises que um travamento interrompeu: falas de candidato registradas sem
-        extração e afirmações extraídas sem confirmação. Só elas voltam ao Claude."""
+        extração, afirmações extraídas sem confirmação e atualizações da base registradas sem todas as
+        reconferências das afirmações sem par. Só o que não está no registro volta ao Claude."""
+        with self._trava:
+            bases = sorted(self._reconferir)
+        for n in bases:
+            self._reconfere(n)
         with self._trava:
             feitas = {e.get("fala_id") for e in self.eventos if e["tipo"] in ("afirmacoes", "erro")}
             confirmadas = {e["afirmacao"]["id"] for e in self.eventos
@@ -292,12 +343,12 @@ class Sessao:
         return dados
 
     def _pendente(self, ligacao_id):
-        p = next((p for p in self._propostas if p["id"] == ligacao_id), None)
-        if p is None:
+        """A ligação como está na fila (só com as checagens que esperam decisão)."""
+        if not any(p["id"] == ligacao_id for p in self._propostas):
             raise AcaoInvalida(f"ligação inexistente: {ligacao_id}")
-        if ligacao_id in self._situacao:
-            raise AcaoInvalida(f"{ligacao_id} já foi {self._situacao[ligacao_id]}")
-        return p
+        if ligacao_id not in self._aguardando:
+            raise AcaoInvalida(f"{ligacao_id} não está na fila: já foi {self._situacao[ligacao_id]}")
+        return next(p for p in self.fila() if p["id"] == ligacao_id)
 
     def _publicada(self, ligacao_id):
         if ligacao_id not in self._publicadas:
@@ -359,6 +410,7 @@ class Sessao:
     # ---------- estado (só muda por eventos) ----------
 
     def _registra(self, evento):
+        """Registra e aplica o evento; devolve-o com o número e o horário."""
         with self._trava:
             evento = {"n": len(self.eventos) + 1, "em": self._agora(), **evento}
             self.eventos.append(evento)
@@ -369,6 +421,7 @@ class Sessao:
             for p in self._propostas[propostas:]:  # ligação nova: a política decide se sai sozinha
                 self._politica(p)
             self._avisa_publicado()
+            return evento
 
     def _politica(self, p):
         """Publicação automática: com limiar, depois dos 10 min de aquecimento, vão as checagens com
@@ -399,6 +452,10 @@ class Sessao:
     def _aplica(self, e):
         if e["tipo"] in EVENTOS_DE_PUBLICACAO:
             return self._aplica_publicacao(e)
+        if e.get("tardia"):  # reconferência feita: não se repete ao retomar (registros antigos sem base_n: a última base)
+            pendente = self._reconferir.get(e.get("base_n", self._ultima_base))
+            if pendente:
+                pendente["afirmacoes"] = [a for a in pendente["afirmacoes"] if a["id"] != e["afirmacao"]["id"]]
         if e["tipo"] == "fala":
             self._falas.append(e["fala"])
         elif e["tipo"] == "erro":
@@ -407,6 +464,11 @@ class Sessao:
             self._descartados += e["descartadas"]
         elif e["tipo"] == "base":  # repetir o registro também refaz a base em memória
             self.indice.acrescenta(e["registros"])
+            self._ultima_base = e["n"]
+            self._reconferir[e["n"]] = {"registros": {r["id"] for r in e["registros"]},
+                                        "afirmacoes": list(self._sem_par)}
+        elif e["tipo"] == "base_conferida":
+            self._reconferir.pop(e["base_n"], None)
         elif e["tipo"] == "confirmacao" and not e["confirmadas"]:
             if not e.get("tardia"):  # reconferida sem par: continua onde estava
                 self._sem_par.append(e["afirmacao"])
@@ -421,6 +483,7 @@ class Sessao:
                 "ligada_depois": bool(e.get("tardia")),
                 "checagens": [{**c["checagem"], "nota": c["nota"], "motivo": c["motivo"]} for c in e["confirmadas"]],
             })
+            self._aguardando[self._propostas[-1]["id"]] = [c["checagem"]["url"] for c in e["confirmadas"]]
 
     def _aplica_publicacao(self, e):
         """Eventos do 00:00, das ações do operador e da publicação automática."""
@@ -431,26 +494,40 @@ class Sessao:
             p = next(p for p in self._propostas if p["id"] == ident)
             selos = e.get("selos", {})
             self._situacao[ident] = "publicada"
-            self._publicadas[ident] = {
+            lig = self._publicadas.setdefault(ident, {  # aprovar o resto de uma automática: entra nela
                 "id": ident, "minutagem_s": p["minutagem_s"], "quem": p["quem"], "trecho": p["trecho"],
                 "reformulacao": p["reformulacao"], "tipo": p["tipo"],
                 "origem": "aprovada" if tipo == "aprovacao" else "automatica", "publicada_em": e["em"],
-                "ligada_depois": bool(p.get("ligada_depois", False)),
-                "checagens": [{"agencia": c["agencia"], "data": c["data"],
-                               "rotulo": selos.get(c["url"]) or c["rotulo"],
-                               "fonte_rotulo": "selo_da_pagina" if c["url"] in selos else "dados_da_agencia",
-                               "url": c["url"]}
-                              for c in p["checagens"] if c["url"] in e["checagens"]],
-            }
+                "ligada_depois": bool(p.get("ligada_depois", False)), "checagens": [],
+            })
+            novas = {c["url"]: {"agencia": c["agencia"], "data": c["data"],
+                                "rotulo": selos.get(c["url"]) or c["rotulo"],
+                                "fonte_rotulo": "selo_da_pagina" if c["url"] in selos else "dados_da_agencia",
+                                "url": c["url"]}
+                     for c in p["checagens"] if c["url"] in e["checagens"]}
+            ja = {c["url"]: c for c in lig["checagens"]}
+            lig["checagens"] = [ja.get(c["url"]) or novas[c["url"]] for c in p["checagens"]
+                                if c["url"] in ja or c["url"] in novas]  # na ordem da proposta
+            # a automática deixa o resto na fila; a aprovação decide tudo o que esperava
+            resto = [u for u in self._aguardando.pop(ident, []) if u not in novas]
+            if tipo == "publicacao_automatica" and resto:
+                self._aguardando[ident] = resto
         elif tipo == "recusa":
-            self._situacao[ident] = "recusada"
-            next(p for p in self._propostas if p["id"] == ident)["motivo_recusa"] = e["motivo"]
+            self._situacao.setdefault(ident, "recusada")  # o resto de uma automática: ela segue publicada
+            self._recusas[ident] = {"urls": self._aguardando.pop(ident), "motivo": e["motivo"]}
         elif tipo == "despublicacao":
             self._situacao[ident] = "despublicada"
+            self._aguardando.pop(ident, None)  # o resto que esperava na fila sai junto
             retirada = self._publicadas.pop(ident)
-            self._correcoes.append({"em": e["em"], "ligacao_id": ident, "motivo": e["motivo"], "retirado": retirada})
+            self._correcoes.append({"tipo": "despublicacao", "em": e["em"], "ligacao_id": ident,
+                                    "motivo": e["motivo"], "retirado": retirada})
         elif tipo == "correcao_rotulo":
-            c = next(c for c in self._publicadas[ident]["checagens"] if c["url"] == e["url"])
+            lig = self._publicadas[ident]
+            c = next(c for c in lig["checagens"] if c["url"] == e["url"])
+            self._correcoes.append({
+                "tipo": "rotulo", "em": e["em"], "ligacao_id": ident, "minutagem_s": lig["minutagem_s"],
+                "quem": lig["quem"], "agencia": c["agencia"], "url": c["url"], "rotulo_anterior": c["rotulo"],
+                "fonte_rotulo_anterior": c["fonte_rotulo"], "rotulo": e["rotulo"], "fonte_rotulo": "selo_da_pagina"})
             c.update(rotulo=e["rotulo"], fonte_rotulo="selo_da_pagina")
 
     def _inicio_debate(self):
@@ -565,7 +642,7 @@ def band(falas_json, pasta_base_checagens, saida, paralelo=3):
     trava, uso = threading.Lock(), {"chamadas": 0, "entrada": 0, "saida": 0}
 
     def chamar(etapa, prompt, conteudo, schema):
-        out, reg = agente.chama(etapa, prompt, conteudo, schema, logs=saida / "agente")
+        out, reg = agente.chama(etapa, prompt, conteudo, schema, logs=saida / "agente", modelo=MODELO)
         with trava:
             uso["chamadas"] += 1
             uso["entrada"] += reg["tokens"]["entrada"]

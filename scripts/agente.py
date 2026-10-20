@@ -55,12 +55,13 @@ class RespostaInvalida(SystemExit):
     a sessão de checagem ao vivo a captura para não cair."""
 
 
-def chama(etapa, prompt, conteudo, schema, logs=None):
+def chama(etapa, prompt, conteudo, schema, logs=None, modelo=None):
     """Uma chamada com saída estruturada. Registra tudo em `logs` (padrão data/agente/) e devolve
-    (saída, registro)."""
+    (saída, registro). `modelo` padrão: MODELO (o da análise da Band)."""
+    modelo = modelo or MODELO
     system = (PROMPTS / prompt).read_text(encoding="utf-8")
     with anthropic.Anthropic().beta.messages.stream(
-        model=MODELO,
+        model=modelo,
         max_tokens=64000,
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",  # se o modelo recusar, a API refaz no modelo de reserva
@@ -77,7 +78,7 @@ def chama(etapa, prompt, conteudo, schema, logs=None):
     saida = json.loads(next(b.text for b in msg.content if b.type == "text"))
     registro = {
         "etapa": etapa, "data": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "modelo_pedido": MODELO, "modelo_respondeu": msg.model, "esforco": ESFORCO,
+        "modelo_pedido": modelo, "modelo_respondeu": msg.model, "esforco": ESFORCO,
         "prompt": f"prompts/{prompt}", "prompt_sha256": hashlib.sha256(system.encode()).hexdigest(),
         "entrada_sha256": hashlib.sha256(conteudo.encode()).hexdigest(),
         "tokens": {"entrada": msg.usage.input_tokens, "saida": msg.usage.output_tokens},

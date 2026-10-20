@@ -100,6 +100,7 @@ def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base=""):
     import threading
 
     from base_checagens import Indice
+    import sessao
     from sessao import CANDIDATOS, Sessao
 
     saida = Path(saida)
@@ -116,9 +117,10 @@ def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base=""):
         import agente
 
         def chamar(etapa, prompt, conteudo, schema):
-            return agente.chama(etapa, prompt, conteudo, schema, logs=saida / "agente")
+            return agente.chama(etapa, prompt, conteudo, schema, logs=saida / "agente", modelo=sessao.MODELO)
 
     trava, uso = threading.Lock(), {"chamadas": 0, "entrada": 0, "saida": 0}
+    respondeu = set()
 
     def chamar_e_contar(etapa, prompt, conteudo, schema):
         out, reg = chamar(etapa, prompt, conteudo, schema)
@@ -126,6 +128,7 @@ def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base=""):
             uso["chamadas"] += 1
             uso["entrada"] += reg["tokens"]["entrada"]
             uso["saida"] += reg["tokens"]["saida"]
+            respondeu.add(reg.get("modelo_respondeu"))
         return out, reg
 
     with (saida / "eventos.jsonl").open("a", encoding="utf-8") as eventos:
@@ -139,6 +142,10 @@ def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base=""):
         })
         s.recebe_falas(falas, paralelo=paralelo)
 
+    candidatas = sum(q in CANDIDATOS for q, _, _ in falas)
+    if candidatas and len(s.erros()) >= candidatas:  # nenhuma chamada deu certo: não vale como rodada
+        sys.exit(f"{saida.name}: todas as chamadas falharam ({s.erros()[0]['mensagem'][:300]}); "
+                 f"apague {saida} e rode de novo")
     dados = s.exporta()
     (saida / "painel.json").write_text(json.dumps(dados, ensure_ascii=False, indent=1), encoding="utf-8")
     resumo = {
@@ -148,6 +155,7 @@ def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base=""):
         "ligacoes_propostas": len(s.fila()), "sem_par": len(dados["sem_par"]),
         "descartados": len(s.descartados()), "erros": len(s.erros()),
         "chamadas_claude": uso["chamadas"], "tokens": {"entrada": uso["entrada"], "saida": uso["saida"]},
+        "modelo": dados["meta"]["modelo"], "modelos_que_responderam": sorted(m for m in respondeu if m),
     }
     (saida / "fila.json").write_text(json.dumps({
         "resumo": resumo, "fila": s.fila(), "descartados": s.descartados(), "erros": s.erros(),
@@ -434,6 +442,12 @@ def main():
     dados = Path(a.dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data")
     saida = Path(a.saida) if a.saida else dados / "avaliacao"
     if a.comando == "rodar":
+        if not a.duble and not os.environ.get("ANTHROPIC_API_KEY"):  # num worktree o .env só existe no checkout principal
+            env = raiz_principal() / ".env"
+            for linha in env.read_text(encoding="utf-8").splitlines() if env.exists() else []:
+                nome, _, valor = linha.partition("=")
+                if nome.strip() == "ANTHROPIC_API_KEY" and valor.strip():
+                    os.environ["ANTHROPIC_API_KEY"] = valor.strip()
         avalia(dados, a.falas or dados / "bloco1_final.json", saida, chamar=Duble() if a.duble else None,
                paralelo=a.paralelo, origens=("revisao", "publicacao") if a.aceitar_publicacao else ("revisao",))
     else:

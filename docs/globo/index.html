@@ -202,8 +202,8 @@ footer p { margin: 0 0 8px; }
 
   <section class="sec mid" aria-labelledby="h-cor">
     <p class="sec-n">3 · Correções</p>
-    <h2 id="h-cor">O que retiramos e por quê</h2>
-    <p class="sub">Nenhuma ligação é apagada. Quando retiramos uma, ela fica registrada aqui com o horário, o motivo e o que estava publicado.</p>
+    <h2 id="h-cor">O que retiramos ou corrigimos</h2>
+    <p class="sub">Nenhuma ligação é apagada. Quando retiramos uma, ela fica registrada aqui com o horário, o motivo e o que estava publicado. Quando trocamos o rótulo exibido de uma checagem, a troca também fica aqui, com o rótulo antigo e o novo.</p>
     <div class="lista" id="correcoes"></div>
   </section>
 
@@ -313,7 +313,19 @@ function semPar(a) {
   </article>`;
 }
 
-function correcao(c) {
+const FONTE = { selo_da_pagina: "selo da página da agência", dados_da_agencia: "rótulo conforme dados da agência" };
+
+function correcaoRotulo(c, d) {
+  const ainda = d.ligacoes.some(l => l.id === c.ligacao_id);
+  return `<article class="card cor">
+    <div class="ih"><b>Rótulo corrigido às ${hora(c.em)}</b><span>ligação da fala em</span><span class="tm">${minutagem(c.minutagem_s)}</span>${quem(c.quem)}</div>
+    <p class="motivo">${esc(c.agencia)}: de <b>${esc(c.rotulo_anterior)}</b> (${FONTE[c.fonte_rotulo_anterior] || ""}) para <b>${esc(c.rotulo)}</b> (${FONTE[c.fonte_rotulo] || ""}).</p>
+    <p class="motivo"><a href="${esc(link(c.url))}" target="_blank" rel="noopener">Ler a checagem<span aria-hidden="true"> ↗</span></a>${ainda ? ` · <a href="#${esc(c.ligacao_id)}">ver a ligação</a>` : ""}</p>
+  </article>`;
+}
+
+function correcao(c, d) {
+  if (c.tipo === "rotulo") return correcaoRotulo(c, d);
   const r = c.retirado;
   return `<article class="card cor">
     <div class="ih"><b>Retirada às ${hora(c.em)}</b><span>ligação da fala em</span><span class="tm">${minutagem(r.minutagem_s)}</span>${quem(r.quem)}</div>
@@ -365,7 +377,7 @@ function render(d) {
   // correções: abertas pelo leitor continuam abertas depois da atualização
   const abertas = new Set([...document.querySelectorAll("details.antes[open]")].map(e => e.dataset.k));
   document.getElementById("correcoes").innerHTML = d.correcoes.length
-    ? d.correcoes.slice().sort((a, b) => a.em < b.em ? 1 : -1).map(correcao).join("")
+    ? d.correcoes.slice().sort((a, b) => a.em < b.em ? 1 : -1).map(c => correcao(c, d)).join("")
     : `<p class="empty">Nenhuma correção até agora.</p>`;
   document.querySelectorAll("details.antes").forEach(e => { if (abertas.has(e.dataset.k)) e.open = true; });
 
