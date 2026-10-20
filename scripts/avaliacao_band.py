@@ -408,17 +408,22 @@ def avalia(dados, falas_json, saida=None, chamar=None, paralelo=3, origens=("rev
 
 
 class Duble:
-    """Claude de mentira para ensaiar o comando sem gastar chamadas: extrai a primeira frase de cada
-    fala como afirmação e confirma a primeira candidata com nota 0,5."""
+    """Claude de mentira para ensaiar o comando sem gastar chamadas: em cada fala, a primeira frase vira
+    a afirmação, e a primeira checagem da base que chegar entre as candidatas é confirmada com nota 0,5.
+    Reconhece a fala e as candidatas pelo texto e pelas URLs que chegam no pedido, não pela forma dele.
+    falas: textos das falas; urls: URLs das checagens da base."""
+
+    def __init__(self, falas, urls):
+        self.falas, self.urls = list(falas), list(urls)
 
     def __call__(self, etapa, prompt, conteudo, schema):
-        if schema.get("required") == ["afirmacoes"]:
-            fala = conteudo.split("Fala:\n", 1)[1]
+        if "afirmacoes" in schema["properties"]:
+            fala = max((f for f in self.falas if f in conteudo), key=len, default="")
             frase = fala.split(". ")[0].strip()
             saida = {"afirmacoes": [{"trecho": frase, "reformulacao": frase, "tipo": "perene"}] if frase else []}
         else:
-            urls = [linha.split("URL: ", 1)[1] for linha in conteudo.splitlines() if linha.startswith("- URL: ")]
-            saida = {"confirmadas": [{"url": urls[0], "nota": 0.5, "motivo": "dublê"}] if urls else []}
+            url = next((u for u in self.urls if u in conteudo), None)
+            saida = {"confirmadas": [{"url": url, "nota": 0.5, "motivo": "dublê"}] if url else []}
         return saida, {"etapa": etapa, "modelo_respondeu": "dublê", "prompt_sha256": "0" * 64,
                        "tokens": {"entrada": 0, "saida": 0}}
 
@@ -448,7 +453,13 @@ def main():
                 nome, _, valor = linha.partition("=")
                 if nome.strip() == "ANTHROPIC_API_KEY" and valor.strip():
                     os.environ["ANTHROPIC_API_KEY"] = valor.strip()
-        avalia(dados, a.falas or dados / "bloco1_final.json", saida, chamar=Duble() if a.duble else None,
+        falas = a.falas or dados / "bloco1_final.json"
+        duble = None
+        if a.duble:
+            from base_checagens import le_base
+
+            duble = Duble([x for _, _, x in le_falas(falas)], [r["url"] for r in le_base(dados / "checagens")])
+        avalia(dados, falas, saida, chamar=duble,
                paralelo=a.paralelo, origens=("revisao", "publicacao") if a.aceitar_publicacao else ("revisao",))
     else:
         relatorio(saida, minimo=a.minimo)

@@ -14,6 +14,7 @@ import pytest
 
 from avaliacao_band import avalia, congela, relatorio
 from base_checagens import Indice, atualiza_indice
+from test_sessao import pedido, resposta
 
 FIXTURES = Path(__file__).parent / "fixtures"
 BRASILIA = timezone(timedelta(hours=-3))
@@ -49,15 +50,14 @@ class Claude:
 
     def __call__(self, etapa, prompt, conteudo, schema):
         self.chamadas += 1
-        if prompt == "extrair_afirmacoes.md":
+        if pedido(schema) == "extracao":
             achadas = [a for fala, a in AFIRMACOES.items() if fala in conteudo]
             saida = {"afirmacoes": [{k: a[k] for k in ("trecho", "reformulacao", "tipo")} for a in achadas]}
         else:
             [a] = [a for a in AFIRMACOES.values() if a["trecho"] in conteudo]
             saida = {"confirmadas": [{"url": u, "nota": n, "motivo": m}
-                                     for u, (n, m) in a["confirma"].items() if f"URL: {u}\n" in conteudo]}
-        return saida, {"etapa": etapa, "modelo_respondeu": "dublê", "prompt_sha256": "0" * 64,
-                       "tokens": {"entrada": 0, "saida": 0}}
+                                     for u, (n, m) in a["confirma"].items() if u in conteudo]}
+        return resposta(etapa, saida)
 
 
 @pytest.fixture(scope="module")

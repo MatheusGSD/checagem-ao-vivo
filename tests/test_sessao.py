@@ -51,31 +51,43 @@ DESEMPREGO = afirmacao("o desemprego é o menor da história do IBGE",
                        {DESEMPREGO_2025: (0.92, "Mesma afirmação: desemprego no menor nível da série do IBGE.")})
 
 
+def pedido(schema):
+    """Que resposta o pedido espera, pela forma da saída estruturada (e não pelo prompt): "extracao"
+    (lista de afirmações) ou "confirmacao" (lista de checagens confirmadas)."""
+    return "extracao" if "afirmacoes" in schema["properties"] else "confirmacao"
+
+
+def resposta(etapa, saida, modelo="dublê"):
+    return saida, {"etapa": etapa, "modelo_respondeu": modelo, "prompt_sha256": "0" * 64,
+                   "tokens": {"entrada": 0, "saida": 0}}
+
+
 class Claude:
     """Dublê do Claude: devolve respostas prontas no formato da saída estruturada.
-    falas = {texto da fala: [afirmação(...), ...]}."""
+    falas = {texto da fala: [afirmação(...), ...]}. Reconhece a fala e a afirmação pelo texto que
+    chega no pedido e confirma só as checagens que chegaram entre as candidatas."""
 
-    def __init__(self, falas):
+    def __init__(self, falas, modelo="dublê"):
         self.falas = falas
+        self.modelo = modelo
         self.chamadas = []
 
     def __call__(self, etapa, prompt, conteudo, schema):
-        self.chamadas.append(prompt)
-        if prompt == "extrair_afirmacoes.md":
+        self.chamadas.append(pedido(schema))
+        if pedido(schema) == "extracao":
             afirmacoes = next((v for fala, v in self.falas.items() if fala in conteudo), [])
             saida = {"afirmacoes": [{k: a[k] for k in ("trecho", "reformulacao", "tipo")} for a in afirmacoes]}
         else:
             [a] = [a for v in self.falas.values() for a in v if a["trecho"] in conteudo]
             saida = {"confirmadas": [{"url": url, "nota": nota, "motivo": motivo}
                                      for url, (nota, motivo) in a["confirma"].items() if url in conteudo]}
-        return saida, {"etapa": etapa, "modelo_respondeu": "dublê", "prompt_sha256": "0" * 64,
-                       "tokens": {"entrada": 0, "saida": 0}}
+        return resposta(etapa, saida, self.modelo)
 
     def extracoes(self):
-        return self.chamadas.count("extrair_afirmacoes.md")
+        return self.chamadas.count("extracao")
 
     def confirmacoes(self):
-        return self.chamadas.count("confirmar_ligacao.md")
+        return self.chamadas.count("confirmacao")
 
 
 def relogio():

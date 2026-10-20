@@ -19,7 +19,7 @@ from noite import Noite, zero_da_gravacao
 from publicador import ARQUIVO, Publicador
 from test_publicador import commits, git, remoto  # noqa: F401 - remoto é fixture
 from test_sessao import (CHECAGEM_DA_NOITE, DESEMPREGO, FALA_13, FALA_DESEMPREGO, FALA_MEDIACAO, FALA_PIX, FIXTURES,
-                         FOF_13, INICIO, PIX, Claude, Relogio, afirmacao)
+                         FOF_13, INICIO, PIX, Claude, Relogio, afirmacao, pedido)
 
 
 @pytest.fixture(scope="module")
@@ -156,7 +156,7 @@ class ClaudeQueFalha(Claude):
         self.falha_em = falha_em
 
     def __call__(self, etapa, prompt, conteudo, schema):
-        if prompt == "extrair_afirmacoes.md" and any(f in conteudo for f in self.falha_em):
+        if pedido(schema) == "extracao" and any(f in conteudo for f in self.falha_em):
             raise ConnectionError("API do Claude fora do ar (529 overloaded)")
         return super().__call__(etapa, prompt, conteudo, schema)
 
