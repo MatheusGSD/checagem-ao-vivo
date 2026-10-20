@@ -14,6 +14,7 @@ Uso como biblioteca (ao vivo, ticket 09):
 Linha de comando (pasta de dados: --dados ou CHECAGEM_DADOS; padrão C:\\dev\\debate_lulavsflavio\\data):
     python -P scripts/vozes.py perfis    # grava <dados>/vozes/perfis.json
     python -P scripts/vozes.py medir     # mede no debate todo, escolhe o limiar, grava relatorio.md
+                                         # (--reusar: refaz só o limiar e o relatório)
 """
 import argparse
 import difflib
@@ -273,22 +274,31 @@ def acerto(rotulos, quem, dur, limiar):
     return float((dur * (pred == rotulos)).sum() / dur.sum()), pred
 
 
-def cmd_medir(dados, saida):
+def cmd_medir(dados, saida, reusar=False):
     r = Reconhecedor.carregar(saida, limiar=0.0)
     trans = [p for p in transcricoes_alinhamento(dados, saida) if p.exists()]
     escriba = dados / "referencia" / "escriba_aosfatos.json"
     ivs = intervalos_escriba(escriba, trans)
     desl = deslocamento_escriba(tokens_escriba(escriba), trans)[1]
     t0, t1 = min(i["start"] for i in ivs) - 1, max(i["end"] for i in ivs) + 1
-    print(f"referência: {len(ivs)} intervalos, {t0:.0f}-{t1:.0f} s; lendo áudio…")
-    sig = le_audio(dados / "raw" / "debate_audio.m4a", t0, t1)
+    print(f"referência: {len(ivs)} intervalos, {t0:.0f}-{t1:.0f} s")
 
     # conferência do alinhamento do Escriba contra as falas da Band (bloco1_final), no confronto livre
     falas = json.loads((dados / "bloco1_final.json").read_text(encoding="utf-8"))["turns"]
     conf = [(i["end"] - i["start"], rotulo_por_cobertura(i["start"], i["end"], falas, 0.5) == i["speaker"])
             for i in ivs if BLOCO1[0] <= i["start"] and i["end"] <= BLOCO1[1]]
     alinhamento = sum(d for d, ok in conf if ok) / sum(d for d, _ in conf)
+    audio = dados / "raw" / "debate_audio.m4a"
+    cache = saida / "medicao_semelhancas.npz"
 
+    if reusar and cache.exists():  # só refaz a escolha do limiar e o relatório
+        z = np.load(cache)
+        res = {d: {"jan": [(a, b, q) for (a, b), q in zip(z[f"jan_{d}"], z[f"quem_{d}"])],
+                   "sims": z[f"sims_{d}"], "tempos": z[f"tempos_{d}"]} for d in DURACOES}
+        relatorio(saida, res, alinhamento, trans, desl, audio)
+        return
+
+    sig = le_audio(audio, t0, t1)
     res = {}
     for dur in DURACOES:
         jan = janelas(ivs, dur)
@@ -301,11 +311,10 @@ def cmd_medir(dados, saida):
             sims.append([v.semelhancas["Lula"], v.semelhancas["Flávio"]])
         res[dur] = {"jan": jan, "sims": np.array(sims), "tempos": np.array(tempos)}
         print(f"{dur} s: {len(jan)} janelas, {np.median(tempos) * 1000:.0f} ms/janela")
-    np.savez(saida / "medicao_semelhancas.npz",
-             **{f"sims_{d}": res[d]["sims"] for d in res},
+    np.savez(cache, **{f"sims_{d}": res[d]["sims"] for d in res}, **{f"tempos_{d}": res[d]["tempos"] for d in res},
              **{f"jan_{d}": np.array([(a, b) for a, b, _ in res[d]["jan"]]) for d in res},
              **{f"quem_{d}": np.array([q for _, _, q in res[d]["jan"]]) for d in res})
-    relatorio(saida, res, alinhamento, trans, desl, dados / raw / debate_audio.m4a)
+    relatorio(saida, res, alinhamento, trans, desl, audio)
 
 
 def _partes(jan):
@@ -498,10 +507,15 @@ def main():
     ap.add_argument("comando", choices=["perfis", "medir"])
     ap.add_argument("--dados", type=Path, default=DADOS, help="pasta de dados (padrão: %(default)s)")
     ap.add_argument("--saida", type=Path, help="pasta dos perfis e do relatório (padrão: <dados>/vozes)")
+    ap.add_argument("--reusar", action="store_true",
+                    help="medir: reaproveita as semelhanças de medicao_semelhancas.npz (só refaz limiar e relatório)")
     a = ap.parse_args()
     saida = a.saida or a.dados / "vozes"
     saida.mkdir(parents=True, exist_ok=True)
-    {"perfis": cmd_perfis, "medir": cmd_medir}[a.comando](a.dados, saida)
+    if a.comando == "perfis":
+        cmd_perfis(a.dados, saida)
+    else:
+        cmd_medir(a.dados, saida, a.reusar)
 
 
 if __name__ == "__main__":
