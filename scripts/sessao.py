@@ -39,7 +39,8 @@ RAIZ = Path(__file__).resolve().parent.parent
 PROMPTS = RAIZ / "prompts"
 EXTRAIR = "extrair_afirmacoes.md"
 CONFIRMAR = "confirmar_ligacao.md"
-MODELO = "claude-opus-5-5"
+# modelo da extração e da confirmação; o limiar da avaliação da Band só vale para o modelo avaliado
+MODELO = os.environ.get("CHECAGEM_MODELO", "claude-sonnet-5-5")
 BRASILIA = timezone(timedelta(hours=-3))
 CANDIDATOS = ("Lula", "Flávio")
 N_CANDIDATAS = 8
@@ -68,7 +69,7 @@ ESQUEMA_CONFIRMACAO = {
 def _chamar_padrao(etapa, prompt, conteudo, schema):
     import agente
 
-    return agente.chama(etapa, prompt, conteudo, schema)
+    return agente.chama(etapa, prompt, conteudo, schema, modelo=MODELO)
 
 
 class AcaoInvalida(ValueError):
@@ -641,7 +642,7 @@ def band(falas_json, pasta_base_checagens, saida, paralelo=3):
     trava, uso = threading.Lock(), {"chamadas": 0, "entrada": 0, "saida": 0}
 
     def chamar(etapa, prompt, conteudo, schema):
-        out, reg = agente.chama(etapa, prompt, conteudo, schema, logs=saida / "agente")
+        out, reg = agente.chama(etapa, prompt, conteudo, schema, logs=saida / "agente", modelo=MODELO)
         with trava:
             uso["chamadas"] += 1
             uso["entrada"] += reg["tokens"]["entrada"]

@@ -193,7 +193,7 @@ def test_exportacao_segue_o_contrato_da_pagina(indice):
 
     assert valida(dados) == []
     assert dados["meta"]["atualizado_em"] == "2026-10-23T21:40:00-03:00"
-    assert dados["meta"]["modelo"] == "claude-opus-5-5"
+    assert dados["meta"]["modelo"] == "claude-sonnet-5-5"
     assert {p["arquivo"] for p in dados["meta"]["prompts"]} == {"prompts/extrair_afirmacoes.md",
                                                                "prompts/confirmar_ligacao.md"}
     assert dados["meta"]["limiar_automatico"] is None
