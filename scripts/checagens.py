@@ -8,11 +8,17 @@ data e fonte da coleta e as buscas que o trouxeram. Nada do corpo do texto da ch
 Fontes:
   google_api       resposta JSON de claims:search da API oficial do Google Fact Check
   google_explorer  resposta do buscador interno do Fact Check Explorer (reserva, desligado por padrão)
+  fato_ou_fake_rss     RSS da seção Fato ou Fake do g1 (rótulo = selo no começo do título)
+  fato_ou_fake_pagina  página de uma checagem do Fato ou Fake achada no sitemap diário do g1
+Do Fato ou Fake a coleta guarda só o `recorte` (URL, título com o selo e data), nunca o corpo.
 """
+import html
 import json
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from xml.etree import ElementTree
 
 DATA_NA_URL = re.compile(r"/(20\d\d)/(\d\d)/(\d\d)/")
 
@@ -93,7 +99,91 @@ def _google_explorer(texto, coletado_em, busca):
     return out
 
 
-FONTES = {"google_api": _google_api, "google_explorer": _google_explorer}
+# ---------- Fato ou Fake (g1) ----------
+
+FOF_AGENCIA = "Fato ou Fake (g1)"
+FOF_SITE = "g1.globo.com"
+BRASILIA = timezone(timedelta(hours=-3))
+# selo no começo do título: "É #FAKE que…", "É #FATO: …", "#NÃOÉBEMASSIM: …" (às vezes sem o #, como em
+# "É FATO: …"). Resumos com várias checagens ("Veja o que é #FATO ou #FAKE…") e notícias da seção sem
+# selo não têm rótulo único e ficam de fora.
+SELO_FOF = re.compile(r"^\s*(?:É\s+)?#?(FATO|FAKE|N[ÃA]O\s*[ÉE]\s*BEM\s*ASSIM)(?![\w#])\s*:?\s*(?:que\s+)?")
+
+
+def _titulo_fof(titulo):
+    """Título do Fato ou Fake → (rótulo, frase checada), ou None se o título não começa com um selo."""
+    titulo = (titulo or "").strip()
+    m = SELO_FOF.match(titulo)
+    if not m:
+        return None
+    selo = m.group(1) if m.group(1) in ("FATO", "FAKE") else "NÃOÉBEMASSIM"
+    frase = titulo[m.end():].strip()
+    return f"#{selo}", frase[:1].upper() + frase[1:]
+
+
+def _fof(url, titulo, publicado, coletado_em, fonte):
+    selo = _titulo_fof(titulo)
+    if not selo:
+        return []
+    return [_registro(url, FOF_AGENCIA, FOF_SITE, selo[1], None, "pt", _data(None, url, publicacao=publicado),
+                      selo[0], coletado_em, fonte, None)]
+
+
+def _fato_ou_fake_rss(texto, coletado_em, busca=None):
+    """RSS da seção (https://g1.globo.com/rss/g1/fato-ou-fake/): um registro por item com selo."""
+    out = []
+    for item in ElementTree.fromstring(texto).iter("item"):
+        url = (item.findtext("link") or item.findtext("guid") or "").strip()
+        quando = item.findtext("pubDate")
+        dia = parsedate_to_datetime(quando).astimezone(BRASILIA).strftime("%Y-%m-%d") if quando else None
+        out += _fof(url, html.unescape(item.findtext("title") or ""), dia, coletado_em, "fato_ou_fake_rss")
+    return out
+
+
+_CANONICA = re.compile(r"<link\b[^>]*\brel=\"canonical\"[^>]*\bhref=\"([^\"]+)\"")
+_PUBLICADA = re.compile(r"<(?:meta|time)\b[^>]*\bitemprop=\"datePublished\"[^>]*\b(?:content|datetime)=\"([^\"]+)\"")
+_MANCHETE = re.compile(r"<h1\b[^>]*\bcontent-head__title\b[^>]*>(.*?)</h1>", re.S)
+
+
+def _metadados_pagina(texto):
+    """Página de checagem do g1 → (URL canônica, título com o selo, dia da publicação em Brasília).
+    O <title> e o og:title não têm o selo: vale a manchete (h1). A 1ª datePublished é a da matéria
+    (as seguintes são de vídeos embutidos)."""
+    url, quando, titulo = (_CANONICA.search(texto), _PUBLICADA.search(texto), _MANCHETE.search(texto))
+    dia = None
+    if quando:
+        dia = datetime.fromisoformat(quando.group(1)).astimezone(BRASILIA).strftime("%Y-%m-%d")
+    titulo = titulo and html.unescape(re.sub(r"<[^>]+>", "", titulo.group(1))).strip()
+    return url and html.unescape(url.group(1)), titulo, dia
+
+
+def _fato_ou_fake_pagina(texto, coletado_em, busca=None):
+    """Página de uma checagem achada no sitemap diário (o sitemap só dá URL e data de modificação)."""
+    url, titulo, dia = _metadados_pagina(texto)
+    return _fof(url, titulo, dia, coletado_em, "fato_ou_fake_pagina") if url else []
+
+
+FONTES = {"google_api": _google_api, "google_explorer": _google_explorer,
+          "fato_ou_fake_rss": _fato_ou_fake_rss, "fato_ou_fake_pagina": _fato_ou_fake_pagina}
+
+
+def recorte(fonte, bruto):
+    """O que a coleta guarda de uma resposta do Fato ou Fake: só os metadados que o normalizador lê
+    (URL, título com o selo e data), no formato da própria fonte. Nada do corpo da checagem."""
+    esc = html.escape
+    if fonte == "fato_ou_fake_pagina":
+        url, titulo, dia = _metadados_pagina(bruto)
+        return (f'<link rel="canonical" href="{esc(url or "")}">\n'
+                f'<meta itemprop="datePublished" content="{esc(dia or "")}T12:00:00-03:00">\n'
+                f'<h1 class="content-head__title" itemprop="headline">{esc(titulo or "")}</h1>\n')
+    if fonte == "fato_ou_fake_rss":
+        itens = [f"<item><title>{esc(item.findtext('title') or '')}</title>"
+                 f"<link>{esc((item.findtext('link') or item.findtext('guid') or '').strip())}</link>"
+                 f"<pubDate>{esc(item.findtext('pubDate') or '')}</pubDate></item>"
+                 for item in ElementTree.fromstring(bruto).iter("item")]
+        return "<?xml version='1.0' encoding='UTF-8'?>\n<rss version=\"2.0\"><channel>\n" + "\n".join(itens) + \
+            "\n</channel></rss>\n"
+    raise ValueError(f"sem recorte para a fonte {fonte!r}")
 
 
 def normaliza(fonte, bruto, coletado_em, busca=None):
