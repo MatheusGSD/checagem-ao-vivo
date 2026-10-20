@@ -100,6 +100,7 @@ def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base=""):
     import threading
 
     from base_checagens import Indice
+    import sessao
     from sessao import CANDIDATOS, Sessao
 
     saida = Path(saida)
@@ -116,9 +117,10 @@ def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base=""):
         import agente
 
         def chamar(etapa, prompt, conteudo, schema):
-            return agente.chama(etapa, prompt, conteudo, schema, logs=saida / "agente")
+            return agente.chama(etapa, prompt, conteudo, schema, logs=saida / "agente", modelo=sessao.MODELO)
 
     trava, uso = threading.Lock(), {"chamadas": 0, "entrada": 0, "saida": 0}
+    respondeu = set()
 
     def chamar_e_contar(etapa, prompt, conteudo, schema):
         out, reg = chamar(etapa, prompt, conteudo, schema)
@@ -126,6 +128,7 @@ def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base=""):
             uso["chamadas"] += 1
             uso["entrada"] += reg["tokens"]["entrada"]
             uso["saida"] += reg["tokens"]["saida"]
+            respondeu.add(reg.get("modelo_respondeu"))
         return out, reg
 
     with (saida / "eventos.jsonl").open("a", encoding="utf-8") as eventos:
@@ -148,6 +151,7 @@ def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base=""):
         "ligacoes_propostas": len(s.fila()), "sem_par": len(dados["sem_par"]),
         "descartados": len(s.descartados()), "erros": len(s.erros()),
         "chamadas_claude": uso["chamadas"], "tokens": {"entrada": uso["entrada"], "saida": uso["saida"]},
+        "modelo": dados["meta"]["modelo"], "modelos_que_responderam": sorted(m for m in respondeu if m),
     }
     (saida / "fila.json").write_text(json.dumps({
         "resumo": resumo, "fila": s.fila(), "descartados": s.descartados(), "erros": s.erros(),
