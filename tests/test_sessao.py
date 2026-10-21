@@ -746,6 +746,104 @@ def test_fala_registrada_e_nao_analisada_antes_do_travamento_e_analisada_ao_reto
     assert claude.extracoes() == 1
 
 
+# ---------- falhas do Claude: novas tentativas na noite e depois de reabrir ----------
+
+class ClaudeInstavel(Claude):
+    """Dublê que falha (como a API sobrecarregada) as primeiras `falhas` chamadas de cada pedido dado:
+    falhas = {("extracao" | "confirmacao", texto que aparece no pedido): n}."""
+
+    def __init__(self, falas, falhas):
+        super().__init__(falas)
+        self.falhas = dict(falhas)
+
+    def __call__(self, etapa, prompt, conteudo, schema):
+        for (tipo, texto), n in self.falhas.items():
+            if pedido(schema) == tipo and texto in conteudo and n:
+                self.falhas[(tipo, texto)] = n - 1
+                self.chamadas.append(pedido(schema))
+                raise ConnectionError("529 overloaded")
+        return super().__call__(etapa, prompt, conteudo, schema)
+
+
+SEM_ESPERA = (0, 0)  # três tentativas, sem esperar entre elas
+
+
+def test_falha_passageira_do_claude_e_tentada_de_novo_e_a_fala_e_analisada(indice):
+    claude = ClaudeInstavel({FALA_PIX: [PIX]}, {("extracao", FALA_PIX): 1, ("confirmacao", PIX["trecho"]): 1})
+    s = Sessao(indice, chamar=claude, relogio=relogio, esperas_entre_tentativas=SEM_ESPERA)
+
+    s.recebe_fala("Flávio", 400.0, FALA_PIX)
+
+    assert [p["trecho"] for p in s.fila()] == [PIX["trecho"]]
+    assert [e["etapa"] for e in s.erros()] == ["extrair", "confirmar"]  # cada falha aparece na tela
+    assert (claude.extracoes(), claude.confirmacoes()) == (2, 2)
+
+
+def test_falha_que_insiste_para_depois_de_algumas_tentativas_e_cada_uma_aparece_nos_erros(indice):
+    claude = ClaudeInstavel({FALA_PIX: [PIX]}, {("extracao", FALA_PIX): 99})
+    s = Sessao(indice, chamar=claude, relogio=relogio, esperas_entre_tentativas=SEM_ESPERA)
+
+    s.recebe_fala("Flávio", 400.0, FALA_PIX)
+
+    assert s.fila() == []
+    assert claude.extracoes() == 3
+    assert [(e["etapa"], e["quem"], e["minutagem_s"]) for e in s.erros()] == [("extrair", "Flávio", 400.0)] * 3
+
+
+def test_extracao_que_falhou_em_todas_as_tentativas_e_refeita_ao_reabrir_e_so_ela_volta_ao_claude(indice):
+    instavel = ClaudeInstavel({FALA_PIX: [PIX], FALA_DESEMPREGO: [DESEMPREGO]}, {("extracao", FALA_PIX): 99})
+    original = Sessao(indice, chamar=instavel, relogio=relogio, esperas_entre_tentativas=SEM_ESPERA)
+    original.recebe_fala("Lula", 754.3, FALA_DESEMPREGO)
+    original.recebe_fala("Flávio", 800.0, FALA_PIX)
+    claude = Claude({FALA_PIX: [PIX], FALA_DESEMPREGO: [DESEMPREGO]})
+
+    reaberta = Sessao.reconstroi(indice, json.loads(json.dumps(original.eventos)), chamar=claude, relogio=relogio)
+    assert len(reaberta.erros()) == 3  # o que falhou continua na tela
+    reaberta.retoma_analises()
+
+    assert [p["trecho"] for p in reaberta.fila()] == [DESEMPREGO["trecho"], PIX["trecho"]]
+    assert (claude.extracoes(), claude.confirmacoes()) == (1, 1)  # só a do Pix: o desemprego já estava feito
+    de_novo = Sessao.reconstroi(indice, json.loads(json.dumps(reaberta.eventos)), chamar=Claude({}), relogio=relogio)
+    de_novo.retoma_analises()
+    assert estado(de_novo) == estado(reaberta)
+
+
+def test_confirmacao_que_falhou_em_todas_as_tentativas_e_refeita_ao_reabrir_sem_refazer_a_extracao(indice):
+    instavel = ClaudeInstavel({FALA_PIX: [PIX]}, {("confirmacao", PIX["trecho"]): 99})
+    original = Sessao(indice, chamar=instavel, relogio=relogio, esperas_entre_tentativas=SEM_ESPERA)
+    original.recebe_fala("Flávio", 800.0, FALA_PIX)
+    assert original.fila() == [] and original.exporta()["sem_par"] == []
+    claude = Claude({FALA_PIX: [PIX]})
+
+    reaberta = Sessao.reconstroi(indice, json.loads(json.dumps(original.eventos)), chamar=claude, relogio=relogio)
+    reaberta.retoma_analises()
+
+    assert [p["trecho"] for p in reaberta.fila()] == [PIX["trecho"]]
+    assert (claude.extracoes(), claude.confirmacoes()) == (0, 1)
+
+
+def test_reconferencia_da_base_que_falhou_e_refeita_ao_reabrir():
+    registros = json.loads((FIXTURES / "base_sessao.json").read_text(encoding="utf-8"))["registros"]
+    corte = afirmacao("vai cortar o décimo terceiro e as aposentadorias",
+                      "Flávio Bolsonaro disse que, se eleito, vai cortar o 13º salário e as aposentadorias.",
+                      "perene", {FOF_13: (0.9, "Mesma fala atribuída a Flávio.")})
+    instavel = ClaudeInstavel({FALA_13: [corte]}, {})
+    original = Sessao(Indice(registros), chamar=instavel, relogio=relogio, esperas_entre_tentativas=SEM_ESPERA)
+    original.recebe_fala("Lula", 1500.0, FALA_13)
+    instavel.falhas[("confirmacao", corte["trecho"])] = 99  # a API cai bem na atualização da base
+    original.atualiza_base([CHECAGEM_DA_NOITE])
+    assert original.fila() == [] and len(original.erros()) == 3
+    claude = Claude({FALA_13: [corte]})
+
+    reaberta = Sessao.reconstroi(Indice(registros), json.loads(json.dumps(original.eventos)), chamar=claude,
+                                 relogio=relogio)
+    reaberta.retoma_analises()
+
+    [lig] = reaberta.fila()
+    assert (lig["trecho"], lig["ligada_depois"]) == (corte["trecho"], True)
+    assert claude.confirmacoes() == 1
+
+
 GASOLINA_NOITE_URL = "https://g1.globo.com/fato-ou-fake/noticia/2026/10/23/gasolina-caiu-30-por-cento.ghtml"
 GASOLINA_NOITE = {**CHECAGEM_DA_NOITE, "id": GASOLINA_NOITE_URL, "url": GASOLINA_NOITE_URL,
                   "frase": "Gasolina caiu 30% em um ano no governo Bolsonaro", "rotulo": "#NÃOÉBEMASSIM"}

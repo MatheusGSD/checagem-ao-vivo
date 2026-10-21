@@ -11,8 +11,10 @@ dados da página (docs/globo/formato-dos-dados.md).
 Todo o estado muda por eventos (`Sessao.eventos`, também entregues a `ao_registrar`), que levam o que
 o Claude respondeu: repetir os eventos reconstrói o estado sem chamar o Claude de novo
 (`Sessao.reconstroi`; `Sessao.abre` faz isso a partir de <pasta>/eventos.jsonl e continua gravando lá).
-O que um travamento deixou pela metade (fala sem extração, afirmação sem confirmação, atualização da
-base sem todas as reconferências) é terminado por `retoma_analises`.
+Uma chamada ao Claude que falha é tentada de novo (3 tentativas, com espera crescente); cada falha vira
+um evento "erro", que a tela mostra. O que um travamento deixou pela metade ou falhou em todas as
+tentativas (fala sem extração, afirmação sem confirmação, atualização da base sem todas as
+reconferências) é terminado por `retoma_analises`, sem refazer o que já deu certo.
 
 O operador aprova (informando o selo visível na página da agência), recusa, despublica com motivo e
 corrige o rótulo (despublicar e corrigir o rótulo entram nas correções públicas). Com limiar
@@ -29,6 +31,7 @@ import json
 import os
 import sys
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
@@ -54,6 +57,9 @@ EVENTOS_DE_PUBLICACAO = ("inicio", "aprovacao", "publicacao_automatica", "recusa
 # o corte (agente.RespostaInvalida, que é um SystemExit para encerrar a linha de comando); outros
 # SystemExit (pedido de encerrar o processo) passam
 FALHAS_DO_CLAUDE = (Exception, RespostaInvalida)
+# uma chamada que falha é tentada de novo depois destas esperas (3 tentativas); o que falhar em todas
+# fica para `retoma_analises`
+ESPERAS_ENTRE_TENTATIVAS_S = (5.0, 20.0)
 
 TXT = {"type": "string"}
 ESQUEMA_EXTRACAO = {
@@ -85,7 +91,7 @@ class AcaoInvalida(ValueError):
 
 class Sessao:
     def __init__(self, indice, chamar=None, relogio=None, ao_registrar=None, meta=None,
-                 ao_mudar_publicado=None, ao_marcar_inicio=None):
+                 ao_mudar_publicado=None, ao_marcar_inicio=None, esperas_entre_tentativas=ESPERAS_ENTRE_TENTATIVAS_S):
         """indice: base_checagens.Indice. chamar(etapa, prompt, conteudo, schema) -> (saída, registro),
         por padrão agente.chama. relogio() -> datetime com fuso. ao_registrar(evento) recebe cada
         evento assim que acontece, antes de ele valer (para o registro só de acréscimo). meta: campos
@@ -94,7 +100,9 @@ class Sessao:
         que o conteúdo público muda (tudo menos `meta.atualizado_em`): é o gancho do publicador.
         Ele roda com a sessão travada; deve ser rápido e não chamar ações da sessão.
         ao_marcar_inicio(instante) recebe o 00:00 (datetime) cada vez que ele é marcado (pela tela ou
-        pelo terminal), depois de registrado; não é chamado ao repetir o registro."""
+        pelo terminal), depois de registrado; não é chamado ao repetir o registro.
+        esperas_entre_tentativas: segundos de espera antes de cada nova tentativa de uma chamada ao
+        Claude que falhou (uma tentativa a mais que esperas); cada falha vira um erro na tela."""
         self.indice = indice
         self._meta = meta or {}
         self._chamar = chamar or _chamar_padrao
@@ -102,6 +110,7 @@ class Sessao:
         self._ao_registrar = ao_registrar
         self._ao_mudar_publicado = ao_mudar_publicado
         self._ao_marcar_inicio = ao_marcar_inicio
+        self._esperas = tuple(esperas_entre_tentativas)
         self._trava = threading.RLock()  # falas, tela de aprovação e publicador rodam em threads
         self._publico = None  # último conteúdo público avisado a ao_mudar_publicado
         self._agencias_cache = (None, None)  # (tamanho da base, agências do painel) de _agencias
@@ -204,9 +213,10 @@ class Sessao:
             with ThreadPoolExecutor(max_workers=CONFIRMACOES_EM_PARALELO) as ex:
                 eventos = list(ex.map(lambda a: self._confirma(a, entre=ids), afirmacoes))
             for evento in eventos:
-                if evento["tipo"] != "confirmacao" or evento["candidatas"]:  # sem candidata nova: nada mudou
+                if evento and evento["candidatas"]:  # sem candidata nova: nada mudou
                     self._registra({**evento, "tardia": True, "base_n": n})
-            self._registra({"tipo": "base_conferida", "base_n": n})
+            if all(eventos):  # a que falhou em todas as tentativas segue pendente (retoma_analises)
+                self._registra({"tipo": "base_conferida", "base_n": n})
         finally:
             with self._trava:
                 self._reconferindo.discard(n)
@@ -318,22 +328,23 @@ class Sessao:
                         "mensagem": str(mensagem)})
 
     def retoma_analises(self):
-        """Termina as análises que um travamento interrompeu: falas de candidato registradas sem
-        extração, afirmações extraídas sem confirmação e atualizações da base registradas sem todas as
-        reconferências das afirmações sem par. Só o que não está no registro volta ao Claude."""
+        """Termina as análises que um travamento interrompeu ou que falharam em todas as tentativas:
+        falas de candidato registradas sem extração, afirmações extraídas sem confirmação e
+        atualizações da base registradas sem todas as reconferências das afirmações sem par. Só o que
+        não deu certo no registro volta ao Claude (cada análise com as suas tentativas)."""
         with self._trava:
             bases = sorted(self._reconferir)
         for n in bases:
             self._reconfere(n)
         with self._trava:
-            feitas = {e.get("fala_id") for e in self.eventos if e["tipo"] in ("afirmacoes", "erro")}
-            confirmadas = {e["afirmacao"]["id"] for e in self.eventos
-                           if e["tipo"] in ("confirmacao", "erro") and e.get("afirmacao")}
+            feitas = {e["fala_id"] for e in self.eventos if e["tipo"] == "afirmacoes"}
+            confirmadas = {e["afirmacao"]["id"] for e in self.eventos if e["tipo"] == "confirmacao"}
             falas = [f for f in self._falas if f["quem"] in CANDIDATOS and f["id"] not in feitas]
             afirmacoes = [a for e in self.eventos if e["tipo"] == "afirmacoes"
                           for a in e["afirmacoes"] if a["id"] not in confirmadas]
         for a in afirmacoes:
-            self._registra(self._confirma(a))
+            if evento := self._confirma(a):
+                self._registra(evento)
         for fala in falas:
             for evento in self._analisa(fala):
                 self._registra(evento)
@@ -370,14 +381,17 @@ class Sessao:
     # ---------- análise (chama o Claude; não muda o estado) ----------
 
     def _analisa(self, fala):
-        """Eventos que a fala gera: afirmações extraídas, confirmação de cada uma e erros."""
+        """Eventos que a fala gera: afirmações extraídas e a confirmação de cada uma. As falhas do
+        Claude vão para o registro na hora, como erros (ver _tenta); a análise que falhou em todas as
+        tentativas não gera evento e fica para retoma_analises."""
         if fala["quem"] not in CANDIDATOS:  # mediação e outros: só entram no registro
             return []
-        try:
-            saida, reg = self._chamar(f"extrair_{fala['id']}", EXTRAIR,
-                                      f"Quem fala: {fala['quem']}\n\nFala:\n{fala['texto']}", ESQUEMA_EXTRACAO)
-        except FALHAS_DO_CLAUDE as e:
-            return [_erro("extrair", fala["id"], fala["quem"], fala["inicio_s"], e)]
+        resposta = self._tenta(f"extrair_{fala['id']}", EXTRAIR, f"Quem fala: {fala['quem']}\n\nFala:\n{fala['texto']}",
+                               ESQUEMA_EXTRACAO, {"etapa": "extrair", "fala_id": fala["id"], "quem": fala["quem"],
+                                                  "minutagem_s": fala["inicio_s"]})
+        if resposta is None:
+            return []
+        saida, reg = resposta
         extraidas = [{"id": f"{fala['id']}a{k}", "fala_id": fala["id"], "quem": fala["quem"],
                       "minutagem_s": fala["inicio_s"], **a}
                      for k, a in enumerate(saida["afirmacoes"], 1)]
@@ -389,25 +403,50 @@ class Sessao:
                     "descartadas": descartadas, "chamada": reg}]
         # uma chamada por afirmação, em paralelo para não atrasar a fila; os eventos saem na ordem
         with ThreadPoolExecutor(max_workers=CONFIRMACOES_EM_PARALELO) as ex:
-            eventos += list(ex.map(self._confirma, afirmacoes))
+            eventos += [e for e in ex.map(self._confirma, afirmacoes) if e]
         return eventos
 
+    def _tenta(self, etapa, prompt, conteudo, schema, erro):
+        """Chama o Claude, tentando de novo depois de cada espera de `esperas_entre_tentativas`. Cada
+        falha é registrada na hora como evento "erro" (campos de `erro` mais a mensagem e a tentativa).
+        Devolve (saída, registro da chamada) ou None se todas as tentativas falharam."""
+        tentativas = len(self._esperas) + 1
+        for k in range(tentativas):
+            try:
+                return self._chamar(etapa, prompt, conteudo, schema)
+            except FALHAS_DO_CLAUDE as e:
+                depois = (f"tenta de novo em {self._esperas[k]:g} s" if k < len(self._esperas)
+                          else "fica para quando a sessão for reaberta")
+                self._registra({"tipo": "erro", **erro, "tentativa": k + 1, "tentativas": tentativas,
+                                "mensagem": f"{type(e).__name__}: {e} (tentativa {k + 1} de {tentativas}; {depois})"})
+                if k < len(self._esperas):
+                    time.sleep(self._esperas[k])
+        return None
+
     def _confirma(self, a, entre=None):
+        """O evento de confirmação da afirmação, ou None se a busca ou o Claude falharam (erro já
+        registrado)."""
+        erro = {"etapa": "confirmar", "fala_id": a["fala_id"], "quem": a["quem"], "minutagem_s": a["minutagem_s"],
+                "afirmacao": a}
         # números mudam com o tempo: só valem checagens recentes; fatos perenes valem de qualquer data
         desde = NUMERO_DESDE if a["tipo"] == "numero" else None
         try:
             candidatas = [r for _, r in self.indice.busca(a["reformulacao"], N_CANDIDATAS, desde=desde, entre=entre)]
-            if not candidatas:
-                return {"tipo": "confirmacao", "afirmacao": a, "candidatas": [], "confirmadas": [],
-                        "ignoradas": [], "chamada": None}
-            linhas = [f"- URL: {r['url']}\n  agência: {r['agencia']} · data: {r['data'] or 'sem data'}\n"
-                      f"  frase checada: {r['frase']}" + (f"\n  quem disse: {r['quem_disse']}" if r.get("quem_disse") else "")
-                      for r in candidatas]
-            conteudo = (f"Afirmação\n  quem disse: {a['quem']}\n  trecho: {a['trecho']}\n"
-                        f"  reformulação: {a['reformulacao']}\n  tipo: {a['tipo']}\n\nCandidatas:\n" + "\n".join(linhas))
-            saida, reg = self._chamar(f"confirmar_{a['id']}", CONFIRMAR, conteudo, ESQUEMA_CONFIRMACAO)
-        except FALHAS_DO_CLAUDE as e:
-            return {**_erro("confirmar", a["fala_id"], a["quem"], a["minutagem_s"], e), "afirmacao": a}
+        except Exception as e:  # noqa: BLE001 - a fala segue; o operador vê na tela
+            self._registra({"tipo": "erro", **erro, "mensagem": f"{type(e).__name__}: {e}"})
+            return None
+        if not candidatas:
+            return {"tipo": "confirmacao", "afirmacao": a, "candidatas": [], "confirmadas": [],
+                    "ignoradas": [], "chamada": None}
+        linhas = [f"- URL: {r['url']}\n  agência: {r['agencia']} · data: {r['data'] or 'sem data'}\n"
+                  f"  frase checada: {r['frase']}" + (f"\n  quem disse: {r['quem_disse']}" if r.get("quem_disse") else "")
+                  for r in candidatas]
+        conteudo = (f"Afirmação\n  quem disse: {a['quem']}\n  trecho: {a['trecho']}\n"
+                    f"  reformulação: {a['reformulacao']}\n  tipo: {a['tipo']}\n\nCandidatas:\n" + "\n".join(linhas))
+        resposta = self._tenta(f"confirmar_{a['id']}", CONFIRMAR, conteudo, ESQUEMA_CONFIRMACAO, erro)
+        if resposta is None:
+            return None
+        saida, reg = resposta
         por_url = {r["url"]: r for r in candidatas}
         confirmadas, ignoradas, vistas = [], [], set()
         for c in saida["confirmadas"]:
@@ -586,11 +625,6 @@ def conteudo_publico(dados):
                       sort_keys=True, ensure_ascii=False)
 
 
-def _erro(etapa, fala_id, quem, minutagem_s, excecao):
-    return {"tipo": "erro", "etapa": etapa, "fala_id": fala_id, "quem": quem, "minutagem_s": minutagem_s,
-            "mensagem": f"{type(excecao).__name__}: {excecao}"}
-
-
 def _metadados_da_checagem(r):
     """O que a ligação guarda da checagem (só metadados)."""
     return {k: r.get(k) for k in ("id", "agencia", "data", "rotulo", "url", "frase")}
@@ -624,12 +658,13 @@ def le_falas(falas_json):
     return [(t["speaker"], round(t["start"] - t0, 1), t["text"]) for t in turnos]
 
 
-def repassa(falas, pasta_base, saida, chamar=None, paralelo=3, meta=None, resumo=None):
+def repassa(falas, pasta_base, saida, chamar=None, paralelo=3, meta=None, resumo=None,
+            esperas_entre_tentativas=ESPERAS_ENTRE_TENTATIVAS_S):
     """Passa as falas [(quem, início em s, texto)] por uma sessão nova contra a base em `pasta_base` e
     grava em `saida`: eventos.jsonl (registro da sessão, com cada chamada), painel.json (arquivo de dados
     da página), fila.json (resumo, ligações propostas, descartes e erros) e agente/ (entrada e saída de
-    cada chamada ao Claude, quando é o de verdade). chamar: padrão agente.chama com MODELO. meta: os
-    campos de `meta` da sessão. resumo: campos a mais no resumo, que é devolvido. Se nenhuma fala de
+    cada chamada ao Claude, quando é o de verdade). chamar: padrão agente.chama com MODELO. meta e
+    esperas_entre_tentativas: os da Sessao. resumo: campos a mais no resumo, que é devolvido. Se nenhuma fala de
     candidato chegou a ser analisada (todas as chamadas falharam), sai sem gravar painel nem fila."""
     from base_checagens import Indice
 
@@ -648,7 +683,8 @@ def repassa(falas, pasta_base, saida, chamar=None, paralelo=3, meta=None, resumo
             registro.write(json.dumps(evento, ensure_ascii=False) + "\n")
             registro.flush()
 
-        s = Sessao(indice, chamar=chamar, ao_registrar=grava, meta=meta)
+        s = Sessao(indice, chamar=chamar, ao_registrar=grava, meta=meta,
+                   esperas_entre_tentativas=esperas_entre_tentativas)
         s.recebe_falas(falas, paralelo=paralelo)
 
     if any(q in CANDIDATOS for q, _, _ in falas) and not any(e["tipo"] == "afirmacoes" for e in s.eventos):

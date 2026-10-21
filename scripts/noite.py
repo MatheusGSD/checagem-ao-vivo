@@ -50,7 +50,8 @@ from sessao import Sessao, conteudo_publico  # noqa: E402
 class Noite:
     def __init__(self, pasta, indice, fabrica_linha, chamar=None, relogio=None, meta=None, paralelo=3,
                  recomeca_se_acabar=False, reinicios=20, espera_reinicio=5.0, atualiza_base=None,
-                 intervalo_base=600.0, porta=None, publicador=None, alerta_sem_fala_s=None, log=print):
+                 intervalo_base=600.0, porta=None, publicador=None, alerta_sem_fala_s=None, log=print,
+                 esperas_entre_tentativas=None):
         """pasta: pasta da sessão. fabrica_linha(desde_s) -> linha de falas (iterável de falas.Fala, com
         marcar_zero(instante) e parar()) que entrega só as falas que terminam depois de `desde_s` (segundos
         desde o 00:00; None = do começo). chamar, relogio, meta: os da Sessao. recomeca_se_acabar: ao vivo,
@@ -62,7 +63,8 @@ class Noite:
         qualquer livre; None = sem tela), em `self.tela`. publicador: publicador.Publicador, avisado a cada
         mudança pública; ao começar, só recebe o estado se ele difere do que o remoto já tem.
         alerta_sem_fala_s: ao vivo, avisa na tela (uma vez) quando passa esse tempo sem nenhuma fala
-        depois do 00:00 (g1 parado, som no dispositivo errado)."""
+        depois do 00:00 (g1 parado, som no dispositivo errado). esperas_entre_tentativas: o da Sessao
+        (padrão: sessao.ESPERAS_ENTRE_TENTATIVAS_S)."""
         self.pasta = Path(pasta)
         self.pasta.mkdir(parents=True, exist_ok=True)
         self._fabrica_linha = fabrica_linha
@@ -75,7 +77,9 @@ class Noite:
         # fim (s desde o 00:00) da última fala entregue à sessão: a linha nova segue dali
         self._ultimo_fim = max((f["fim_s"] for f in self._ja_entregues), default=None)
         self.sessao = Sessao.abre(self.pasta, indice, chamar=chamar, relogio=relogio, meta=meta,
-                                  ao_mudar_publicado=self._mudou_publicado, ao_marcar_inicio=self._zero_da_linha)
+                                  ao_mudar_publicado=self._mudou_publicado, ao_marcar_inicio=self._zero_da_linha,
+                                  **({"esperas_entre_tentativas": esperas_entre_tentativas}
+                                     if esperas_entre_tentativas is not None else {}))
         self._analises = ThreadPoolExecutor(max_workers=paralelo, thread_name_prefix="analise")
         self._falas = (self.pasta / "falas.jsonl").open("a", encoding="utf-8")
         self._trava = threading.Lock()

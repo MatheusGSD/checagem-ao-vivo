@@ -94,17 +94,17 @@ def congela(origem, destino, corte=CORTE, origens=("revisao",)):
 BASES = ("congelada", "completa")
 
 
-def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base=""):
+def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base="", **kw):
     """Passa as falas [(quem, início em s, texto)] pela sessão contra a base em `pasta_base` e grava
     em `saida` o que sessao.repassa grava (eventos.jsonl, fila.json, painel.json e agente/). Uma rodada
-    já terminada (com fila.json) não é refeita."""
+    já terminada (com fila.json) não é refeita. kw: os de sessao.repassa (esperas_entre_tentativas)."""
     saida = Path(saida)
     if (saida / "fila.json").exists():
         print(f"{saida.name}: já rodada, aproveitando {saida / 'fila.json'}")
         return json.loads((saida / "fila.json").read_text(encoding="utf-8"))["resumo"]
     if (saida / "eventos.jsonl").exists():
         sys.exit(f"{saida} tem uma rodada interrompida (eventos.jsonl sem fila.json): apague a pasta e rode de novo")
-    resumo = repassa(falas, pasta_base, saida, chamar=chamar, paralelo=paralelo, resumo={"base": nome_base}, meta={
+    resumo = repassa(falas, pasta_base, saida, chamar=chamar, paralelo=paralelo, resumo={"base": nome_base}, **kw, meta={
         "debate": f"Debate do 2º turno · Band · 18/10/2026 · avaliação com a base {nome_base}",
         "encerrado": True,
     })
@@ -335,7 +335,7 @@ def _relatorio_md(avaliacao, r, agora):
 
 # ---------- tudo junto ----------
 
-def avalia(dados, falas_json, saida=None, chamar=None, paralelo=3, origens=("revisao",)):
+def avalia(dados, falas_json, saida=None, chamar=None, paralelo=3, origens=("revisao",), **kw):
     """Congela a base de DADOS/checagens, roda a sessão contra as duas versões e grava a planilha."""
     dados = Path(dados)
     saida = Path(saida) if saida else dados / "avaliacao"
@@ -344,7 +344,7 @@ def avalia(dados, falas_json, saida=None, chamar=None, paralelo=3, origens=("rev
         print(json.dumps(congela(completa, saida / "base_congelada", origens=origens), ensure_ascii=False, indent=1))
     falas = le_falas(falas_json)
     for base, pasta in (("congelada", saida / "base_congelada"), ("completa", completa)):
-        rodada(falas, pasta, saida / f"rodada_{base}", chamar=chamar, paralelo=paralelo, nome_base=base)
+        rodada(falas, pasta, saida / f"rodada_{base}", chamar=chamar, paralelo=paralelo, nome_base=base, **kw)
     return planilha(saida)
 
 

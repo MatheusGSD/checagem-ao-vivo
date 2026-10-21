@@ -258,7 +258,8 @@ def test_rodada_em_que_todas_as_chamadas_falham_nao_fica_valendo(dados, tmp_path
         raise TypeError("Could not resolve authentication method")
 
     with pytest.raises(SystemExit, match="authentication"):
-        avalia(dados, dados / "falas.json", saida=tmp_path / "avaliacao", chamar=sem_chave)
+        avalia(dados, dados / "falas.json", saida=tmp_path / "avaliacao", chamar=sem_chave,
+               esperas_entre_tentativas=(0, 0))
 
     assert not (tmp_path / "avaliacao" / "rodada_congelada" / "fila.json").exists()
     assert not (tmp_path / "avaliacao" / "marcacao.xlsx").exists()

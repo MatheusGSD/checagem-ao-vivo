@@ -169,7 +169,7 @@ def estado_da_tela(noite):
 def test_tela_mostra_os_erros_por_etapa_com_a_falha_do_claude_na_extracao(indice, tmp_path):
     claude = ClaudeQueFalha({FALA_DESEMPREGO: [DESEMPREGO], FALA_PIX: [PIX]}, falha_em=[FALA_DESEMPREGO])
     noite = Noite(tmp_path, indice, Linhas(falas_da_noite()), chamar=claude,
-                  relogio=Relogio(INICIO + timedelta(minutes=30)), porta=0)
+                  relogio=Relogio(INICIO + timedelta(minutes=30)), porta=0, esperas_entre_tentativas=(0, 0))
     noite.comeca()
     assert noite.espera(timeout=60)
     noite.sessao.registra_erro("publicar", "falha ao publicar: git push: rede")
@@ -181,7 +181,7 @@ def test_tela_mostra_os_erros_por_etapa_com_a_falha_do_claude_na_extracao(indice
     assert list(paineis) == ["Transcrição e áudio", "API do Claude", "API do Google (base)", "Publicação"]
     assert paineis["Transcrição e áudio"]["n"] == 0 and paineis["API do Google (base)"]["n"] == 0
     claude_api = paineis["API do Claude"]
-    assert claude_api["n"] == 1
+    assert claude_api["n"] == 3  # a extração foi tentada três vezes
     assert "529 overloaded" in claude_api["ultimo"]["mensagem"] and claude_api["ultimo"]["quem"] == "Lula"
     assert paineis["Publicação"]["n"] == 1
     assert [p["trecho"] for p in estado["fila"]] == [PIX["trecho"]]  # a noite seguiu depois da falha
