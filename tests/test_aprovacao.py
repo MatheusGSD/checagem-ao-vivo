@@ -10,7 +10,7 @@ import pytest
 from aprovacao import serve
 from base_checagens import Indice
 from sessao import Sessao
-from test_sessao import (FALA_GASOLINA, FALA_MEDIACAO, FALA_PIX, FIXTURES, INICIO, PIX, PIX_ESTADAO, Claude, Relogio,
+from test_sessao import (FALA_DESEMPREGO, FALA_GASOLINA, FALA_MEDIACAO, FALA_PIX, FIXTURES, INICIO, PIX, PIX_ESTADAO, Claude, Relogio,
                          afirmacao, pedido)
 
 
@@ -157,3 +157,40 @@ def test_tela_mostra_a_fala_ainda_em_analise_e_as_chamadas_ao_claude_em_curso(in
         analise.join(10)
         servidor.shutdown()
     assert s.fila()
+
+
+# ---------- o que a tela do operador resume da noite ----------
+
+def test_tela_conta_falas_afirmacoes_e_ligacoes_de_cada_candidato(indice):
+    s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX], FALA_GASOLINA: [GASOLINA, GASOLINA_30]}),
+               relogio=Relogio(INICIO + timedelta(minutes=30)))
+    s.recebe_fala("Mediação", 1790.0, FALA_MEDIACAO)
+    s.recebe_fala("Lula", 1795.0, FALA_DESEMPREGO)  # nenhuma afirmação checável
+    s.recebe_fala("Flávio", 1800.0, FALA_PIX)
+    s.recebe_fala("Flávio", 1850.0, FALA_GASOLINA)  # uma sem par e uma descartada (não literal)
+    servidor = serve(s, porta=0)
+    base = f"http://127.0.0.1:{servidor.server_address[1]}"
+    try:
+        contagens = json.loads(pede(base + "/estado")[1])["contagens"]
+        assert contagens == {"Lula": {"falas": 1, "afirmacoes": 0, "ligacoes": 0, "publicadas": 0},
+                             "Flávio": {"falas": 2, "afirmacoes": 2, "ligacoes": 1, "publicadas": 0}}
+
+        s.aprova(s.fila()[0]["id"])
+
+        assert json.loads(pede(base + "/estado")[1])["contagens"]["Flávio"]["publicadas"] == 1
+    finally:
+        servidor.shutdown()
+
+
+def test_publicacao_automatica_desligada_aparece_como_ajuste_e_nao_como_erro(tela, indice):
+    s, base = tela
+    s.registra_erro("limiar", "publicação automática desligada: sem data/avaliacao/limiar.json", uma_vez=True)
+    s.registra_erro("publicar", "falha ao publicar: git push: rede")
+
+    estado = json.loads(pede(base + "/estado")[1])
+
+    assert estado["automatica"] == {"limiar": None, "motivo": "sem data/avaliacao/limiar.json"}
+    assert [e["etapa"] for e in estado["erros"]] == ["publicar"]
+    assert [q["nome"] for q in estado["painel_erros"]] == [
+        "Transcrição e áudio", "API do Claude", "API do Google (base)", "Publicação"]
+    assert estado["base"] == {"checagens": len(indice.registros)}

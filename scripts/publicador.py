@@ -59,6 +59,7 @@ class Publicador:
         self._gravada = self._publicada = 0
         self._proximo = 0.0  # instante (monotonic) a partir do qual pode haver outro push
         self._falhas, self._ultimo_aviso = 0, None
+        self._envio = {"ultimo_envio_em": None, "ultimo_commit": None, "ultimo_erro": None, "ultimo_erro_em": None}
         self._parar = False
         self._thread = threading.Thread(target=self._roda, name="publicador", daemon=True)
         self._thread.start()
@@ -70,6 +71,12 @@ class Publicador:
         with self._cond:
             self._dados, self._versao = dados, self._versao + 1
             self._cond.notify()
+
+    def situacao(self):
+        """Para a tela: quando o último envio chegou ao remoto (e o commit), se há mudança esperando
+        envio, quantas tentativas seguidas falharam e a última falha (None depois que volta a funcionar)."""
+        with self._cond:
+            return {**self._envio, "pendente": self._versao > self._publicada, "falhas": self._falhas}
 
     def difere_do_remoto(self, dados, chave=lambda d: d):
         """Se o ramo publicado no remoto ainda não tem este conteúdo (comparado por `chave(dados)`, ex.
@@ -120,17 +127,23 @@ class Publicador:
                     return
                 self._proximo = time.monotonic() + self.espera_erro
                 continue
-            self._publicada = versao
+            with self._cond:
+                self._publicada = versao
+                self._envio.update(ultimo_envio_em=_agora(), ultimo_erro=None, ultimo_erro_em=None,
+                                   **({"ultimo_commit": commit} if commit else {}))
+                falhas, self._falhas = self._falhas, 0
             self._proximo = time.monotonic() + self.intervalo
-            if self._falhas:
+            if falhas:
                 self._ao_erro(f"publicação voltou a funcionar às {datetime.now(BRASILIA):%H:%M:%S}, "
-                              f"depois de {self._falhas} tentativa(s) com falha")
-                self._falhas, self._ultimo_aviso = 0, None
+                              f"depois de {falhas} tentativa(s) com falha")
+                self._ultimo_aviso = None
             if commit and self._ao_publicar:
                 self._ao_publicar(commit)
 
     def _falhou(self, mensagem):
-        self._falhas += 1
+        with self._cond:
+            self._falhas += 1
+            self._envio.update(ultimo_erro=mensagem, ultimo_erro_em=_agora())
         agora = time.monotonic()
         aviso = (mensagem, agora)
         if (self._ultimo_aviso is None or self._ultimo_aviso[0] != mensagem
@@ -211,6 +224,10 @@ def mensagem(dados):
     n = lambda chave: len((dados or {}).get(chave) or [])  # noqa: E731
     return (f"Checagem ao vivo: painel atualizado às {datetime.now(BRASILIA):%H:%M:%S} "
             f"({n('ligacoes')} ligações, {n('correcoes')} correções)")
+
+
+def _agora():
+    return datetime.now(BRASILIA).isoformat(timespec="seconds")
 
 
 def _remoto_andou(erro):

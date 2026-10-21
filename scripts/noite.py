@@ -122,14 +122,17 @@ class Noite:
 
     def situacao(self):
         """O que a tela mostra da noite, no cabeçalho: a linha, as falas entregues, o último áudio que
-        chegou da fonte (a linha diz, se souber: ultimo_audio() em segundos de time.time()) e a base."""
+        chegou da fonte e o nível do som no último segundo (a linha diz, se souber: ultimo_audio() em
+        segundos de time.time(), nivel_audio() em dBFS), a base e o publicador (Publicador.situacao)."""
         with self._trava:
             linha = self._linha
         ultimo = getattr(linha, "ultimo_audio", lambda: None)()
         return {"linha": self._estado_linha, "falas": self._n_falas, "ultima_fala_em": self._ultima_fala,
                 "ultimo_audio_em": datetime.fromtimestamp(ultimo, BRASILIA).isoformat(timespec="milliseconds")
                 if ultimo else None,
-                "base_atualizada_em": self._base}
+                "nivel_audio_db": getattr(linha, "nivel_audio", lambda: None)(),
+                "base_atualizada_em": self._base,
+                "publicacao": self.publicador.situacao() if self.publicador else None}
 
     def espera(self, timeout=None):
         """Espera a linha acabar (fonte por arquivo) e as análises das falas dela. True se acabou."""
@@ -348,6 +351,9 @@ class LinhaAoVivo:
     def ultimo_audio(self):
         return self.linha.ultimo_audio_s
 
+    def nivel_audio(self):
+        return self.linha.nivel_audio_db
+
     def __iter__(self):
         return iter(self.linha)
 
@@ -374,6 +380,9 @@ class LinhaDeArquivos:
 
     def ultimo_audio(self):
         return self._atual.ultimo_audio_s if self._atual else None
+
+    def nivel_audio(self):
+        return self._atual.nivel_audio_db if self._atual else None
 
     def __iter__(self):
         from falas import FonteArquivo, LinhaDeFalas

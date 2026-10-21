@@ -44,14 +44,14 @@ python -P scripts/noite.py ao-vivo --publicar --vocabulario data/vocabulario_glo
   - se a publicação automática está ligada e com qual limiar;
   - `publicador -> origin/main`;
   - o endereço da tela.
-- [ ] A tela abre em **http://127.0.0.1:8765/**. O cabeçalho mostra "linha rodando", o número de falas e a hora da última atualização da base. A primeira atualização roda logo ao começar e leva uns 5 min.
-- [ ] Os quatro quadros de erro estão verdes: Transcrição e áudio, API do Claude, API do Google (base), Publicação.
+- [ ] A tela abre em **http://127.0.0.1:8765/**. No topo, a linha "O que fazer agora" diz o próximo passo. Abaixo dela, a faixa de estado tem uma luz por parte da noite: Áudio ("Ouvindo", com o medidor de som), Análise, Site, Base e Publicação automática. A primeira atualização da base roda logo ao começar e leva uns 5 min.
+- [ ] As luzes de Áudio, Análise, Site e Base estão verdes. "Automática desligada" aparece como ajuste (círculo vazio), não como erro.
 - [ ] **Notebook reserva gravando** (`falas.py gravar`, ver o roteiro dele).
 - [ ] Antes do 00:00, as falas ficam retidas e nada vai para o Claude. Isso é normal.
 
 ## Durante o debate
 
-- [ ] **00:00 na abertura do mediador.** Use Enter no terminal ou o botão "Marcar 00:00 agora" na tela; os dois marcam a sessão e a linha de falas.
+- [ ] **00:00 na abertura do mediador.** Use Enter no terminal ou o botão amarelo "Marcar 00:00" na tela; os dois marcam a sessão e a linha de falas.
   - Depois de marcado, o Enter não remarca. Para corrigir, digite `remarcar` e Enter.
   - Se marcou atrasado, corrija para o horário certo:
 
@@ -61,12 +61,13 @@ python -P scripts/noite.py ao-vivo --publicar --vocabulario data/vocabulario_glo
 
   - A publicação automática, se estiver ligada, só começa 10 min depois do 00:00.
 - [ ] **Fila:**
-  - para cada ligação, abra a página da agência e digite o selo visível;
-  - aprove, recuse, ou desmarque as checagens que não servem;
-  - despublicar exige motivo, que vai para as correções.
-- [ ] **Quadros de erro:** vermelho = erro nos últimos 10 min; laranja = erro mais antigo. O que fazer em cada um:
+  - para cada ligação, clique "Abrir a checagem" e digite no campo o selo que a página mostra;
+  - aprove se é a mesma afirmação (mesmo sujeito, fato, número e período), sem julgar se é verdade; recuse, ou desmarque as checagens que não servem;
+  - teclado na ligação marcada: A aprova, R recusa (pede confirmação), O abre a checagem, S vai ao selo, ↑ ↓ trocam de ligação; Enter no selo aprova;
+  - retirar do site ("Corrigir rótulo ou retirar do site", em "No site agora") exige motivo, que vai para as correções.
+- [ ] **Problemas:** uma luz vermelha diz o que fazer, e o problema aparece em texto simples acima da fila, com o detalhe técnico ao abrir. Laranja = atenção, sem ação urgente. O que fazer em cada um:
 
-| quadro | o que significa | o que fazer |
+| problema | o que significa | o que fazer |
 |---|---|---|
 | Transcrição e áudio: "a linha de falas caiu" | O Whisper ou a captura caiu. A noite recomeça a linha sozinha em ~5 s, numa gravação nova em `data/sessao_globo/gravacoes/`, com o mesmo 00:00. | Nada, se o número de falas voltar a subir. Se cair de novo, veja a mensagem. Se for o dispositivo de áudio, confira a saída padrão. |
 | Transcrição e áudio: "nenhuma fala há 180 s depois do 00:00" | Nada chega da linha. | O g1 parou, travou, está no mudo ou toca em outra saída. Volte o player. No intervalo comercial, as falas da propaganda saem como Mediação, então esse aviso não aparece. |

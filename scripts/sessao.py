@@ -260,6 +260,27 @@ class Sessao:
                                    "motivo_recusa": r["motivo"]})
                     for p in self._propostas if (r := self._recusas.get(p["id"]))]
 
+    def contagens(self):
+        """Por candidato: falas recebidas, afirmações checáveis extraídas (sem as descartadas), ligações
+        propostas e ligações no painel agora."""
+        with self._trava:
+            conta = {q: {"falas": 0, "afirmacoes": 0, "ligacoes": 0, "publicadas": 0} for q in CANDIDATOS}
+            quem_falou = {}
+            for f in self._falas:
+                quem_falou[f["id"]] = f["quem"]
+                if f["quem"] in conta:
+                    conta[f["quem"]]["falas"] += 1
+            for e in self.eventos:
+                if e["tipo"] == "afirmacoes" and quem_falou.get(e["fala_id"]) in conta:
+                    conta[quem_falou[e["fala_id"]]]["afirmacoes"] += len(e["afirmacoes"])
+            for p in self._propostas:
+                if p["quem"] in conta:
+                    conta[p["quem"]]["ligacoes"] += 1
+            for lig in self._publicadas.values():
+                if lig["quem"] in conta:
+                    conta[lig["quem"]]["publicadas"] += 1
+            return conta
+
     def chamadas_em_curso(self):
         """Quantas chamadas ao Claude estão em andamento agora."""
         with self._trava:

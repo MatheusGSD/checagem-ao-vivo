@@ -46,6 +46,9 @@ class LinhaFalsa:
     def ultimo_audio(self):
         return self._ultimo_audio
 
+    def nivel_audio(self):
+        return -23.5 if self._ultimo_audio else None
+
     def marcar_zero(self, instante):
         self.zeros.append(instante)
 
@@ -245,6 +248,23 @@ def test_rodar_de_novo_na_mesma_pasta_segue_de_onde_parou_sem_chamar_o_claude_ne
     assert commits(nu) == envios  # nada mudou: nenhum commit novo
     assert sorted(lig["trecho"] for lig in segunda.sessao.exporta()["ligacoes"]) == sorted(publicadas)
     assert len((pasta / "falas.jsonl").read_text(encoding="utf-8").splitlines()) == 3
+
+
+def test_tela_mostra_o_nivel_do_som_e_o_ultimo_envio_ao_site(indice, tmp_path, remoto):
+    nu, repo = remoto
+    noite = Noite(tmp_path, indice, Linhas(falas_da_noite()), chamar=Claude({FALA_PIX: [PIX]}),
+                  relogio=Relogio(INICIO + timedelta(minutes=30)), meta={"limiar_automatico": 0.9}, porta=0,
+                  publicador=Publicador(repo, intervalo=0, espera_erro=0.1))
+    noite.comeca()
+    assert noite.espera(timeout=60)
+    ate(lambda: len(commits(nu)) >= 2)
+    situacao = ate(lambda: (s := estado_da_tela(noite)["situacao"])["publicacao"]["ultimo_commit"] and s)
+    noite.encerra()
+
+    assert situacao["nivel_audio_db"] == -23.5
+    # um commit que chegou ao site (encerrar ainda faz o último envio depois)
+    assert situacao["publicacao"]["ultimo_commit"] in git(nu, "log", "--format=%H", "main").splitlines()
+    assert situacao["publicacao"]["falhas"] == 0
 
 
 def test_ao_vivo_muito_tempo_sem_fala_depois_do_00_00_avisa_uma_vez_na_tela(indice, tmp_path):
