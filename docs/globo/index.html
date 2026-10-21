@@ -8,7 +8,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Lula × Flávio: o que as agências já checaram">
 <meta property="og:description" content="No debate da Globo, cada afirmação dos candidatos ao lado das checagens que as agências já publicaram sobre ela, com rótulo original e link.">
-<meta property="og:url" content="https://matheusgsd.github.io/debate-lula-flavio/globo/">
+<meta property="og:url" content="https://matheusgsd.github.io/checagem-ao-vivo/globo/">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Lula × Flávio: o que as agências já checaram">
 <meta name="twitter:description" content="No debate da Globo, cada afirmação dos candidatos ao lado das checagens que as agências já publicaram sobre ela, com rótulo original e link.">
@@ -168,13 +168,13 @@ footer p { margin: 0 0 8px; }
 </style>
 </head>
 <body>
-<div class="masthead"><span>Análise de debates<span class="marca-2"> · protótipo</span></span><div class="acoes"><a href="../">Debate da Band</a><a href="#metodo">Método</a><button type="button" class="tema-btn" id="tema-btn" aria-pressed="false"></button></div></div>
+<div class="masthead"><span>Checagem ao vivo<span class="marca-2"> · protótipo</span></span><div class="acoes"><a href="#metodo">Método</a><button type="button" class="tema-btn" id="tema-btn" aria-pressed="false"></button></div></div>
 <main>
   <header class="abre col">
     <p class="kicker" id="kicker">Debate do 2º turno · TV Globo · 23/10/2026</p>
     <h1 id="titulo">Lula × Flávio: o que as agências já checaram</h1>
     <p class="dek">Durante o debate, ligamos o que os candidatos dizem às checagens que as agências já publicaram sobre a mesma afirmação, com o rótulo original e o link de cada uma.</p>
-    <p class="byline">Por <b>Matheus Dalmolin</b> · 23 de outubro de 2026 · <a href="#metodo">Como fizemos</a> · <a href="../">O confronto livre da Band em números</a></p>
+    <p class="byline">Por <b>Matheus Dalmolin</b> · 23 de outubro de 2026 · <a href="#metodo">Como fizemos</a></p>
   </header>
 
   <p class="estado col" id="estado" aria-live="polite"><span class="vivo parado">Carregando</span></p>
@@ -217,9 +217,8 @@ footer p { margin: 0 0 8px; }
   </section>
 
   <footer class="col">
-    <p><b>Protótipo de uma ferramenta de análise de debates.</b> Transcrição e casamento automáticos estão sujeitos a erro; na dúvida, vale a fala original e a checagem da agência.</p>
-    <p>Do mesmo projeto: <a href="../">Lula × Flávio, o confronto livre da Band em números</a>.</p>
-    <p><a id="baixar" href="data/painel.json">Baixar os dados (JSON)</a> · <a href="formato-dos-dados.md">Formato dos dados</a> · <a href="https://github.com/MatheusGSD/debate-lula-flavio">Código no GitHub</a></p>
+    <p><b>Protótipo de uma ferramenta de checagem de debates ao vivo.</b> Transcrição e casamento automáticos estão sujeitos a erro; na dúvida, vale a fala original e a checagem da agência.</p>
+    <p><a id="baixar" href="data/painel.json">Baixar os dados (JSON)</a> · <a href="formato-dos-dados.md">Formato dos dados</a> · <a href="https://github.com/MatheusGSD/checagem-ao-vivo">Código no GitHub</a></p>
   </footer>
 </main>
 
@@ -357,7 +356,7 @@ function metodo(m) {
     ? "<p><b>Publicação automática desligada.</b> Toda ligação é aprovada por uma pessoa antes de aparecer.</p>"
     : `<p>Ligações com nota de confiança de <b>${nota(m.limiar_automatico)}</b> ou mais, dada pelo modelo, são publicadas sem aprovação, só depois dos 10 primeiros minutos do debate, e marcadas como "publicada automaticamente". As demais são aprovadas por uma pessoa.</p>`;
   const prompts = m.prompts.length
-    ? `<ul>${m.prompts.map(p => `<li><a href="https://github.com/MatheusGSD/debate-lula-flavio/blob/main/${esc(p.arquivo)}">${esc(p.arquivo)}</a><br><code title="SHA-256: ${esc(p.sha256)}">sha256 ${esc(p.sha256.slice(0, 12))}…</code></li>`).join("")}</ul>`
+    ? `<ul>${m.prompts.map(p => `<li><a href="https://github.com/MatheusGSD/checagem-ao-vivo/blob/main/${esc(p.arquivo)}">${esc(p.arquivo)}</a><br><code title="SHA-256: ${esc(p.sha256)}">sha256 ${esc(p.sha256.slice(0, 12))}…</code></li>`).join("")}</ul>`
     : "<p>Os prompts serão publicados antes do debate.</p>";
   document.getElementById("met").innerHTML = `
     <div><h3>Fontes da base</h3><ul>${m.fontes.map(f => `<li><a href="${esc(link(f.url))}">${esc(f.nome)}</a></li>`).join("")}</ul></div>

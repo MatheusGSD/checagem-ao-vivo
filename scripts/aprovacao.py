@@ -35,7 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sessao import AcaoInvalida  # noqa: E402
 
 PAGINA = Path(__file__).resolve().parent / "aprovacao.html"
-SITE = "https://matheusgsd.github.io/debate-lula-flavio/globo/"  # a página pública, servida pelo Pages
+SITE = "https://matheusgsd.github.io/checagem-ao-vivo/globo/"  # a página pública, servida pelo Pages
 HOST = "127.0.0.1"
 PORTA = 8765
 
