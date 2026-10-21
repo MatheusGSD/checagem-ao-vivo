@@ -97,7 +97,8 @@
       }
     ],
     "limiar_automatico": null,
-    "atualizado_em": "2026-10-20T21:48:07-03:00"
+    "atualizado_em": "2026-10-20T21:48:07-03:00",
+    "teste_publicacao": "1/4"
   },
   "ligacoes": [],
   "sem_par": [],
