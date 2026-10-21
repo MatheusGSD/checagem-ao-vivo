@@ -35,6 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sessao import AcaoInvalida  # noqa: E402
 
 PAGINA = Path(__file__).resolve().parent / "aprovacao.html"
+SITE = "https://matheusgsd.github.io/debate-lula-flavio/globo/"  # a página pública, servida pelo Pages
 HOST = "127.0.0.1"
 PORTA = 8765
 
@@ -53,12 +54,21 @@ def painel_de_erros(erros):
     return [{"nome": nome, "n": len(lista), "ultimo": lista[-1] if lista else None} for nome, _, lista in quadros]
 
 
+AVISO_LIMIAR = "publicação automática desligada: "
+
+
 def estado(sessao, situacao=None):
     """O que a tela mostra: fila, publicadas, correções, recusadas, sem par, descartes, erros (um quadro
     por etapa), o andamento (cada fala e o que saiu dela, Sessao.andamento), as chamadas ao Claude em
-    curso e a situação da noite (situacao(): dicionário curto, da integração ao vivo)."""
+    curso, as contagens por candidato, o tamanho da base, a publicação automática (limiar e, desligada,
+    o motivo: um ajuste da noite, não um erro) e a situação da noite (situacao(): dicionário curto, da
+    integração ao vivo)."""
     versao = len(sessao.eventos)  # lida antes: um evento no meio só faz a próxima busca redesenhar
     dados = sessao.exporta()
+    todos = sessao.erros()
+    erros = [e for e in todos if e["etapa"] != "limiar"]
+    motivo = next((e["mensagem"].removeprefix(AVISO_LIMIAR) for e in reversed(todos) if e["etapa"] == "limiar"), None)
+    limiar = dados["meta"]["limiar_automatico"]
     return {
         "versao": versao,
         "agora": dados["meta"]["atualizado_em"],
@@ -69,10 +79,14 @@ def estado(sessao, situacao=None):
         "sem_par": dados["sem_par"],
         "recusadas": sessao.recusadas(),
         "descartados": sessao.descartados(),
-        "erros": (erros := sessao.erros()),
+        "erros": erros,
         "painel_erros": painel_de_erros(erros),
+        "automatica": {"limiar": limiar, "motivo": motivo if limiar is None else None},
+        "base": {"checagens": len(sessao.indice.registros)},
+        "site": SITE,
         "andamento": sessao.andamento(),
         "chamadas_claude_em_curso": sessao.chamadas_em_curso(),
+        "contagens": sessao.contagens(),
         "situacao": situacao() if situacao else None,
     }
 
@@ -203,7 +217,7 @@ def main():
               f"no máximo um push a cada {a.intervalo:g} s", flush=True)
     if not a.sem_retomar:
         threading.Thread(target=sessao.retoma_analises, daemon=True).start()
-    servidor = serve(sessao, a.porta)
+    servidor = serve(sessao, a.porta, (lambda: {"publicacao": publicador.situacao()}) if publicador else None)
     print(f"tela de aprovação: http://127.0.0.1:{servidor.server_address[1]}/  (Ctrl+C encerra)", flush=True)
     try:
         threading.Event().wait()

@@ -415,6 +415,10 @@ class LinhaDeFalas:
         self.erro = None
         self.estatisticas = {"lotes": 0, "segundos_de_audio": 0.0, "segundos_de_cpu": 0.0}
         self.ultimo_audio_s = None  # time.time() do último bloco de áudio que chegou da fonte
+        # nível do som no último segundo (dBFS, piso -90; None antes do primeiro bloco), para a tela
+        # mostrar se há som chegando: o loopback entrega silêncio quando o player está no mudo
+        self.nivel_audio_db = None
+        self._energia = deque()  # (amostras, soma dos quadrados) dos blocos do último segundo
 
     # ---------- interface
 
@@ -468,12 +472,24 @@ class LinhaDeFalas:
                 self._saida.put(None)
         return roda
 
+    def _mede_nivel(self, bloco):
+        """RMS do último segundo de áudio (os blocos mais recentes que somam até TAXA amostras), em dBFS."""
+        if not len(bloco):
+            return
+        self._energia.append((len(bloco), float(np.dot(bloco, bloco))))
+        while sum(n for n, _ in self._energia) - self._energia[0][0] >= TAXA:
+            self._energia.popleft()
+        n = sum(k for k, _ in self._energia)
+        rms = (sum(e for _, e in self._energia) / n) ** 0.5
+        self.nivel_audio_db = round(max(-90.0, 20 * float(np.log10(rms))) if rms > 0 else -90.0, 1)
+
     def _loop_vad(self):
         pos = 0  # amostras já passadas ao VAD
         inicio_seg = None
         ultimo_tempo = 0
         for bloco in self.fonte.blocos():
             self.ultimo_audio_s = time.time()
+            self._mede_nivel(bloco)
             for chunk in self._chunker.push(bloco):
                 ev, audio = self._montador.feed(chunk, self._vad.prob(chunk))
                 pos += len(chunk)

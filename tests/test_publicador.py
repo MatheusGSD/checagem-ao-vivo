@@ -156,6 +156,28 @@ def test_falha_de_push_aparece_e_a_ultima_mudanca_sai_quando_o_remoto_volta(tmp_
     assert "voltou a funcionar" in erros[1]
 
 
+def test_situacao_diz_o_ultimo_envio_e_a_falha_em_curso_para_a_tela(tmp_path, remoto, abre):
+    nu, repo = remoto
+    p = abre(repo, intervalo=0, espera_erro=0.3, ao_erro=lambda m: None)
+    assert p.situacao() == {"ultimo_envio_em": None, "ultimo_commit": None, "pendente": False, "falhas": 0,
+                            "ultimo_erro": None, "ultimo_erro_em": None}
+    p.notifica(dados(1))
+    ate(lambda: len(commits(nu)) == 2)
+    ok = ate(lambda: (s := p.situacao())["ultimo_commit"] and s)
+    assert ok["ultimo_commit"] == git(nu, "rev-parse", "main") and ok["ultimo_envio_em"]
+    assert (ok["pendente"], ok["falhas"], ok["ultimo_erro"]) == (False, 0, None)
+
+    git(repo, "remote", "set-url", "origin", str(tmp_path / "fora-do-ar.git"))
+    p.notifica(dados(2))
+    falha = ate(lambda: (s := p.situacao())["falhas"] and s)
+    assert falha["pendente"] is True and "git" in falha["ultimo_erro"] and falha["ultimo_erro_em"]
+    assert falha["ultimo_commit"] == ok["ultimo_commit"]  # o último que chegou ao site continua valendo
+
+    git(repo, "remote", "set-url", "origin", str(nu))
+    voltou = ate(lambda: (s := p.situacao())["ultimo_commit"] != ok["ultimo_commit"] and s)
+    assert (voltou["pendente"], voltou["falhas"], voltou["ultimo_erro"]) == (False, 0, None)
+
+
 def test_encerrar_envia_o_que_esperava_o_intervalo(remoto, abre):
     nu, repo = remoto
     p = abre(repo, intervalo=600)

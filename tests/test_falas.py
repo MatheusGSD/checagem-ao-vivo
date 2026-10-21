@@ -26,6 +26,7 @@ class Mundo:
         self.roteiro, self.inicio = roteiro, inicio
         self.textos, self.vozes = {}, {}
         self.linha = None
+        self.niveis = []
 
     def _valor(self, quem, texto):
         v = round(BASE[quem] + 0.001 * (len(self.textos) + 1), 4)
@@ -65,6 +66,9 @@ class Mundo:
 
             def blocos(self):
                 for item in mundo.roteiro:
+                    if item[0] == "nivel":  # o que a tela mostraria do som neste ponto do áudio
+                        mundo.niveis.append(mundo.linha.nivel_audio_db)
+                        continue
                     if item[0] == "zero":
                         mundo.linha.marcar_zero(item[1] if len(item) > 1 else self.posicao())
                         continue
@@ -177,6 +181,16 @@ def test_pedaco_curto_demais_para_saber_quem_fala_fica_com_a_fala_em_volta():
                    ("Flávio", 3.0, "Não votei.")]).falas(zero=0.0)
 
     assert [(q, t) for q, _, _, t in falas] == [("Lula", "O senhor votou contra. Contra."), ("Flávio", "Não votei.")]
+
+
+def test_nivel_do_som_mostra_se_ha_som_chegando_no_ultimo_segundo():
+    mundo = Mundo([("nivel",), ("Lula", 2.0, "Boa noite."), ("nivel",), (None, 2.0), ("nivel",)])
+    mundo.falas(zero=0.0)
+
+    antes, falando, calado = mundo.niveis
+    assert antes is None  # nenhum áudio chegou ainda
+    assert falando == pytest.approx(-14, abs=1)  # sinal constante de 0,201: 20·log10(0,201) dBFS
+    assert calado <= -60
 
 
 def test_minutagem_sai_em_centesimos_de_segundo():
