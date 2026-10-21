@@ -55,7 +55,8 @@ def painel_de_erros(erros):
 
 def estado(sessao, situacao=None):
     """O que a tela mostra: fila, publicadas, correções, recusadas, sem par, descartes, erros (um quadro
-    por etapa) e a situação da noite (situacao(): dicionário curto, da integração ao vivo)."""
+    por etapa), o andamento (cada fala e o que saiu dela, Sessao.andamento), as chamadas ao Claude em
+    curso e a situação da noite (situacao(): dicionário curto, da integração ao vivo)."""
     versao = len(sessao.eventos)  # lida antes: um evento no meio só faz a próxima busca redesenhar
     dados = sessao.exporta()
     return {
@@ -70,6 +71,8 @@ def estado(sessao, situacao=None):
         "descartados": sessao.descartados(),
         "erros": (erros := sessao.erros()),
         "painel_erros": painel_de_erros(erros),
+        "andamento": sessao.andamento(),
+        "chamadas_claude_em_curso": sessao.chamadas_em_curso(),
         "situacao": situacao() if situacao else None,
     }
 

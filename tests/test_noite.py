@@ -41,6 +41,10 @@ class LinhaFalsa:
         self.desde, self.pausa, self.falha_depois, self.espera_parar = desde, pausa, falha_depois, espera_parar
         self.zeros = []
         self._parar = threading.Event()
+        self._ultimo_audio = None
+
+    def ultimo_audio(self):
+        return self._ultimo_audio
 
     def marcar_zero(self, instante):
         self.zeros.append(instante)
@@ -54,6 +58,7 @@ class LinhaFalsa:
                 raise RuntimeError("Whisper caiu")
             if self._parar.wait(self.pausa):
                 return
+            self._ultimo_audio = time.time()
             yield f
         if self.espera_parar:  # ao vivo: a linha só termina quando mandam parar
             self._parar.wait()
@@ -61,7 +66,7 @@ class LinhaFalsa:
 
 def falas_da_noite():
     return [Fala("Mediação", 0.0, 4.0, FALA_MEDIACAO), Fala("Lula", 300.0, 312.0, FALA_DESEMPREGO),
-            Fala("Flávio", 900.0, 905.0, FALA_PIX)]
+            Fala("Flávio", 900.0, 905.0, FALA_PIX, atraso_s=2.5)]
 
 
 def test_falas_da_linha_chegam_a_sessao_e_o_painel_fica_gravado_na_pasta(indice, tmp_path):
@@ -201,6 +206,11 @@ def test_tela_mostra_os_erros_por_etapa_com_a_falha_do_claude_na_extracao(indice
     assert paineis["Publicação"]["n"] == 1
     assert [p["trecho"] for p in estado["fila"]] == [PIX["trecho"]]  # a noite seguiu depois da falha
     assert estado["situacao"]["falas"] == 3
+    assert estado["situacao"]["ultimo_audio_em"]  # o pulso do áudio, no cabeçalho
+    # o andamento mostra cada fala, inclusive a que falhou, e o atraso da entrega
+    andamento = sorted(estado["andamento"], key=lambda f: f["minutagem_s"])  # as análises correm em paralelo
+    assert [(f["quem"], f["analise"], f["atraso_s"]) for f in andamento] == [
+        ("Mediação", "mediacao", None), ("Lula", "erro", None), ("Flávio", "feita", 2.5)]
 
 
 def painel_no_remoto(nu):

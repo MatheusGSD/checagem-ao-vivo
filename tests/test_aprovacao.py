@@ -1,5 +1,6 @@
 """Tela de aprovação: as ações chegam à sessão por HTTP, e só a partir da própria máquina e da própria tela."""
 import json
+import threading
 import urllib.error
 import urllib.request
 from datetime import timedelta
@@ -9,7 +10,8 @@ import pytest
 from aprovacao import serve
 from base_checagens import Indice
 from sessao import Sessao
-from test_sessao import FALA_PIX, FIXTURES, INICIO, PIX, PIX_ESTADAO, Claude, Relogio
+from test_sessao import (FALA_GASOLINA, FALA_MEDIACAO, FALA_PIX, FIXTURES, INICIO, PIX, PIX_ESTADAO, Claude, Relogio,
+                         afirmacao, pedido)
 
 
 @pytest.fixture(scope="module")
@@ -86,3 +88,72 @@ def test_editar_pela_tela_troca_a_reformulacao_e_trecho_que_nao_bate_volta_com_o
 
     codigo, corpo = pede(base + "/acao/editar", {"ligacao_id": ident, "trecho": "frase que ninguém disse"})
     assert codigo == 400 and "letra a letra" in json.loads(corpo)["erro"]
+
+
+# ---------- a noite ao vivo na tela: cada fala, o que saiu dela e se o pipeline está andando ----------
+
+GASOLINA = afirmacao("a gasolina caiu trinta por cento no posto em um ano",
+                     "O preço da gasolina caiu 30% em um ano no governo Bolsonaro.", "numero")
+GASOLINA_30 = afirmacao("a gasolina caiu 30% no posto", "A gasolina caiu 30%.", "numero")  # não é literal
+
+
+def andamento(base):
+    return json.loads(pede(base + "/estado")[1])["andamento"]
+
+
+def test_tela_mostra_cada_fala_com_quem_falou_e_o_que_aconteceu_com_cada_afirmacao(indice):
+    s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX], FALA_GASOLINA: [GASOLINA, GASOLINA_30]}),
+               relogio=Relogio(INICIO + timedelta(minutes=30)))
+    s.recebe_fala("Mediação", 1790.0, FALA_MEDIACAO, atraso_s=12.5)
+    s.recebe_fala("Flávio", 1800.0, FALA_PIX, atraso_s=18.3)
+    s.recebe_fala("Flávio", 1850.0, FALA_GASOLINA)
+    servidor = serve(s, porta=0)
+    base = f"http://127.0.0.1:{servidor.server_address[1]}"
+    try:
+        gasolina, pix, mediacao = andamento(base)  # a mais recente primeiro
+
+        assert (mediacao["quem"], mediacao["texto"], mediacao["atraso_s"]) == ("Mediação", FALA_MEDIACAO, 12.5)
+        assert mediacao["afirmacoes"] == [] and mediacao["analise"] == "mediacao"
+        assert (pix["quem"], pix["minutagem_s"], pix["atraso_s"], pix["analise"]) == ("Flávio", 1800.0, 18.3, "feita")
+        [a] = pix["afirmacoes"]
+        assert (a["trecho"], a["reformulacao"], a["tipo"], a["situacao"]) == (
+            PIX["trecho"], PIX["reformulacao"], "perene", "fila")
+        [sem_par] = gasolina["afirmacoes"]
+        assert (sem_par["trecho"], sem_par["situacao"]) == (GASOLINA["trecho"], "sem_par")
+        assert sem_par["candidatas"] and all(c["agencia"] and c["url"] for c in sem_par["candidatas"])
+        assert "nenhuma" in sem_par["veredito"]
+        assert [d["trecho"] for d in gasolina["descartadas"]] == [GASOLINA_30["trecho"]]
+
+        s.aprova(a["ligacao_id"])
+
+        assert andamento(base)[1]["afirmacoes"][0]["situacao"] == "publicada"
+    finally:
+        servidor.shutdown()
+
+
+def test_tela_mostra_a_fala_ainda_em_analise_e_as_chamadas_ao_claude_em_curso(indice):
+    solta, chegou = threading.Event(), threading.Event()
+    dublê = Claude({FALA_PIX: [PIX]})
+
+    def chamar(etapa, prompt, conteudo, schema):
+        if pedido(schema) == "extracao":
+            chegou.set()
+            solta.wait(10)
+        return dublê(etapa, prompt, conteudo, schema)
+
+    s = Sessao(indice, chamar=chamar, relogio=Relogio(INICIO + timedelta(minutes=30)))
+    servidor = serve(s, porta=0)
+    base = f"http://127.0.0.1:{servidor.server_address[1]}"
+    analise = threading.Thread(target=s.recebe_fala, args=("Flávio", 1800.0, FALA_PIX))
+    try:
+        analise.start()
+        assert chegou.wait(10)
+        estado = json.loads(pede(base + "/estado")[1])
+        assert estado["chamadas_claude_em_curso"] == 1
+        [fala] = estado["andamento"]
+        assert (fala["analise"], fala["afirmacoes"]) == ("analisando", [])
+    finally:
+        solta.set()
+        analise.join(10)
+        servidor.shutdown()
+    assert s.fila()

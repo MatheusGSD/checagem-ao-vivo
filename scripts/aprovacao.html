@@ -21,8 +21,34 @@
   header button { background: #fff; color: var(--tinta); }
   #conexao { width: 10px; height: 10px; border-radius: 50%; background: #3cb371; display: inline-block; }
   #conexao.fora { background: #e04a3f; }
-  main { padding: 14px 18px 40px; display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 18px; }
-  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+  main { padding: 14px 18px 40px; display: grid; gap: 18px; align-items: start;
+         grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+         grid-template-areas: "aviso aviso" "quadros quadros" "erros erros" "fila vivo" "fila resto"; }
+  @media (min-width: 1500px) {
+    main { grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) minmax(0, 4fr);
+           grid-template-areas: "aviso aviso aviso" "quadros quadros quadros" "erros erros erros" "fila vivo resto"; } }
+  @media (max-width: 1000px) {
+    main { grid-template-columns: 1fr; grid-template-areas: "aviso" "quadros" "erros" "fila" "vivo" "resto"; } }
+  #aviso { grid-area: aviso; } #quadros { grid-area: quadros; } #erros { grid-area: erros; }
+  #col-fila { grid-area: fila; } #col-vivo { grid-area: vivo; } #col-resto { grid-area: resto; }
+  /* o ao vivo rola por dentro: a fila continua à vista */
+  #vivo { max-height: 62vh; overflow-y: auto; padding-right: 4px; }
+  @media (max-width: 1000px) { #vivo { max-height: 50vh; } }
+  .fv { border-left: 3px solid var(--linha); background: var(--cartao); border-radius: 6px; padding: 7px 10px;
+        margin-bottom: 8px; font-size: 13px; }
+  .fv.Lula { border-left-color: var(--lula); } .fv.Flávio { border-left-color: var(--flavio); }
+  .fv.mediacao { opacity: .6; background: transparent; }
+  .fv .texto { margin: 4px 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .fv .texto.inteiro { display: block; }
+  .fv ul { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 5px; }
+  .fv li { border-top: 1px dashed var(--linha); padding-top: 4px; }
+  .sit { font-size: 11px; font-weight: 700; text-transform: uppercase; border-radius: 4px; padding: 1px 6px;
+         background: #ece8df; color: var(--suave); white-space: nowrap; }
+  .sit.fila { background: var(--marca); color: var(--tinta); } .sit.publicada { background: #e0efe5; color: var(--ok); }
+  .sit.erro { background: #fdecea; color: #7a1a13; } .sit.analisando { background: #e7eefb; color: var(--foco); }
+  .sit.sem_par { background: #f3eee4; color: var(--alerta); }
+  .cands { color: var(--suave); margin-top: 3px; }
+  .pulso b.velho { color: #ffb3a8; }
   h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); margin: 4px 0 10px; }
   h2 .n { background: var(--tinta); color: #fff; border-radius: 10px; padding: 0 8px; margin-left: 6px; }
   .vazio { color: var(--suave); font-style: italic; padding: 8px 0; }
@@ -59,15 +85,14 @@
   button.aprovar { background: var(--ok); border-color: var(--ok); color: #fff; }
   button.perigo { color: var(--erro); border-color: var(--erro); }
   button:disabled { opacity: .45; cursor: default; }
-  #erros { grid-column: 1 / -1; }
-  #quadros { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+  #quadros { display: flex; flex-wrap: wrap; gap: 8px; }
   #quadros .quadro { border-radius: 6px; padding: 5px 10px; font-size: 13px; border: 1px solid var(--linha); }
   #quadros .bem { background: #e0efe5; color: var(--ok); }
   #quadros .antes { background: #fbe9da; color: var(--alerta); }
   #quadros .mal { background: #fdecea; color: #7a1a13; border-color: #f1b8b2; font-weight: 600; }
   #erros .erro { background: #fdecea; border: 1px solid #f1b8b2; color: #7a1a13; border-radius: 6px;
                  padding: 6px 10px; margin-bottom: 6px; font-size: 13px; }
-  #aviso { grid-column: 1 / -1; display: none; background: #fdecea; color: #7a1a13; border-radius: 6px; padding: 8px 12px; }
+  #aviso { display: none; background: #fdecea; color: #7a1a13; border-radius: 6px; padding: 8px 12px; }
   details { margin-top: 18px; }
   details.editar { margin: 4px 0 8px; display: grid; gap: 6px; }
   details.editar summary { text-transform: none; letter-spacing: 0; font-size: 13px; }
@@ -82,6 +107,7 @@
   <span class="item"><span id="conexao" title="conexão com a sessão"></span> <b id="relogio">--:--:--</b></span>
   <span class="item">00:00: <b id="inicio">não marcado</b> <button id="marcar" type="button">Marcar 00:00 agora</button></span>
   <span class="item">Automática: <b id="auto">desligada</b></span>
+  <span class="item pulso">áudio <b id="p-audio">—</b> · falas <b id="p-falas">0</b> · Claude <b id="p-claude">0</b> em curso · base <b id="p-base">—</b></span>
   <span class="item" id="situacao"></span>
   <span class="item">fila <b id="n-fila">0</b> · publicadas <b id="n-pub">0</b> · correções <b id="n-cor">0</b> · sem par <b id="n-sp">0</b></span>
 </header>
@@ -89,11 +115,15 @@
   <div id="aviso" role="alert"></div>
   <section id="quadros" aria-label="erros por etapa"></section>
   <section id="erros" aria-live="polite"></section>
-  <section>
+  <section id="col-fila">
     <h2>Fila <span class="n" id="n-fila2">0</span></h2>
     <div id="fila"></div>
   </section>
-  <section>
+  <section id="col-vivo">
+    <h2>Ao vivo: cada fala e o que saiu dela</h2>
+    <div id="vivo" aria-live="off"></div>
+  </section>
+  <section id="col-resto">
     <h2>Publicadas <span class="n" id="n-pub2">0</span></h2>
     <div id="publicadas"></div>
     <details open><summary>Correções (<span id="n-cor2">0</span>)</summary><div id="correcoes"></div></details>
@@ -109,6 +139,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<
 const link = (u) => /^https?:\/\//i.test(u || "") ? esc(u) : "#";
 const num = (x) => (x == null ? "" : Number(x).toLocaleString("pt-BR", {maximumFractionDigits: 2}));
 function minutagem(s) {
+  if (s < 0) return "−" + minutagem(-s);  // a fala começou antes do 00:00
   s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
   const p = (n) => String(n).padStart(2, "0");
   return h ? `${h}:${p(m)}:${p(ss)}` : `${p(m)}:${p(ss)}`;
@@ -199,6 +230,7 @@ function cartaoPublicada(l) {
         <div class="cab"><span class="agencia">${esc(c.agencia)}</span><span>${esc(c.data || "sem data")}</span>
           <span class="rotulo">${esc(c.rotulo)}</span>
           <span class="fonte-rotulo">${c.fonte_rotulo === "selo_da_pagina" ? "selo da página" : "rótulo conforme dados da agência"}</span>
+          ${c.origem && c.origem !== l.origem ? `<span class="selo-origem ${esc(c.origem)}">${c.origem === "automatica" ? "automática" : "aprovada"}</span>` : ""}
           <a class="abre" href="${link(c.url)}" target="_blank" rel="noopener noreferrer">abrir checagem ↗</a></div>
         <label class="selo">Corrigir rótulo <input type="text" class="novo-rotulo" placeholder="selo visível na página">
           <button type="button" class="corrige">Corrigir</button></label>
@@ -220,6 +252,50 @@ function cartaoPublicada(l) {
       acao("despublicar", {ligacao_id: l.id, motivo: motivo.value}, botao);
   };
   return el;
+}
+
+const SITUACAO = {fila: "na fila", publicada: "publicada", "publicada e fila": "publicada · resto na fila",
+  recusada: "recusada", despublicada: "despublicada", sem_par: "sem par", analisando: "analisando…",
+  "tentando de novo": "tentando de novo", erro: "erro"};
+const ANALISE = {analisando: "extraindo afirmações…", "tentando de novo": "falhou; tentando de novo", erro: "falhou (refeita ao reabrir)"};
+
+function cartaoVivo(f) {
+  const el = document.createElement("article");
+  el.className = `fv ${f.candidato ? esc(f.quem) : "mediacao"}`;
+  const atraso = f.atraso_s == null ? "" : `<span title="do fim da fala no áudio até a entrega">+${num(f.atraso_s)} s</span>`;
+  const estado = f.analise === "feita" ? (f.afirmacoes.length || f.descartadas.length ? "" : `<span class="sit">sem afirmação checável</span>`)
+    : f.analise === "mediacao" ? "" : `<span class="sit ${f.analise === "erro" ? "erro" : "analisando"}" title="${esc(f.erro || "")}">${ANALISE[f.analise] || esc(f.analise)}</span>`;
+  const afirmacao = (a) => {
+    const sit = a.situacao.split(" ")[0];
+    let extra = "";
+    if (a.situacao === "sem_par") {
+      extra = `<div class="cands">${esc(a.veredito)}${a.candidatas && a.candidatas.length ? ". Mais próximas: " + a.candidatas.map((c) =>
+        `<a class="abre" href="${link(c.url)}" target="_blank" rel="noopener noreferrer">${esc(c.agencia)}</a> (${esc(c.rotulo || "sem rótulo")}${c.data ? ", " + esc(c.data) : ""}): ${esc((c.frase || "").slice(0, 90))}`).join(" · ") : ""}</div>`;
+    } else if (a.erro) {
+      extra = `<div class="cands">${esc(a.erro)}</div>`;
+    }
+    return `<li><span class="sit ${esc(sit)}">${SITUACAO[a.situacao] || esc(a.situacao)}</span>${a.ligacao_id ? ` <span class="fonte-rotulo">${esc(a.ligacao_id)}</span>` : ""}
+      “${esc(a.trecho)}” <span class="fonte-rotulo">${a.tipo === "numero" ? "número" : "fato perene"}</span>
+      <div class="frase">${esc(a.reformulacao)}</div>${extra}</li>`;
+  };
+  el.innerHTML = `
+    <div class="topo"><span>${minutagem(f.inicio_s)}</span><span class="quem ${esc(f.quem)}">${esc(f.quem)}</span>${atraso}${estado}</div>
+    <p class="texto" title="clique para ver a fala inteira">${esc(f.texto)}</p>
+    ${f.afirmacoes.length || f.descartadas.length ? `<ul>${f.afirmacoes.map(afirmacao).join("")}${f.descartadas.map((d) =>
+      `<li><span class="sit">descartada</span> “${esc(d.trecho)}” <span class="fonte-rotulo">(${esc(d.motivo)})</span></li>`).join("")}</ul>` : ""}`;
+  el.querySelector(".texto").onclick = (ev) => ev.target.classList.toggle("inteiro");
+  return el;
+}
+
+function pulso(e) {
+  const s = e.situacao || {};
+  const audio = s.ultimo_audio_em ? new Date(s.ultimo_audio_em) : null;
+  const ha = audio ? Math.round((Date.now() - audio) / 1000) : null;
+  $("p-audio").textContent = audio ? `${hora(s.ultimo_audio_em)} (há ${ha} s)` : (e.situacao ? "nenhum ainda" : "—");
+  $("p-audio").classList.toggle("velho", ha != null && ha > 10);
+  $("p-falas").textContent = s.falas ?? e.andamento.length;
+  $("p-claude").textContent = e.chamadas_claude_em_curso;
+  $("p-base").textContent = s.base_atualizada_em || (e.situacao ? "ainda não" : "—");
 }
 
 // redesenha só os cartões que mudaram: o que o operador está digitando num cartão não se perde
@@ -251,6 +327,7 @@ async function atualiza(forca) {
     e = await r.json();
     $("conexao").classList.remove("fora");
   } catch (err) { $("conexao").classList.add("fora"); return; }
+  pulso(e);  // o pulso muda sem evento novo (áudio chegando, chamadas em curso)
   if (e.versao === versao && !forca) return;
   versao = e.versao;
   document.title = `(${e.fila.length}) Aprovação · checagem ao vivo`;
@@ -267,11 +344,11 @@ async function atualiza(forca) {
     `<div class="quadro ${q.n ? (recente(q.ultimo) ? "mal" : "antes") : "bem"}" title="${q.ultimo ? esc(q.ultimo.mensagem) : ""}">
       <b>${esc(q.nome)}</b> ${q.n ? `${q.n} erro${q.n > 1 ? "s" : ""} · último às ${hora(q.ultimo.em)}` : "ok"}</div>`).join("");
   const s = e.situacao;
-  $("situacao").textContent = s ? `linha ${s.linha} · ${s.falas} falas` + (s.ultima_fala_em ? ` · última às ${hora(s.ultima_fala_em)}` : "")
-    + ` · base ${s.base_atualizada_em || "ainda não atualizada"}` : "";
+  $("situacao").textContent = s ? `linha ${s.linha}` + (s.ultima_fala_em ? ` · última fala às ${hora(s.ultima_fala_em)}` : "") : "";
   $("erros").innerHTML = e.erros.slice(-6).reverse().map((x) =>
     `<div class="erro"><b>${esc(x.etapa)}</b> ${hora(x.em)}${x.quem ? ` · ${esc(x.quem)} ${minutagem(x.minutagem_s)}` : ""} — ${esc(x.mensagem)}</div>`).join("");
   sincroniza($("fila"), e.fila, (p) => p.id, cartaoFila, "Nada esperando aprovação.");
+  sincroniza($("vivo"), e.andamento, (f) => f.id, cartaoVivo, "Nenhuma fala ainda. A primeira aparece aqui assim que fechar.");
   const pubs = [...e.publicadas].sort((a, b) => b.minutagem_s - a.minutagem_s);
   sincroniza($("publicadas"), pubs, (l) => l.id, cartaoPublicada, "Nenhuma ligação publicada.");
   sincroniza($("correcoes"), [...e.correcoes].reverse(), (c) => `${c.tipo}:${c.ligacao_id}:${c.em}:${c.url || ""}`,

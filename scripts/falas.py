@@ -414,6 +414,7 @@ class LinhaDeFalas:
         self._threads = []
         self.erro = None
         self.estatisticas = {"lotes": 0, "segundos_de_audio": 0.0, "segundos_de_cpu": 0.0}
+        self.ultimo_audio_s = None  # time.time() do último bloco de áudio que chegou da fonte
 
     # ---------- interface
 
@@ -472,6 +473,7 @@ class LinhaDeFalas:
         inicio_seg = None
         ultimo_tempo = 0
         for bloco in self.fonte.blocos():
+            self.ultimo_audio_s = time.time()
             for chunk in self._chunker.push(bloco):
                 ev, audio = self._montador.feed(chunk, self._vad.prob(chunk))
                 pos += len(chunk)

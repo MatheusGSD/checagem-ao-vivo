@@ -121,8 +121,14 @@ class Noite:
         self.sessao.marca_inicio(instante)
 
     def situacao(self):
-        """O que a tela mostra da noite, no cabeçalho."""
+        """O que a tela mostra da noite, no cabeçalho: a linha, as falas entregues, o último áudio que
+        chegou da fonte (a linha diz, se souber: ultimo_audio() em segundos de time.time()) e a base."""
+        with self._trava:
+            linha = self._linha
+        ultimo = getattr(linha, "ultimo_audio", lambda: None)()
         return {"linha": self._estado_linha, "falas": self._n_falas, "ultima_fala_em": self._ultima_fala,
+                "ultimo_audio_em": datetime.fromtimestamp(ultimo, BRASILIA).isoformat(timespec="milliseconds")
+                if ultimo else None,
                 "base_atualizada_em": self._base}
 
     def espera(self, timeout=None):
@@ -169,7 +175,7 @@ class Noite:
                 if na_sessao[chave]:
                     na_sessao[chave] -= 1
                 else:
-                    self._analises.submit(self._recebe, *chave)
+                    self._analises.submit(self._recebe, *chave, f.get("atraso_s"))
         except Exception as e:  # noqa: BLE001
             self.sessao.registra_erro("sessao", f"retomada: {type(e).__name__}: {e}")
         finally:
@@ -244,13 +250,13 @@ class Noite:
             self._ultima_fala = _agora()
         self._log(_texto_da_fala(fala))
         self._pronto.wait()
-        self._analises.submit(self._recebe, fala.quem, fala.inicio_s, fala.texto)
+        self._analises.submit(self._recebe, fala.quem, fala.inicio_s, fala.texto, fala.atraso_s)
 
-    def _recebe(self, quem, inicio_s, texto):
+    def _recebe(self, quem, inicio_s, texto, atraso_s=None):
         """A fala na sessão. Falhas do Claude a sessão já registra (etapas extrair e confirmar); o que
         mais escapar vai para a tela em vez de sumir na thread."""
         try:
-            self.sessao.recebe_fala(quem, inicio_s, texto)
+            self.sessao.recebe_fala(quem, inicio_s, texto, atraso_s=atraso_s)
         except Exception as e:  # noqa: BLE001
             self.sessao.registra_erro("sessao", f"fala de {quem} em {inicio_s:.0f} s: {type(e).__name__}: {e}")
 
@@ -339,6 +345,9 @@ class LinhaAoVivo:
     def parar(self):
         self.linha.parar()
 
+    def ultimo_audio(self):
+        return self.linha.ultimo_audio_s
+
     def __iter__(self):
         return iter(self.linha)
 
@@ -362,6 +371,9 @@ class LinhaDeArquivos:
         self._parar.set()
         if self._atual:
             self._atual.parar()
+
+    def ultimo_audio(self):
+        return self._atual.ultimo_audio_s if self._atual else None
 
     def __iter__(self):
         from falas import FonteArquivo, LinhaDeFalas

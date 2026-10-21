@@ -134,6 +134,8 @@ class Sessao:
         # "base_conferida" (sobra aqui o que um travamento interrompeu)
         self._reconferir = {}
         self._reconferindo = set()  # bases sendo reconferidas agora (não é estado do registro)
+        self._em_curso = 0  # chamadas ao Claude em andamento agora (não é estado do registro)
+        self._por_id = (None, {})  # (tamanho da base, registros por id) de andamento
         self._ultima_base = None
         self._inicio = None  # 00:00 marcado pelo operador (marca_inicio)
         self._modelos = set()  # modelos que de fato responderam (a API pode refazer no modelo de reserva)
@@ -176,11 +178,14 @@ class Sessao:
 
     # ---------- interface ----------
 
-    def recebe_fala(self, quem, inicio_s, texto):
+    def recebe_fala(self, quem, inicio_s, texto, atraso_s=None):
         """Uma fala fechada: quem ("Lula", "Flávio" ou outro), início em segundos desde o 00:00 (negativo se
-        ela começou antes do 00:00; a minutagem no painel fica 0) e texto."""
+        ela começou antes do 00:00; a minutagem no painel fica 0) e texto. atraso_s: segundos entre o fim
+        da fala no áudio e a entrega, para a tela do operador."""
         with self._trava:
             fala = self._nova_fala(quem, inicio_s, texto)
+            if atraso_s is not None:
+                fala["atraso_s"] = atraso_s
             self._registra({"tipo": "fala", "fala": fala})  # registrada antes das chamadas ao Claude
         for evento in self._analisa(fala):
             self._registra(evento)
@@ -254,6 +259,84 @@ class Sessao:
             return [copy.deepcopy({**p, "checagens": [c for c in p["checagens"] if c["url"] in r["urls"]],
                                    "motivo_recusa": r["motivo"]})
                     for p in self._propostas if (r := self._recusas.get(p["id"]))]
+
+    def chamadas_em_curso(self):
+        """Quantas chamadas ao Claude estão em andamento agora."""
+        with self._trava:
+            return self._em_curso
+
+    def andamento(self, limite=40):
+        """As últimas `limite` falas, a mais recente primeiro, com o que aconteceu com cada uma (para o
+        operador ver o pipeline andar): quem, minutagem, texto, atraso, a análise ("mediacao",
+        "analisando", "tentando de novo", "erro" ou "feita") e, de cada afirmação extraída, o trecho, a
+        reformulação, o tipo e a situação: "fila", "publicada", "publicada e fila", "recusada",
+        "despublicada", "sem_par" (com as candidatas mais próximas que o Claude viu e o veredito),
+        "analisando", "tentando de novo" ou "erro". Mais as descartadas (trecho não literal)."""
+        with self._trava:
+            eventos, falas = list(self.eventos), self._falas[-limite:]
+            situacao_da_proposta = {p["afirmacao_id"]: (p["id"], self._situacao_da_proposta(p["id"]))
+                                    for p in self._propostas}
+            if self._por_id[0] != len(self.indice.registros):  # refeito só quando a base cresce
+                self._por_id = (len(self.indice.registros), {r["id"]: r for r in self.indice.registros})
+            por_id = self._por_id[1]
+        extracao, confirmacao, erros = {}, {}, {}
+        for e in eventos:
+            if e["tipo"] == "afirmacoes":
+                extracao[e["fala_id"]] = e
+            elif e["tipo"] == "confirmacao":
+                confirmacao[e["afirmacao"]["id"]] = e
+            elif e["tipo"] == "erro" and e.get("fala_id"):
+                chave = e["afirmacao"]["id"] if e.get("afirmacao") else e["fala_id"]
+                erros[chave] = e
+        tentativas = len(self._esperas) + 1
+
+        def falhou(chave):
+            """None, "tentando de novo" ou "erro" (todas as tentativas falharam), pelo último erro."""
+            e = erros.get(chave)
+            if e is None:
+                return None
+            return "erro" if e.get("tentativa", tentativas) >= e.get("tentativas", tentativas) else "tentando de novo"
+
+        def afirmacao(a):
+            out = {k: a[k] for k in ("trecho", "reformulacao", "tipo")}
+            if a["id"] in situacao_da_proposta:
+                out["ligacao_id"], out["situacao"] = situacao_da_proposta[a["id"]]
+                return out
+            c = confirmacao.get(a["id"])
+            if c is None:
+                out["situacao"] = falhou(a["id"]) or "analisando"
+                out["erro"] = (erros.get(a["id"]) or {}).get("mensagem")
+                return out
+            out["situacao"] = "sem_par"
+            out["candidatas"] = [{k: por_id[i].get(k) for k in ("agencia", "rotulo", "data", "frase", "url")}
+                                 for i in c["candidatas"][:3] if i in por_id]
+            out["veredito"] = (f"o Claude não viu a mesma afirmação em nenhuma das {len(c['candidatas'])} candidatas"
+                               if c["candidatas"] else "nenhuma checagem parecida na base"
+                               + (" de 2025 em diante" if a["tipo"] == "numero" else ""))
+            return out
+
+        feed = []
+        for f in reversed(falas):
+            item = {"id": f["id"], "quem": f["quem"], "inicio_s": f["inicio_s"], "minutagem_s": max(0.0, f["inicio_s"]),
+                    "texto": f["texto"], "atraso_s": f.get("atraso_s"), "candidato": f["quem"] in CANDIDATOS,
+                    "afirmacoes": [], "descartadas": []}
+            if f["quem"] not in CANDIDATOS:
+                item["analise"] = "mediacao"
+            elif (x := extracao.get(f["id"])) is None:
+                item["analise"] = falhou(f["id"]) or "analisando"
+                item["erro"] = (erros.get(f["id"]) or {}).get("mensagem")
+            else:
+                item["analise"] = "feita"
+                item["afirmacoes"] = [afirmacao(a) for a in x["afirmacoes"]]
+                item["descartadas"] = [{"trecho": d["trecho"], "motivo": d["motivo"]} for d in x["descartadas"]]
+            feed.append(item)
+        return feed
+
+    def _situacao_da_proposta(self, ident):
+        situacao = self._situacao.get(ident)
+        if ident in self._aguardando:
+            return "publicada e fila" if situacao == "publicada" else "fila"
+        return situacao or "fila"
 
     def descartados(self):
         """Afirmações extraídas e descartadas (trecho que não aparece letra a letra na fala), com o motivo."""
@@ -445,6 +528,8 @@ class Sessao:
         Devolve (saída, registro da chamada) ou None se todas as tentativas falharam."""
         tentativas = len(self._esperas) + 1
         for k in range(tentativas):
+            with self._trava:
+                self._em_curso += 1
             try:
                 return self._chamar(etapa, prompt, conteudo, schema)
             except FALHAS_DO_CLAUDE as e:
@@ -454,6 +539,9 @@ class Sessao:
                                 "mensagem": f"{type(e).__name__}: {e} (tentativa {k + 1} de {tentativas}; {depois})"})
                 if k < len(self._esperas):
                     time.sleep(self._esperas[k])
+            finally:
+                with self._trava:
+                    self._em_curso -= 1
         return None
 
     def _confirma(self, a, entre=None):
