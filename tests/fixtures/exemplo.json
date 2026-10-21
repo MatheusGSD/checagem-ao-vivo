@@ -20,7 +20,7 @@
       {"nome": "Projeto Comprova", "via": "ClaimReview na API do Google"}
     ],
     "agencias_excluidas": [
-      {"nome": "Lupa", "motivo": "Não publica ClaimReview e não autorizou a coleta das checagens até agora."}
+      {"nome": "Lupa", "motivo": "Não publica dados estruturados (ClaimReview) e não autorizou o uso dos metadados até a publicação deste painel."}
     ],
     "modelo": "claude-sonnet-5-5",
     "modelos_que_responderam": ["claude-sonnet-5-5"],
