@@ -400,6 +400,20 @@ def test_ligacao_acima_do_limiar_so_e_publicada_sozinha_depois_de_10_min(indice)
     assert dados["meta"]["inicio_debate"] == "2026-10-23T21:20:00-03:00"
 
 
+def test_repassando_a_gravacao_o_aquecimento_conta_no_relogio_da_gravacao(indice):
+    # pós-debate: a sessão roda horas depois do 00:00, mas os 10 min de aquecimento são os do áudio
+    relogio = Relogio(INICIO + timedelta(hours=3))
+    s = Sessao(indice, chamar=Claude({FALA_DESEMPREGO: [DESEMPREGO], FALA_PIX: [PIX]}), relogio=relogio,
+               meta={"limiar_automatico": 0.9}, aquecimento_pela_gravacao=True)
+    s.marca_inicio(INICIO)
+
+    s.recebe_fala("Lula", 300.0, FALA_DESEMPREGO)  # nota 0.92, mas no minuto 5 da gravação
+    s.recebe_fala("Flávio", 700.0, FALA_PIX)  # minuto 11 e pouco
+
+    assert [lig["trecho"] for lig in s.fila()] == [DESEMPREGO["trecho"]]
+    assert [lig["trecho"] for lig in s.exporta()["ligacoes"]] == [PIX["trecho"]]
+
+
 def test_ligacao_abaixo_do_limiar_vai_para_a_fila_mesmo_depois_de_10_min(indice):
     relogio = Relogio(INICIO + timedelta(minutes=40))
     s = sessao_com_limiar(indice, Claude({FALA_DESEMPREGO: [DESEMPREGO]}), relogio, 0.95)

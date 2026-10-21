@@ -81,6 +81,21 @@ def test_falas_da_linha_chegam_a_sessao_e_o_painel_fica_gravado_na_pasta(indice,
         == ["Mediação", "Lula", "Flávio"]
 
 
+def test_pos_debate_nao_publica_sozinho_os_primeiros_10_min_da_gravacao(indice, tmp_path):
+    claude = Claude({FALA_DESEMPREGO: [DESEMPREGO], FALA_PIX: [PIX]})
+    noite = Noite(tmp_path, indice, lambda desde: LinhaFalsa(falas_da_noite(), desde), chamar=claude,
+                  relogio=Relogio(INICIO + timedelta(hours=2)), meta={"limiar_automatico": 0.9, "encerrado": True},
+                  relogio_da_gravacao=True)
+    noite.marca_zero(INICIO)
+
+    noite.comeca()
+    assert noite.espera(timeout=60)
+    noite.encerra()
+
+    assert [p["minutagem_s"] for p in noite.sessao.fila()] == [300.0]  # no aquecimento da gravação
+    assert [lig["minutagem_s"] for lig in noite.sessao.exporta()["ligacoes"]] == [900.0]
+
+
 def ate(condicao, segundos=30):
     limite = time.monotonic() + segundos
     while time.monotonic() < limite:

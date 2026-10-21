@@ -91,7 +91,8 @@ class AcaoInvalida(ValueError):
 
 class Sessao:
     def __init__(self, indice, chamar=None, relogio=None, ao_registrar=None, meta=None,
-                 ao_mudar_publicado=None, ao_marcar_inicio=None, esperas_entre_tentativas=ESPERAS_ENTRE_TENTATIVAS_S):
+                 ao_mudar_publicado=None, ao_marcar_inicio=None, esperas_entre_tentativas=ESPERAS_ENTRE_TENTATIVAS_S,
+                 aquecimento_pela_gravacao=False):
         """indice: base_checagens.Indice. chamar(etapa, prompt, conteudo, schema) -> (saída, registro),
         por padrão agente.chama. relogio() -> datetime com fuso. ao_registrar(evento) recebe cada
         evento assim que acontece, antes de ele valer (para o registro só de acréscimo). meta: campos
@@ -102,7 +103,9 @@ class Sessao:
         ao_marcar_inicio(instante) recebe o 00:00 (datetime) cada vez que ele é marcado (pela tela ou
         pelo terminal), depois de registrado; não é chamado ao repetir o registro.
         esperas_entre_tentativas: segundos de espera antes de cada nova tentativa de uma chamada ao
-        Claude que falhou (uma tentativa a mais que esperas); cada falha vira um erro na tela."""
+        Claude que falhou (uma tentativa a mais que esperas); cada falha vira um erro na tela.
+        aquecimento_pela_gravacao: os 10 min de aquecimento da publicação automática contam no relógio
+        da gravação (minutagem das falas), e não no de parede: é o repasse pós-debate."""
         self.indice = indice
         self._meta = meta or {}
         self._chamar = chamar or _chamar_padrao
@@ -111,6 +114,7 @@ class Sessao:
         self._ao_mudar_publicado = ao_mudar_publicado
         self._ao_marcar_inicio = ao_marcar_inicio
         self._esperas = tuple(esperas_entre_tentativas)
+        self._aquecimento_pela_gravacao = aquecimento_pela_gravacao
         self._trava = threading.RLock()  # falas, tela de aprovação e publicador rodam em threads
         self._publico = None  # último conteúdo público avisado a ao_mudar_publicado
         self._agencias_cache = (None, None)  # (tamanho da base, agências do painel) de _agencias
@@ -485,12 +489,23 @@ class Sessao:
         limiar, inicio = self._meta.get("limiar_automatico"), self._inicio_debate()
         if limiar is None or inicio is None:
             return
-        if (self._relogio() - datetime.fromisoformat(inicio)).total_seconds() <= AQUECIMENTO_S:
+        if self._segundos_de_debate(p) <= AQUECIMENTO_S:
             return
         urls = [c["url"] for c in p["checagens"] if c["nota"] >= limiar and (c.get("rotulo") or "").strip()]
         if urls:
             self._registra({"tipo": "publicacao_automatica", "ligacao_id": p["id"], "checagens": urls,
                             "limiar": limiar})
+
+    def _segundos_de_debate(self, p):
+        """Quanto do debate já passou quando a ligação p é proposta. Ao vivo, pelo relógio, desde o 00:00.
+        Repassando uma gravação (aquecimento_pela_gravacao), pelo relógio do áudio: a minutagem da fala
+        (numa ligação tardia, a da última fala recebida), para os 10 primeiros minutos da gravação não
+        saírem sozinhos só porque o repasse roda depois do debate."""
+        if self._aquecimento_pela_gravacao:
+            if p.get("ligada_depois"):
+                return max((f["inicio_s"] for f in self._falas), default=0.0)
+            return p["minutagem_s"]
+        return (self._relogio() - datetime.fromisoformat(self._inicio_debate())).total_seconds()
 
     def _avisa_publicado(self):
         if not self._ao_mudar_publicado:

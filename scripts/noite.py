@@ -12,7 +12,9 @@ O que roda junto (ver `Noite`):
 
 O 00:00 é marcado uma vez (botão da tela ou Enter no terminal) e vale para a sessão (minutagem e
 aquecimento de 10 min da publicação automática) e para a linha de falas. A publicação automática usa o
-limiar de <dados>/avaliacao/limiar.json (sem ele, desligada).
+limiar de <dados>/avaliacao/limiar.json (sem ele, ou medido com outro modelo, desligada). Ao vivo, o
+aquecimento conta no relógio; com `arquivo` e `pos-debate`, no relógio da gravação (a minutagem da fala),
+para o repasse depois do debate não publicar sozinho os 10 primeiros minutos.
 
 Retomada: rodar o mesmo comando com a mesma --pasta reconstrói a sessão pelo registro, termina as
 análises interrompidas, entrega à sessão as falas que ficaram só em falas.jsonl e segue a partir da última
@@ -51,7 +53,7 @@ class Noite:
     def __init__(self, pasta, indice, fabrica_linha, chamar=None, relogio=None, meta=None, paralelo=3,
                  recomeca_se_acabar=False, reinicios=20, espera_reinicio=5.0, atualiza_base=None,
                  intervalo_base=600.0, porta=None, publicador=None, alerta_sem_fala_s=None, log=print,
-                 esperas_entre_tentativas=None):
+                 esperas_entre_tentativas=None, relogio_da_gravacao=False):
         """pasta: pasta da sessão. fabrica_linha(desde_s) -> linha de falas (iterável de falas.Fala, com
         marcar_zero(instante) e parar()) que entrega só as falas que terminam depois de `desde_s` (segundos
         desde o 00:00; None = do começo). chamar, relogio, meta: os da Sessao. recomeca_se_acabar: ao vivo,
@@ -64,7 +66,8 @@ class Noite:
         mudança pública; ao começar, só recebe o estado se ele difere do que o remoto já tem.
         alerta_sem_fala_s: ao vivo, avisa na tela (uma vez) quando passa esse tempo sem nenhuma fala
         depois do 00:00 (g1 parado, som no dispositivo errado). esperas_entre_tentativas: o da Sessao
-        (padrão: sessao.ESPERAS_ENTRE_TENTATIVAS_S)."""
+        (padrão: sessao.ESPERAS_ENTRE_TENTATIVAS_S). relogio_da_gravacao: pós-debate; os 10 min de
+        aquecimento da publicação automática contam no áudio (Sessao(aquecimento_pela_gravacao))."""
         self.pasta = Path(pasta)
         self.pasta.mkdir(parents=True, exist_ok=True)
         self._fabrica_linha = fabrica_linha
@@ -78,6 +81,7 @@ class Noite:
         self._ultimo_fim = max((f["fim_s"] for f in self._ja_entregues), default=None)
         self.sessao = Sessao.abre(self.pasta, indice, chamar=chamar, relogio=relogio, meta=meta,
                                   ao_mudar_publicado=self._mudou_publicado, ao_marcar_inicio=self._zero_da_linha,
+                                  aquecimento_pela_gravacao=relogio_da_gravacao,
                                   **({"esperas_entre_tentativas": esperas_entre_tentativas}
                                      if esperas_entre_tentativas is not None else {}))
         self._analises = ThreadPoolExecutor(max_workers=paralelo, thread_name_prefix="analise")
@@ -484,7 +488,8 @@ def main(argv=None):
                                                                **({"encerrado": True} if a.cmd == "pos-debate" else {})},
                   paralelo=a.paralelo, recomeca_se_acabar=a.cmd == "ao-vivo", atualiza_base=atualiza_base,
                   intervalo_base=a.intervalo_base, porta=a.porta, publicador=publicador,
-                  alerta_sem_fala_s=180 if a.cmd == "ao-vivo" else None, log=lambda m: print(m, flush=True))
+                  alerta_sem_fala_s=180 if a.cmd == "ao-vivo" else None, log=lambda m: print(m, flush=True),
+                  relogio_da_gravacao=a.cmd != "ao-vivo")  # arquivo e pós-debate: o relógio é o do áudio
     sessao_ref["s"] = noite.sessao
     if sem_limiar:  # o operador vê na tela por que nada sai sozinho
         noite.sessao.registra_erro("limiar", f"publicação automática desligada: {sem_limiar}", uma_vez=True)
