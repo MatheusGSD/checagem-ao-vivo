@@ -338,6 +338,14 @@ function correcao(c, d) {
   </article>`;
 }
 
+// a API pode refazer uma chamada recusada num modelo de reserva: o painel diz quais modelos de fato responderam
+function respondeu(m) {
+  const r = m.modelos_que_responderam || [];
+  if (!r.length) return "";
+  if (r.length === 1 && r[0] === m.modelo) return `<p>Todas as respostas vieram desse modelo.</p>`;
+  return `<p>Modelos que de fato responderam: ${r.map(x => `<code>${esc(x)}</code>`).join(", ")}. Quando o modelo pedido recusa uma chamada, a API pode refazê-la num modelo de reserva.</p>`;
+}
+
 function metodo(m) {
   const limiar = m.limiar_automatico == null
     ? "<p><b>Publicação automática desligada.</b> Toda ligação é aprovada por uma pessoa antes de aparecer.</p>"
@@ -350,7 +358,7 @@ function metodo(m) {
     <div><h3>Agências incluídas</h3><ul>${m.agencias_incluidas.map(a => `<li><b>${esc(a.nome)}</b>: ${esc(a.via)}</li>`).join("")}</ul></div>
     <div><h3>Agências fora do painel</h3>${m.agencias_excluidas.length ? `<ul>${m.agencias_excluidas.map(a => `<li><b>${esc(a.nome)}</b>: ${esc(a.motivo)}</li>`).join("")}</ul>` : "<p>Nenhuma.</p>"}</div>
     <div><h3>Publicação</h3>${limiar}</div>
-    <div><h3>Modelo de IA</h3><p><code>${esc(m.modelo)}</code>, nas duas etapas: separar as afirmações e confirmar cada ligação.</p></div>
+    <div><h3>Modelo de IA</h3><p><code>${esc(m.modelo)}</code>, nas duas etapas: separar as afirmações e confirmar cada ligação.</p>${respondeu(m)}</div>
     <div><h3>Instruções fixas do modelo</h3>${prompts}</div>`;
 }
 

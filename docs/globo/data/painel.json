@@ -81,7 +81,8 @@
         "motivo": "Não publica dados estruturados (ClaimReview) e não autorizou a coleta até 22/10."
       }
     ],
-    "modelo": "claude-opus-5-5",
+    "modelo": "claude-sonnet-5-5",
+    "modelos_que_responderam": [],
     "prompts": [],
     "limiar_automatico": null
   },

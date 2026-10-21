@@ -22,7 +22,8 @@
     "agencias_excluidas": [
       {"nome": "Lupa", "motivo": "Não publica ClaimReview e não autorizou a coleta das checagens até agora."}
     ],
-    "modelo": "claude-opus-5-5",
+    "modelo": "claude-sonnet-5-5",
+    "modelos_que_responderam": ["claude-sonnet-5-5"],
     "prompts": [
       {"arquivo": "prompts/extrair_afirmacoes.md", "sha256": "3f9a1c0d5e7b2a4f6c8d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b"},
       {"arquivo": "prompts/confirmar_ligacao.md", "sha256": "a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778899aabbccddeeff00"}

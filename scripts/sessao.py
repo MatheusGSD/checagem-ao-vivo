@@ -131,6 +131,7 @@ class Sessao:
         self._reconferindo = set()  # bases sendo reconferidas agora (não é estado do registro)
         self._ultima_base = None
         self._inicio = None  # 00:00 marcado pelo operador (marca_inicio)
+        self._modelos = set()  # modelos que de fato responderam (a API pode refazer no modelo de reserva)
         self._marca_publico()
 
     def _marca_publico(self):
@@ -502,6 +503,8 @@ class Sessao:
             pendente = self._reconferir.get(e.get("base_n", self._ultima_base))
             if pendente:
                 pendente["afirmacoes"] = [a for a in pendente["afirmacoes"] if a["id"] != e["afirmacao"]["id"]]
+        if (e.get("chamada") or {}).get("modelo_respondeu"):
+            self._modelos.add(e["chamada"]["modelo_respondeu"])
         if e["tipo"] == "fala":
             self._falas.append(e["fala"])
         elif e["tipo"] == "erro":
@@ -580,7 +583,8 @@ class Sessao:
         return self._inicio or self._meta.get("inicio_debate")
 
     def _meta_eventos(self):
-        return {"inicio_debate": self._inicio} if self._inicio else {}
+        return {"modelos_que_responderam": sorted(self._modelos),
+                **({"inicio_debate": self._inicio} if self._inicio else {})}
 
     def _fala(self, fala_id):
         return next(f for f in self._falas if f["id"] == fala_id)
@@ -612,6 +616,7 @@ class Sessao:
                          if fof else []),
             **self._agencias(),
             "modelo": MODELO,
+            "modelos_que_responderam": [],
             "prompts": [{"arquivo": f"prompts/{p}", "sha256": sha256_prompt(p)} for p in (EXTRAIR, CONFIRMAR)],
             "limiar_automatico": None,  # desligada, a menos que meta traga o limiar (le_limiar)
         }
@@ -700,8 +705,7 @@ def repassa(falas, pasta_base, saida, chamar=None, paralelo=3, meta=None, resumo
         "ligacoes_propostas": len(s.fila()), "sem_par": len(dados["sem_par"]),
         "descartados": len(s.descartados()), "erros": len(s.erros()), "chamadas_claude": len(chamadas),
         "tokens": {k: sum(c["tokens"][k] for c in chamadas) for k in ("entrada", "saida")},
-        "modelo": dados["meta"]["modelo"],
-        "modelos_que_responderam": sorted({c.get("modelo_respondeu") for c in chamadas} - {None}),
+        "modelo": dados["meta"]["modelo"], "modelos_que_responderam": dados["meta"]["modelos_que_responderam"],
     }
     (saida / "fila.json").write_text(json.dumps({
         "resumo": resumo, "fila": s.fila(), "descartados": s.descartados(), "erros": s.erros(),

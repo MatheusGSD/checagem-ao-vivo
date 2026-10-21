@@ -34,7 +34,8 @@ Regras gerais:
 | `fontes` | lista de `{nome, url}` | canais de coleta da base |
 | `agencias_incluidas` | lista de `{nome, via}` | agências na base, pelo nome exibido, e por qual canal |
 | `agencias_excluidas` | lista de `{nome, motivo}` | agências fora da base e por quê |
-| `modelo` | texto | modelo do Claude usado, ex. `"claude-opus-5-5"` |
+| `modelo` | texto | modelo do Claude pedido nas duas etapas, ex. `"claude-sonnet-5-5"` (configurável por `CHECAGEM_MODELO`) |
+| `modelos_que_responderam` | lista de texto | modelos que de fato responderam às chamadas, sem repetição e em ordem alfabética (a API pode refazer uma chamada recusada num modelo de reserva); vazia antes da primeira resposta |
 | `prompts` | lista de `{arquivo, sha256}` | prompts fixos e o hash SHA-256 do conteúdo |
 | `limiar_automatico` | número de 0 a 1, ou `null` | nota mínima para publicar sem aprovação; `null` = publicação automática desligada |
 

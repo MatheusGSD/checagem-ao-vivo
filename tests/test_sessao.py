@@ -195,6 +195,28 @@ def test_falas_da_mediacao_nao_geram_chamada_de_extracao(indice):
     assert [lig["quem"] for lig in s.fila()] == ["Lula"]
 
 
+def test_metodo_mostra_os_modelos_que_de_fato_responderam(indice):
+    # a API pode refazer a chamada num modelo de reserva: a confirmação aqui saiu de outro modelo
+    dublê = Claude({FALA_PIX: [PIX]})
+
+    def chamar(etapa, prompt, conteudo, schema):
+        saida, reg = dublê(etapa, prompt, conteudo, schema)
+        return saida, {**reg, "modelo_respondeu": "claude-sonnet-5-5" if pedido(schema) == "extracao"
+                       else "claude-opus-5-5"}
+
+    s = Sessao(indice, chamar=chamar, relogio=relogio)
+    assert s.exporta()["meta"]["modelos_que_responderam"] == []
+
+    s.recebe_fala("Flávio", 400.0, FALA_PIX)
+
+    dados = s.exporta()
+    assert dados["meta"]["modelo"] == "claude-sonnet-5-5"  # o pedido
+    assert dados["meta"]["modelos_que_responderam"] == ["claude-opus-5-5", "claude-sonnet-5-5"]
+    assert valida(dados) == []
+    copia = Sessao.reconstroi(indice, json.loads(json.dumps(s.eventos)), chamar=Claude({}), relogio=relogio)
+    assert copia.exporta()["meta"]["modelos_que_responderam"] == ["claude-opus-5-5", "claude-sonnet-5-5"]
+
+
 def test_exportacao_segue_o_contrato_da_pagina(indice):
     gasolina = afirmacao("a gasolina caiu trinta por cento no posto em um ano",
                          "O preço da gasolina caiu 30% em um ano no governo Bolsonaro.", "numero")
@@ -615,12 +637,15 @@ def test_o_publicador_e_avisado_a_cada_mudanca_do_conteudo_publico(indice):
 
     s.recebe_fala("Mediação", 1790.0, FALA_MEDIACAO)  # não muda nada do que é público
     assert avisos == []
-    s.recebe_fala("Flávio", 1800.0, FALA_PIX)  # proposta: só na fila, o painel não muda
-    assert avisos == []
+    s.recebe_fala("Flávio", 1800.0, FALA_PIX)  # proposta: só na fila; o método passa a citar o modelo
+    [dados] = avisos
+    assert (dados["ligacoes"], dados["meta"]["modelos_que_responderam"]) == ([], ["dublê"])
+    s.recebe_fala("Flávio", 1850.0, FALA_PIX)  # outra proposta do mesmo modelo: nada público muda
+    assert len(avisos) == 1
     s.aprova(s.fila()[0]["id"])
 
-    [dados] = avisos
-    assert [lig["trecho"] for lig in dados["ligacoes"]] == [PIX["trecho"]]
+    assert len(avisos) == 2
+    assert [lig["trecho"] for lig in avisos[-1]["ligacoes"]] == [PIX["trecho"]]
 
 
 def test_exportacao_lista_as_agencias_pela_politica_de_agencias(indice):
