@@ -117,6 +117,19 @@ def test_fala_com_afirmacao_que_bate_com_a_base_gera_ligacao_proposta_na_fila(in
     assert (chk["nota"], chk["motivo"]) == (0.92, "Mesma afirmação: desemprego no menor nível da série do IBGE.")
 
 
+def test_fala_que_comecou_antes_do_00_00_aparece_no_painel_com_minutagem_zero(indice):
+    # a linha de falas entrega o começo de verdade (negativo) da fala que estava em andamento no 00:00
+    s = sessao(indice, Claude({FALA_PIX: [PIX]}))
+
+    s.recebe_fala("Flávio", -34.2, FALA_PIX)
+
+    [lig] = s.fila()
+    assert lig["minutagem_s"] == 0.0
+    s.aprova(lig["id"])
+    assert s.exporta()["ligacoes"][0]["minutagem_s"] == 0.0
+    assert valida(s.exporta()) == []
+
+
 def test_trecho_que_nao_e_literal_e_descartado_e_registrado(indice):
     # a transcrição diz "trinta por cento"; o trecho devolvido corrige para "30%"
     corrigido = afirmacao("a gasolina caiu 30% no posto em um ano",

@@ -177,7 +177,8 @@ class Sessao:
     # ---------- interface ----------
 
     def recebe_fala(self, quem, inicio_s, texto):
-        """Uma fala fechada: quem ("Lula", "Flávio" ou outro), início em segundos desde o 00:00 e texto."""
+        """Uma fala fechada: quem ("Lula", "Flávio" ou outro), início em segundos desde o 00:00 (negativo se
+        ela começou antes do 00:00; a minutagem no painel fica 0) e texto."""
         with self._trava:
             fala = self._nova_fala(quem, inicio_s, texto)
             self._registra({"tipo": "fala", "fala": fala})  # registrada antes das chamadas ao Claude
@@ -423,8 +424,9 @@ class Sessao:
         if resposta is None:
             return []
         saida, reg = resposta
+        # a fala que já estava em andamento no 00:00 começa antes dele (inicio_s negativo): no painel, 00:00
         extraidas = [{"id": f"{fala['id']}a{k}", "fala_id": fala["id"], "quem": fala["quem"],
-                      "minutagem_s": fala["inicio_s"], **a}
+                      "minutagem_s": max(0.0, fala["inicio_s"]), **a}
                      for k, a in enumerate(saida["afirmacoes"], 1)]
         # como no agente da Band, o trecho tem de estar na fala letra a letra; se não estiver, sai
         afirmacoes = [a for a in extraidas if a["trecho"].strip() and a["trecho"] in fala["texto"]]

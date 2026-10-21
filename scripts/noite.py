@@ -295,9 +295,10 @@ def _agora():
 
 
 def _texto_da_fala(f):
-    m, seg = divmod(int(f.inicio_s), 60)
+    m, seg = divmod(int(abs(f.inicio_s)), 60)
+    sinal = "-" if f.inicio_s < 0 else ""  # começou antes do 00:00
     atraso = f" (+{f.atraso_s:.0f} s)" if f.atraso_s is not None else ""
-    return f"[{m // 60:d}:{m % 60:02d}:{seg:02d}] {f.quem}{atraso}: {f.texto}"
+    return f"[{sinal}{m // 60:d}:{m % 60:02d}:{seg:02d}] {f.quem}{atraso}: {f.texto}"
 
 
 # ---------------------------------------------------------------- linhas de verdade (scripts/falas.py)

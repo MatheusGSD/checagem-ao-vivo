@@ -7,7 +7,7 @@ Regras gerais:
 - Todo campo listado é obrigatório. Campo a mais é erro, para que um nome errado não passe despercebido.
 - Horários: ISO 8601 com fuso, ex. `"2026-10-23T22:35:10-03:00"`. A página os mostra no horário de Brasília.
 - Datas de checagem: `"AAAA-MM-DD"` ou `null` quando a fonte não traz data.
-- Minutagem: `minutagem_s`, segundos (inteiro ou decimal, ≥ 0) contados do 00:00 marcado pelo operador na abertura do mediador.
+- Minutagem: `minutagem_s`, segundos (inteiro ou decimal, ≥ 0) contados do 00:00 marcado pelo operador na abertura do mediador. Uma fala que já estava em andamento quando o 00:00 foi marcado começou antes dele: aparece com `minutagem_s` 0.
 - `quem`: `"Lula"` ou `"Flávio"`. Falas da mediação não entram.
 - Exemplo completo: `tests/fixtures/exemplo.json`, com dados fictícios, fora do site publicado. Para ver a página com ele sem publicar nada, sirva a raiz do repositório (`python -m http.server 8000`) e abra `http://localhost:8000/docs/globo/?dados=../../tests/fixtures/exemplo.json`. O parâmetro `?dados=` só aceita um caminho relativo para um `.json` do mesmo site; qualquer outra coisa cai em `data/painel.json`.
 
