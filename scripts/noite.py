@@ -10,6 +10,14 @@ O que roda junto (ver `Noite`):
 - a atualização da base a cada 10 min (base_checagens.atualiza -> Sessao.atualiza_base);
 - o publicador (scripts/publicador.py), com --publicar.
 
+Com --esperar-comecar (os atalhos de iniciar/ usam), a tela abre em "Pronto para começar": os modelos
+carregam em segundo plano e a tela mostra a lista que a noite confere sozinha (som capturado, com medidor;
+para qual site publica; credenciais; base; energia; chave do Claude; publicação automática). Só o botão
+Começar (ou Retomar, se a pasta já tem uma sessão) liga a captura, a base, o publicador e o Claude; antes
+disso nada é gravado nem enviado. O botão "Encerrar a noite" da tela faz a mesma saída limpa do Ctrl+C e
+deixa a tela dizendo que já pode fechar a janela. Sem a opção, a noite começa sozinha assim que os
+modelos carregam (como antes).
+
 O 00:00 é marcado uma vez (botão da tela ou Enter no terminal) e vale para a sessão (minutagem e
 aquecimento de 10 min da publicação automática) e para a linha de falas. A publicação automática usa o
 limiar de <dados>/avaliacao/limiar.json (sem ele, ou medido com outro modelo, desligada). Ao vivo, o
@@ -22,6 +30,7 @@ fala entregue, sem chamar o Claude de novo para o que já está no registro e se
 
 Uso:
   python -P scripts/noite.py ao-vivo  [opções]                     # loopback; Enter marca o 00:00
+  python -P scripts/noite.py ao-vivo --esperar-comecar --publicar  # o que iniciar/Noite do debate.cmd roda
   python -P scripts/noite.py arquivo AUDIO --zero S [--inicio S] [--fim S] [--ritmo 1|0] [opções]
   python -P scripts/noite.py pos-debate [GRAVACAO.wav ...] [--zero S] [opções]
       a mesma sessão sobre a(s) gravação(ões) da noite, no ritmo da CPU, gerando o painel completo
@@ -30,7 +39,8 @@ Uso:
 
 Opções comuns: --dados D (CHECAGEM_DADOS ou data/ do checkout principal) · --pasta P (padrão
 D/sessao_globo) · --porta 8765 · --prompt/--vocabulario (Whisper) · --sem-base · --intervalo-base 600 · --explorer-emergencia ·
---publicar [--repo R] [--remoto origin] [--ramo main] [--intervalo 60].
+--publicar [--repo R] [--remoto origin] [--ramo main] [--intervalo 60] · --esperar-comecar · --aviso TEXTO ·
+--destino real|ensaio · --site-url URL.
 """
 import json
 import os
@@ -53,7 +63,8 @@ class Noite:
     def __init__(self, pasta, indice, fabrica_linha, chamar=None, relogio=None, meta=None, paralelo=3,
                  recomeca_se_acabar=False, reinicios=20, espera_reinicio=5.0, atualiza_base=None,
                  intervalo_base=600.0, porta=None, publicador=None, alerta_sem_fala_s=None, log=print,
-                 esperas_entre_tentativas=None, relogio_da_gravacao=False):
+                 esperas_entre_tentativas=None, relogio_da_gravacao=False, carregar=None, preparo=None,
+                 destino=None):
         """pasta: pasta da sessão. fabrica_linha(desde_s) -> linha de falas (iterável de falas.Fala, com
         marcar_zero(instante) e parar()) que entrega só as falas que terminam depois de `desde_s` (segundos
         desde o 00:00; None = do começo). chamar, relogio, meta: os da Sessao. recomeca_se_acabar: ao vivo,
@@ -67,7 +78,11 @@ class Noite:
         alerta_sem_fala_s: ao vivo, avisa na tela (uma vez) quando passa esse tempo sem nenhuma fala
         depois do 00:00 (g1 parado, som no dispositivo errado). esperas_entre_tentativas: o da Sessao
         (padrão: sessao.ESPERAS_ENTRE_TENTATIVAS_S). relogio_da_gravacao: pós-debate; os 10 min de
-        aquecimento da publicação automática contam no áudio (Sessao(aquecimento_pela_gravacao))."""
+        aquecimento da publicação automática contam no áudio (Sessao(aquecimento_pela_gravacao)).
+        carregar() -> modelos (Whisper, vozes...), rodado em segundo plano por `abre`; o resultado fica em
+        `self.modelos` e o Começar só vale depois dele. preparo: a lista que a tela mostra antes do Começar
+        (preparo.Preparo: itens() e parar(), chamado antes de a captura abrir o dispositivo). destino: para
+        onde a noite publica ({"tipo": "real" | "ensaio" | "nenhum", "url": página}), sempre na tela."""
         self.pasta = Path(pasta)
         self.pasta.mkdir(parents=True, exist_ok=True)
         self._fabrica_linha = fabrica_linha
@@ -97,24 +112,112 @@ class Noite:
         self._pronto = threading.Event()  # análises interrompidas retomadas: falas novas podem entrar
         self._alerta_sem_fala_s = alerta_sem_fala_s
         self._ultimo_sinal = time.monotonic()  # última fala, 00:00 marcado ou linha (re)começando
+        self._carregar, self._preparo, self._destino = carregar, preparo, destino
+        self.modelos = None
+        self._aberta = False
+        self._carregado = threading.Event()
+        self._erro_carregar = None
+        self._comecou = threading.Event()
+        self._encerrando = False
+        self._trava_fase = threading.Lock()
+        self.encerrada = threading.Event()  # saída limpa feita (pelo terminal ou pelo botão da tela)
+        self._encerramento = None
+        # sessão interrompida (travou ou fecharam a janela): a tela oferece "Retomar", não "Começar"
+        self.retomada = bool(self._ja_entregues) or any(e["tipo"] in ("fala", "inicio") for e in self.sessao.eventos)
 
     # ---------- interface ----------
 
+    def abre(self):
+        """Sobe a tela, pronta para começar, e carrega os modelos em segundo plano. Nada é capturado,
+        publicado nem enviado ao Claude até `comeca` (o botão Começar ou Retomar da tela)."""
+        with self._trava_fase:
+            if self._aberta:
+                return
+            self._aberta = True
+        if self._porta is not None:
+            from aprovacao import serve
+
+            self.tela = serve(self.sessao, self._porta, self.situacao, controle=self)
+        self._inicia(self._carrega, "carregar")
+
     def comeca(self):
+        """Começa a noite (espera os modelos): retomada das análises interrompidas, linha de falas, base
+        e publicador. Uma vez só; chamar de novo não faz nada. False se já tinha começado."""
+        return self._marca_comeco() and self._liga()
+
+    def _marca_comeco(self):
+        with self._trava_fase:
+            if self._comecou.is_set() or self._encerrando:
+                return False
+            self._comecou.set()
+            return True
+
+    def _liga(self):
+        self.abre()
+        self._carregado.wait()
+        if self._erro_carregar:
+            raise RuntimeError(f"os modelos não carregaram: {self._erro_carregar}")
+        if self._preparo:  # o medidor de som da lista solta o dispositivo antes de a captura abrir
+            self._preparo.parar()
         dados = self.sessao.exporta()
         self._grava_painel(dados)
         if self.publicador and self.publicador.difere_do_remoto(dados, conteudo_publico):
             self.publicador.notifica(dados)
-        if self._porta is not None:
-            from aprovacao import serve
-
-            self.tela = serve(self.sessao, self._porta, self.situacao)
         self._inicia(self._retoma, "retomada")
         if self._alerta_sem_fala_s:
             self._inicia(self._vigia, "vigia")
         self._inicia(self._roda_linha, "linha")
         if self._atualiza_base:
             self._inicia(self._roda_base, "base")
+        return True
+
+    def fase(self):
+        """carregando -> pronto (espera o Começar) -> rodando -> encerrando -> encerrada; falhou se os
+        modelos não carregaram."""
+        if self.encerrada.is_set():
+            return "encerrada"
+        if self._encerrando:
+            return "encerrando"
+        if self._comecou.is_set():
+            return "rodando"
+        if self._erro_carregar:
+            return "falhou"
+        return "pronto" if self._carregado.is_set() else "carregando"
+
+    # ---------- o que a tela pede (aprovacao.serve(controle=...)) ----------
+
+    def pede_comecar(self):
+        """Botão Começar/Retomar: começa numa thread (o publicador confere o remoto antes) e responde já."""
+        f = self.fase()
+        if f == "carregando":
+            raise ValueError("ainda carregando os modelos; o botão libera sozinho em instantes")
+        if f == "falhou":
+            raise ValueError(f"os modelos não carregaram ({self._erro_carregar}); feche a janela e abra de novo")
+        if f in ("encerrando", "encerrada"):
+            raise ValueError("a noite foi encerrada; para retomar, feche a janela e abra o programa de novo")
+        if f == "pronto" and self._marca_comeco():  # já "rodando" na resposta: a tela não oferece de novo
+            threading.Thread(target=self._comeca_pela_tela, name="comecar", daemon=True).start()
+
+    def _comeca_pela_tela(self):
+        try:
+            self._liga()
+        except Exception as e:  # noqa: BLE001 - vai para a tela
+            self.sessao.registra_erro("sessao", f"não começou: {type(e).__name__}: {e}")
+
+    def pede_encerrar(self):
+        """Botão Encerrar a noite: a saída limpa numa thread; a tela segue no ar e mostra quando acabou."""
+        if self.fase() in ("encerrando", "encerrada"):
+            return
+        self._log("encerrando pela tela: parando o áudio, esperando as análises em curso e o último envio...")
+        threading.Thread(target=self.encerra, kwargs={"fechar_tela": False}, name="encerrar", daemon=True).start()
+
+    def aceita_acoes(self):
+        """As ações da fila (aprovar, recusar, 00:00...) só valem com a noite rodando."""
+        f = self.fase()
+        if f in ("encerrando", "encerrada"):
+            raise ValueError("a noite foi encerrada: nada mais vai para o site por esta tela")
+        if f != "rodando":
+            raise ValueError("clique Começar antes")
 
     def marca_zero(self, instante=None):
         """O 00:00 (Enter no terminal; a tela chama sessao.marca_inicio, que dá no mesmo)."""
@@ -127,7 +230,10 @@ class Noite:
         with self._trava:
             linha = self._linha
         ultimo = getattr(linha, "ultimo_audio", lambda: None)()
-        return {"linha": self._estado_linha, "falas": self._n_falas, "ultima_fala_em": self._ultima_fala,
+        return {"fase": self.fase(), "retomada": self.retomada, "destino": self._destino,
+                "erro_ao_carregar": self._erro_carregar, "encerramento": self._encerramento,
+                "preparo": self._preparo.itens() if self._preparo and not self._comecou.is_set() else None,
+                "linha": self._estado_linha, "falas": self._n_falas, "ultima_fala_em": self._ultima_fala,
                 "ultimo_audio_em": datetime.fromtimestamp(ultimo, BRASILIA).isoformat(timespec="milliseconds")
                 if ultimo else None,
                 "nivel_audio_db": getattr(linha, "nivel_audio", lambda: None)(),
@@ -141,7 +247,18 @@ class Noite:
         self._analises.shutdown(wait=True)
         return True
 
-    def encerra(self):
+    def encerra(self, fechar_tela=True):
+        """Saída limpa: para o áudio (a gravação fecha), espera as análises em curso, grava o painel e faz
+        o último envio. fechar_tela=False (o botão da tela): a tela segue no ar, dizendo que acabou.
+        Uma vez só; chamar de novo só espera a primeira terminar (e fecha a tela)."""
+        with self._trava_fase:
+            ja = self._encerrando
+            self._encerrando = True
+        if ja:
+            self.encerrada.wait()
+            if fechar_tela and self.tela:
+                self.tela.shutdown()
+            return
         self._parar.set()
         with self._trava:
             linha = self._linha
@@ -151,19 +268,36 @@ class Noite:
             if th.name == "linha":
                 th.join(60)
         self._linha_acabou.set()
-        if self._threads:  # comecou: a retomada termina antes de as análises fecharem
+        if self._comecou.is_set():  # a retomada termina antes de as análises fecharem
             self._pronto.wait(60)
         self._analises.shutdown(wait=True)
-        if self.tela:
-            self.tela.shutdown()
+        if self._preparo:
+            self._preparo.parar()
         self._grava_painel(self.sessao.exporta())
         self._falas.close()
+        enviado = None
         if self.publicador:
             self._log("enviando o último painel...")
-            if not self.publicador.encerra():
+            enviado = self.publicador.encerra()
+            if not enviado:
                 self._log("ATENÇÃO: o último painel não foi enviado (ver os erros de publicação)")
+        self._encerramento = {"em": _agora(), "ultimo_envio_ok": enviado,
+                              "gravacoes": str(self.pasta / "gravacoes"), "falas": self._n_falas}
+        self.encerrada.set()
+        if fechar_tela and self.tela:
+            self.tela.shutdown()
 
     # ---------- retomada ----------
+
+    def _carrega(self):
+        try:
+            self.modelos = self._carregar() if self._carregar else None
+        except BaseException as e:  # noqa: BLE001 - SystemExit também (perfis de voz faltando): vai para a tela
+            self._erro_carregar = f"{type(e).__name__}: {e}"
+            self.sessao.registra_erro("sessao", f"os modelos não carregaram: {self._erro_carregar}")
+            self._log(f"ERRO: os modelos não carregaram: {self._erro_carregar}")
+        finally:
+            self._carregado.set()
 
     def _retoma(self):
         """Depois de um travamento: termina as análises que ficaram pela metade (só elas chamam o
@@ -466,6 +600,13 @@ def main(argv=None):
         p.add_argument("--remoto", default="origin")
         p.add_argument("--ramo", default="main")
         p.add_argument("--intervalo", type=float, default=60, help="segundos mínimos entre pushes (padrão 60)")
+        p.add_argument("--esperar-comecar", action="store_true",
+                       help="a tela abre em 'Pronto para começar' e só o botão Começar (ou Retomar) liga a captura, "
+                            "a base, o publicador e o Claude (os atalhos de iniciar/ usam)")
+        p.add_argument("--aviso", action="append", default=[], help="aviso para a lista da tela antes do Começar")
+        p.add_argument("--destino", choices=["real", "ensaio"],
+                       help="para onde publica, para a tela (padrão: real com --publicar sem --repo; senão ensaio)")
+        p.add_argument("--site-url", help="a página publicada, para os links da tela (padrão: a do GitHub Pages)")
         p.add_argument("--sair-no-fim", action="store_true",
                        help="arquivo/pos-debate: sai quando a gravação acaba (padrão: a tela segue aberta para a fila)")
     a = ap.parse_args(argv)
@@ -474,7 +615,6 @@ def main(argv=None):
     pasta = Path(a.pasta) if a.pasta else dados / "sessao_globo"
     limiar, sem_limiar = le_limiar(dados)
     indice = Indice.da_pasta(pasta_base(dados))
-    transcritor, reconhecedor = _carrega_modelos(a, dados)
 
     publicador = None
     sessao_ref = {}
@@ -498,23 +638,26 @@ def main(argv=None):
             ao_erro=ao_erro, explorer=a.explorer_emergencia)
 
     if a.cmd == "ao-vivo":
-        fabrica = lambda desde: LinhaAoVivo(pasta, transcritor, reconhecedor, a.dispositivo)  # noqa: E731
+        fabrica = lambda desde: LinhaAoVivo(pasta, *noite.modelos, a.dispositivo)  # noqa: E731
     else:
         gravacoes_ref = {}
 
         def fabrica(desde):
             if "g" not in gravacoes_ref:
                 gravacoes_ref["g"] = _gravacoes(a, pasta, noite._inicio())
-            return LinhaDeArquivos(gravacoes_ref["g"], transcritor, reconhecedor, desde,
+            return LinhaDeArquivos(gravacoes_ref["g"], *noite.modelos, desde,
                                    ritmo=(a.ritmo or None) if a.cmd == "arquivo" else None,
                                    registro=pasta / "linha.jsonl")
 
+    destino = _destino(a)
+    preparo = _preparo(a, dados, indice, limiar, sem_limiar, destino) if a.esperar_comecar else None
     noite = Noite(pasta, indice, fabrica, chamar=chamar, meta={"limiar_automatico": limiar,
                                                                **({"encerrado": True} if a.cmd == "pos-debate" else {})},
                   paralelo=a.paralelo, recomeca_se_acabar=a.cmd == "ao-vivo", atualiza_base=atualiza_base,
                   intervalo_base=a.intervalo_base, porta=a.porta, publicador=publicador,
                   alerta_sem_fala_s=180 if a.cmd == "ao-vivo" else None, log=lambda m: print(m, flush=True),
-                  relogio_da_gravacao=a.cmd != "ao-vivo")  # arquivo e pós-debate: o relógio é o do áudio
+                  relogio_da_gravacao=a.cmd != "ao-vivo",  # arquivo e pós-debate: o relógio é o do áudio
+                  carregar=lambda: _carrega_modelos(a, dados), preparo=preparo, destino=destino)
     sessao_ref["s"] = noite.sessao
     if sem_limiar:  # o operador vê na tela por que nada sai sozinho
         noite.sessao.registra_erro("limiar", f"publicação automática desligada: {sem_limiar}", uma_vez=True)
@@ -523,25 +666,68 @@ def main(argv=None):
     print(f"sessão: {pasta} ({len(noite.sessao.eventos)} eventos no registro) · base: {len(indice.registros)} checagens · "
           f"modelo: {MODELO} · publicação automática: "
           + (f"nota >= {limiar} depois de 10 min" if limiar is not None else f"desligada ({sem_limiar})")
-          + (f" · publicador -> {a.remoto}/{a.ramo}" if publicador else " · sem publicar"), flush=True)
-    noite.comeca()
+          + (f" · publicador -> {a.remoto}/{a.ramo} ({destino['tipo']})" if publicador else " · sem publicar"), flush=True)
+    noite.abre()
     print(f"tela de aprovação: http://127.0.0.1:{noite.tela.server_address[1]}/", flush=True)
     _ctrl_break_encerra()
     try:
+        if a.esperar_comecar:
+            print(("Pronto. Na tela, confira a lista e clique " + ("Retomar" if noite.retomada else "Começar"))
+                  + ". Nada é capturado nem enviado ao Claude antes disso.", flush=True)
+        else:
+            noite.comeca()
         if a.cmd == "ao-vivo":
             _terminal_ao_vivo(noite)
         else:
-            while not noite.espera(timeout=1):  # com timeout: o Ctrl+C chega no Windows
+            while not noite.encerrada.is_set() and not noite.espera(timeout=1):  # com timeout: o Ctrl+C chega no Windows
                 pass
-            print("a gravação acabou: painel completo em " + str(pasta / "painel.json"), flush=True)
-            if not a.sair_no_fim:
-                print("a tela segue aberta para a fila. Ctrl+C encerra.", flush=True)
-                _espera_ctrl_c()
+            if not noite.encerrada.is_set():
+                print("a gravação acabou: painel completo em " + str(pasta / "painel.json"), flush=True)
+                if not a.sair_no_fim:
+                    print("a tela segue aberta para a fila. Ctrl+C (ou Encerrar a noite, na tela) encerra.", flush=True)
+                    while not noite.encerrada.wait(1):
+                        pass
     except KeyboardInterrupt:
         pass
+    if noite.encerrada.is_set() and noite.tela:  # encerrada pelo botão da tela: ela segue no ar até fecharem
+        print(f"Noite encerrada pela tela às {datetime.now(BRASILIA):%H:%M:%S}. Gravações em {pasta / 'gravacoes'}. "
+              "Já pode fechar esta janela.", flush=True)
+        try:
+            _espera_ctrl_c()
+        except KeyboardInterrupt:
+            pass
+        noite.encerra()
+        return
     print("encerrando: parando o áudio, esperando as análises em curso e o último envio...", flush=True)
     noite.encerra()
     print(f"encerrada às {datetime.now(BRASILIA):%H:%M:%S}", flush=True)
+
+
+def _destino(a):
+    """Para onde a noite publica, para a tela: o site de verdade, uma cópia de ensaio ou nenhum."""
+    from aprovacao import SITE
+
+    if not a.publicar:
+        return {"tipo": "nenhum", "url": a.site_url or SITE, "descricao": "não publica (sem --publicar)"}
+    tipo = a.destino or ("ensaio" if a.repo else "real")
+    url = a.site_url or (SITE if tipo == "real" else None)
+    return {"tipo": tipo, "url": url, "descricao": f"{a.remoto}/{a.ramo}" if tipo == "real" else ""}
+
+
+def _preparo(a, dados, indice, limiar, sem_limiar, destino):
+    """A lista que a tela mostra antes do Começar (scripts/preparo.py)."""
+    import preparo as pr
+    from base_checagens import pasta_base
+    from publicador import RAIZ as REPO_PADRAO
+
+    medidor = pr.MedidorDeSom(a.dispositivo) if a.cmd == "ao-vivo" else None
+    itens = [pr.item_som(medidor)] if medidor else []
+    if a.publicar:
+        itens.append(pr.item_credenciais(a.repo or REPO_PADRAO, a.remoto, a.ramo, destino["tipo"]))
+    itens += [pr.item_energia(), pr.item_base(pasta_base(dados), len(indice.registros), atualiza=not a.sem_base),
+              pr.item_chave_claude(), pr.item_automatica(limiar, sem_limiar)]
+    itens += [pr.item_aviso(k, texto) for k, texto in enumerate(a.aviso)]
+    return pr.Preparo(itens, medidor=medidor)
 
 
 def _marca_inicio_pela_gravacao(noite, gravacao):
@@ -572,20 +758,30 @@ def _ctrl_break_encerra():
 
 
 def _terminal_ao_vivo(noite):
-    """Enter marca o 00:00; depois disso, remarcar exige digitar 'remarcar'. Ctrl+C encerra."""
-    print("Capturando o som do computador. Enter marca o 00:00 (abertura do mediador); "
-          "o botão da tela faz o mesmo. Ctrl+C encerra.", flush=True)
-    while True:
-        try:
-            texto = input().strip().lower()
-        except EOFError:  # sem terminal: espera o Ctrl+C
-            _espera_ctrl_c()
-        inicio = noite._inicio()
-        if inicio is None or texto == "remarcar":
-            noite.marca_zero()
-            print(f"00:00 marcado às {noite._inicio():%H:%M:%S}.", flush=True)
-        else:
-            print(f"00:00 já marcado às {inicio:%H:%M:%S}. Para remarcar agora, digite 'remarcar' e Enter.", flush=True)
+    """Enter marca o 00:00 (depois de começar); depois disso, remarcar exige digitar 'remarcar'. Volta
+    quando a noite é encerrada pela tela; Ctrl+C encerra."""
+    def teclado():
+        while True:
+            try:
+                texto = input().strip().lower()
+            except (EOFError, OSError):  # sem terminal: só a tela
+                return
+            if noite.fase() != "rodando":
+                print("Clique Começar (ou Retomar) na tela primeiro." if noite.fase() in ("pronto", "carregando")
+                      else f"A noite está {noite.fase()}.", flush=True)
+                continue
+            inicio = noite._inicio()
+            if inicio is None or texto == "remarcar":
+                noite.marca_zero()
+                print(f"00:00 marcado às {noite._inicio():%H:%M:%S}.", flush=True)
+            else:
+                print(f"00:00 já marcado às {inicio:%H:%M:%S}. Para remarcar agora, digite 'remarcar' e Enter.", flush=True)
+
+    print("Depois do Começar: Enter marca o 00:00 (abertura do mediador); o botão da tela faz o mesmo. "
+          "Ctrl+C ou o botão Encerrar a noite encerram.", flush=True)
+    threading.Thread(target=teclado, name="teclado", daemon=True).start()
+    while not noite.encerrada.wait(1):  # com timeout: o Ctrl+C chega no Windows
+        pass
 
 
 if __name__ == "__main__":

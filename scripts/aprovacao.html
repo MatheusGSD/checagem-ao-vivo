@@ -68,6 +68,73 @@
   .btn-quieto { background: transparent; color: var(--banda-suave); border: 1px solid rgba(255, 255, 255, .22);
                 border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; }
   .btn-quieto:hover { color: var(--banda-tinta); border-color: rgba(255, 255, 255, .5); }
+  .btn-encerrar { background: transparent; color: #ffb4ab; border: 1.5px solid #ffb4ab; border-radius: 10px;
+                  padding: 10px 16px; font: 650 15px/1.1 var(--titulo); cursor: pointer; white-space: nowrap; }
+  .btn-encerrar:hover { background: rgba(255, 180, 171, .12); }
+
+  /* ---------- para onde publica: sempre à vista, com cor própria ---------- */
+  .destino { color: #fff; font-weight: 650; }
+  .destino-in { max-width: 1680px; margin: 0 auto; padding: 6px 24px; display: flex; flex-wrap: wrap; gap: 4px 14px;
+                align-items: baseline; font-size: 14px; }
+  .destino b { font: 800 14px/1.2 var(--titulo); letter-spacing: .06em; text-transform: uppercase; }
+  .destino a { color: inherit; font-weight: 500; }
+  .destino[data-tipo="real"] { background: #c2410c; }
+  .destino[data-tipo="ensaio"] { background: #5b3cc4; }
+  .destino[data-tipo="nenhum"] { background: #4b5763; }
+  .destino:not([data-tipo]) { display: none; }
+
+  /* ---------- antes do Começar: a lista que a noite confere sozinha ---------- */
+  #preparo { grid-column: 1 / -1; }
+  #preparo[hidden], #encerrada[hidden], #confirma-encerrar[hidden] { display: none; }
+  .preparo { background: var(--superficie); border: 1px solid var(--linha); border-radius: 16px; box-shadow: var(--sombra);
+             padding: 22px 26px 24px; display: grid; gap: 18px; }
+  .preparo h2 { font: 700 28px/1.2 var(--titulo); margin: 0; }
+  .preparo .sub { margin: -10px 0 0; color: var(--suave); font-size: 16px; }
+  .alvo { border-radius: 14px; padding: 14px 18px; color: #fff; display: grid; gap: 2px; }
+  .alvo .rot { font-size: 13px; opacity: .9; }
+  .alvo .nome { font: 800 24px/1.2 var(--titulo); letter-spacing: .01em; }
+  .alvo .det { font-size: 14px; opacity: .95; overflow-wrap: anywhere; }
+  .alvo a { color: #fff; }
+  .alvo[data-tipo="real"] { background: #c2410c; }
+  .alvo[data-tipo="ensaio"] { background: #5b3cc4; }
+  .alvo[data-tipo="nenhum"] { background: #4b5763; }
+  .lista { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  .lista .lampada { border: 1px solid var(--linha); padding: 12px 14px; }
+  .lista .lampada .n { grid-column: 2; font-size: 12px; color: var(--suave); text-transform: uppercase; letter-spacing: .05em; order: -1; }
+  .lampada[data-estado="verificando"] .luz { background: transparent; box-shadow: inset 0 0 0 2px var(--foco);
+                                             animation: pisca 1.2s ease-in-out infinite; }
+  @keyframes pisca { 50% { opacity: .3; } }
+  @media (prefers-reduced-motion: reduce) { .lampada[data-estado="verificando"] .luz { animation: none; } }
+  .vu { display: flex; gap: 3px; align-items: flex-end; height: 26px; margin-top: 6px; grid-column: 2; }
+  .vu i { flex: 1; max-width: 14px; background: var(--linha); border-radius: 2px; }
+  .vu i.aceso { background: var(--ok); }
+  .vu i.aceso.alto { background: var(--atencao); }
+  .vu .db { margin-left: 8px; font-size: 13px; color: var(--suave); align-self: center; white-space: nowrap; }
+  .comecar-linha { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; }
+  .btn-comecar { background: var(--aprovar); color: var(--aprovar-tinta); border: 0; border-radius: 14px;
+                 padding: 18px 44px; font: 800 26px/1.1 var(--titulo); cursor: pointer; }
+  .btn-comecar:hover:not(:disabled) { filter: brightness(1.08); }
+  .btn-comecar:disabled { background: var(--neutro-fundo); color: var(--suave); cursor: progress; }
+  .comecar-linha .nota { color: var(--suave); font-size: 14px; max-width: 60ch; }
+  .retomada { background: var(--atencao-fundo); color: var(--tinta); border-radius: 10px; padding: 10px 14px; font-size: 15px; }
+  .retomada b { font-weight: 650; }
+  body.antes:not(.sessao-retomada) main > .col { display: none; }
+  body.fim .decisao, body.fim details.editar, body.fim details.corrigir, body.fim .criterio { display: none; }
+  body.antes .faixa, body.fim .faixa { display: none; }
+
+  /* ---------- encerrar ---------- */
+  .confirma { background: var(--problema-fundo); border-bottom: 1px solid var(--problema); }
+  .confirma-in { max-width: 1680px; margin: 0 auto; padding: 14px 24px; display: flex; flex-wrap: wrap; gap: 10px 18px;
+                 align-items: center; }
+  .confirma p { margin: 0; flex: 1 1 420px; font-size: 15px; }
+  .confirma p b { font-weight: 700; }
+  .btn.encerrar-sim { background: var(--problema); border-color: var(--problema); color: #fff; font: 700 16px/1.1 var(--titulo); padding: 12px 20px; }
+  #encerrada { grid-column: 1 / -1; }
+  .fim-cartao { background: var(--superficie); border: 1px solid var(--linha); border-left: 8px solid var(--ok); border-radius: 16px;
+                padding: 22px 26px; display: grid; gap: 10px; box-shadow: var(--sombra); }
+  .fim-cartao h2 { font: 700 28px/1.2 var(--titulo); margin: 0; }
+  .fim-cartao ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+  .fim-cartao .ruim { color: var(--problema); font-weight: 650; }
 
   /* ---------- faixa de estado: uma lâmpada por parte da noite ---------- */
   .faixa { background: var(--superficie); border-bottom: 1px solid var(--linha); box-shadow: var(--sombra); }
@@ -282,6 +349,7 @@
 </style>
 </head>
 <body>
+<div class="destino" id="destino" role="note"><div class="destino-in" id="destino-in"></div></div>
 <header class="banda" id="banda" data-estado="ok">
   <div class="banda-in">
     <div class="relogio sem" id="relogio-debate">
@@ -295,14 +363,36 @@
     <div class="banda-acoes">
       <button type="button" class="btn-zero" id="marcar">Marcar 00:00</button>
       <button type="button" class="btn-quieto" id="remarcar" hidden>Remarcar 00:00</button>
+      <button type="button" class="btn-encerrar" id="encerrar" hidden>Encerrar a noite</button>
     </div>
   </div>
 </header>
+<div class="confirma" id="confirma-encerrar" role="alertdialog" aria-labelledby="confirma-texto" hidden>
+  <div class="confirma-in">
+    <p id="confirma-texto"></p>
+    <button type="button" class="btn encerrar-sim" id="encerrar-sim">Sim, encerrar a noite</button>
+    <button type="button" class="btn" id="encerrar-nao">Voltar</button>
+  </div>
+</div>
 <div class="faixa" role="region" aria-label="Estado da noite">
   <div class="faixa-in" id="faixa"></div>
 </div>
 
 <main>
+  <section id="preparo" aria-labelledby="h-preparo" hidden>
+    <div class="preparo">
+      <h2 id="h-preparo">Pronto para começar</h2>
+      <p class="sub" id="sub-preparo"></p>
+      <div class="alvo" id="alvo"></div>
+      <div id="retomada"></div>
+      <div class="lista" id="lista"></div>
+      <div class="comecar-linha">
+        <button type="button" class="btn-comecar" id="comecar" disabled>Carregando…</button>
+        <span class="nota" id="nota-comecar"></span>
+      </div>
+    </div>
+  </section>
+  <section id="encerrada" aria-live="polite" hidden><div class="fim-cartao" id="fim"></div></section>
   <div class="col">
     <section id="problemas" aria-label="Problemas" aria-live="polite"></section>
     <section aria-labelledby="h-fila">
@@ -451,9 +541,9 @@ function lampadas(e) {
   if (!s || s.linha === undefined) {
     a = {estado: "neutro", t: "Sem áudio nesta tela", s: "Só aprovação. O áudio roda no comando da noite."};
   } else if (/caiu/.test(s.linha)) {
-    a = {estado: "problema", t: "Áudio caiu", s: "Recomeçando sozinho em uns 5 s.", f: "Se não voltar em 1 min, rode o mesmo comando de novo."};
+    a = {estado: "problema", t: "Áudio caiu", s: "Recomeçando sozinho em uns 5 s.", f: "Se não voltar em 1 min, feche a janela do programa, abra o atalho de novo e clique Retomar."};
   } else if (s.linha === "parada") {
-    a = {estado: "problema", t: "Captura parada", f: "Rode o mesmo comando de novo: a sessão retoma de onde parou."};
+    a = {estado: "problema", t: "Captura parada", f: "Feche a janela do programa, abra o atalho de novo e clique Retomar: a sessão segue de onde parou."};
   } else if (s.linha === "começando" || idade == null) {
     a = {estado: "atencao", t: "Ligando a captura…", s: "O primeiro som chega em segundos."};
   } else if (idade > 15) {
@@ -530,8 +620,106 @@ function desenhaFaixa(e) {
   return itens;
 }
 
+// ---------- fases da noite: pronto para começar -> rodando -> encerrando -> encerrada ----------
+const fase = (e) => (e.situacao && e.situacao.fase) || "rodando";  // tela só de aprovação (aprovacao.py): sem fases
+const ANTES = ["carregando", "pronto", "falhou"];
+const DESTINOS = {
+  real: {nome: "Site de verdade", faixa: "o que sair desta tela vai para o público",
+         det: "Publica no GitHub Pages, o site público do painel."},
+  ensaio: {nome: "Ensaio: cópia local do site", faixa: "nada vai para o GitHub",
+           det: "Publica numa cópia descartável, só nesta máquina. Abra o link para ver a página do leitor."},
+  nenhum: {nome: "Não publica", faixa: "nada sai desta máquina", det: "Sessão sem publicação."},
+};
+function desenhaDestino(e) {
+  const d = e.situacao && e.situacao.destino, el = $("destino");
+  if (!d) { el.removeAttribute("data-tipo"); return; }
+  const x = DESTINOS[d.tipo] || {nome: d.tipo, faixa: ""};
+  el.dataset.tipo = d.tipo;
+  $("destino-in").innerHTML = `<b>${esc(x.nome)}</b><span>${esc(x.faixa)}</span>${d.url
+    ? `<a href="${link(d.url)}" target="_blank" rel="noopener noreferrer">${esc(d.url)}</a>` : ""}`;
+}
+function medidorGrande(db) {
+  const n = 14, acesas = db == null ? 0 : Math.max(0, Math.min(n, Math.round((db + 60) / 54 * n)));
+  const barras = Array.from({length: n}, (_, k) => `<i class="${k < acesas ? "aceso" + (k >= n - 2 ? " alto" : "") : ""}" style="height:${25 + 75 * (k + 1) / n}%"></i>`).join("");
+  return `<span class="vu" aria-label="nível do som">${barras}<span class="db">${db == null ? "" : db <= -89 ? "silêncio" : `${num(db, 0)} dB`}</span></span>`;
+}
+function desenhaPreparo(e) {
+  const s = e.situacao || {}, f = fase(e), antes = ANTES.includes(f);
+  document.body.classList.toggle("antes", antes);
+  document.body.classList.toggle("sessao-retomada", !!s.retomada);
+  document.body.classList.toggle("fim", f === "encerrada");
+  $("preparo").hidden = !antes;
+  if (antes) {
+    const d = s.destino || {tipo: "nenhum"}, x = DESTINOS[d.tipo] || DESTINOS.nenhum;
+    $("h-preparo").textContent = f === "carregando" ? "Carregando os modelos…" : f === "falhou" ? "Os modelos não carregaram"
+      : s.retomada ? "Pronto para retomar" : "Pronto para começar";
+    $("sub-preparo").textContent = f === "falhou"
+      ? `Feche a janela do programa e abra o atalho de novo. Detalhe: ${s.erro_ao_carregar || ""}`
+      : "Confira a lista. Nada é gravado, publicado nem enviado ao Claude antes do clique.";
+    const alvo = $("alvo");
+    alvo.dataset.tipo = d.tipo;
+    alvo.innerHTML = `<span class="rot">Publica em</span><span class="nome">${esc(x.nome)}</span>
+      <span class="det">${esc(x.det)}${d.url ? ` <a href="${link(d.url)}" target="_blank" rel="noopener noreferrer">${esc(d.url)}</a>` : ""}${d.descricao ? ` · ${esc(d.descricao)}` : ""}</span>`;
+    const c = e.contagens || {}, falas = Object.values(c).reduce((t, q) => t + (q.falas || 0), 0);
+    $("retomada").innerHTML = s.retomada ? `<div class="retomada"><b>Sessão interrompida nesta pasta.</b>
+      ${e.meta.inicio_debate ? `00:00 marcado às ${hora(e.meta.inicio_debate)} · ` : "00:00 ainda não marcado · "}${plural(falas, "fala de candidato", "falas de candidato")} ·
+      ${plural(e.publicadas.length, "ligação no site", "ligações no site")} · ${plural(e.fila.length, "na fila", "na fila")}.
+      Retomar segue de onde parou, com o mesmo 00:00, sem repetir o que já foi feito.</div>` : "";
+    const itens = s.preparo || [];
+    $("lista").innerHTML = itens.map((it) => `<div class="lampada" data-estado="${esc(it.estado)}" aria-label="${esc(it.nome)}">
+      <span class="luz" aria-hidden="true"></span><span class="n">${esc(it.nome)}</span><span class="t">${esc(it.t)}</span>
+      ${it.s ? `<span class="s">${esc(it.s)}</span>` : ""}${it.id === "som" && it.nivel_db !== undefined ? medidorGrande(it.nivel_db) : ""}</div>`).join("")
+      || `<div class="vazio">Sem lista nesta sessão.</div>`;
+    const botao = $("comecar");
+    if (!botao.dataset.clicado) {
+      botao.disabled = f !== "pronto";
+      botao.textContent = f === "carregando" ? "Carregando…" : f === "falhou" ? "Não dá para começar" : s.retomada ? "Retomar" : "Começar";
+    }
+    const problemas = itens.filter((it) => it.estado === "problema").length;
+    $("nota-comecar").textContent = f === "carregando" ? "O botão libera sozinho quando os modelos carregarem (uns 30 s a 1 min)."
+      : f === "falhou" ? "" : (problemas ? `${plural(problemas, "item vermelho", "itens vermelhos")} na lista: resolva antes, se der. ` : "")
+        + (s.retomada ? "Retomar liga a captura de novo e segue a sessão." : "Começar liga a captura do som, a base e o envio ao site. Depois, marque o 00:00 na abertura do mediador.");
+  }
+  const fim = $("encerrada");
+  fim.hidden = f !== "encerrada";
+  if (f === "encerrada") {
+    const en = s.encerramento || {};
+    $("fim").innerHTML = `<h2>Noite encerrada às ${horaCurta(en.em)}</h2>
+      <p><b>Já pode fechar a janela do programa</b> (a janela preta com as mensagens). Esta tela fica parada depois disso.</p>
+      <ul><li>Gravações guardadas em <code>${esc(en.gravacoes)}</code>.</li>
+        <li>${en.ultimo_envio_ok === true ? "Último envio ao site: feito."
+          : en.ultimo_envio_ok === false ? `<span class="ruim">O último envio ao site não foi feito.</span> Confira a internet, abra o atalho de novo, clique Retomar e encerre outra vez.`
+          : "Esta sessão não publicava no site."}</li>
+        ${e.fila.length ? `<li>${plural(e.fila.length, "ligação ficou", "ligações ficaram")} na fila sem decisão.</li>` : ""}
+        <li>Para retomar, abra o atalho de novo: a tela mostra Retomar.</li></ul>`;
+  }
+}
+function pedeEncerrar() {
+  const n = ultimo ? ultimo.fila.length : 0;
+  $("confirma-texto").innerHTML = `<b>Encerrar a noite?</b> Para a captura do som (as gravações ficam guardadas), espera as análises em curso e faz o último envio ao site.${n ? ` <b>${plural(n, "ligação na fila não vai", "ligações na fila não vão")} mais poder ser aprovada${n > 1 ? "s" : ""} por esta tela.</b>` : ""}`;
+  $("confirma-encerrar").hidden = false;
+  $("encerrar-nao").focus();
+}
+
 // ---------- o que fazer agora ----------
+function oQueFazerFase(e) {
+  const f = fase(e), s = e.situacao || {};
+  if (f === "carregando") return ["Carregando os modelos…", "Enquanto isso, confira a lista e dê play no g1 para ver o medidor de som subir.", "ok"];
+  if (f === "pronto") return [s.retomada ? "Confira a lista e clique Retomar." : "Confira a lista e clique Começar.",
+    "Depois, marque o 00:00 quando o mediador abrir o debate.", "ok"];
+  if (f === "falhou") return ["Os modelos não carregaram. Feche a janela do programa e abra o atalho de novo.", s.erro_ao_carregar || "", "problema"];
+  if (f === "encerrando") return ["Encerrando a noite…", "Esperando as análises em curso e o último envio ao site. Não feche a janela ainda.", "ok"];
+  if (f === "encerrada") return ["Noite encerrada. Já pode fechar a janela do programa.", "As gravações ficaram guardadas.", "ok"];
+  return null;
+}
 function oQueFazer(e, itens) {
+  const pela_fase = oQueFazerFase(e);
+  if (pela_fase) {
+    const [principal, segunda, estado] = pela_fase;
+    $("fazer").innerHTML = `${esc(principal)}${segunda ? `<span class="segunda">${esc(segunda)}</span>` : ""}`;
+    $("banda").dataset.estado = estado;
+    return;
+  }
   const n = e.fila.length, inicio = e.meta.inicio_debate;
   const problema = itens.find((x) => x.estado === "problema");
   const fila = n ? (n === 1 ? "1 ligação esperando você." : `${n} ligações esperando você. Comece pela de cima.`) : "";
@@ -809,8 +997,14 @@ function tique() {
 }
 function semConexao() {
   foraDesde = foraDesde || new Date().toISOString();
+  if (ultimo && fase(ultimo) === "encerrada") {  // fecharam a janela depois de encerrar: tudo certo
+    $("banda").dataset.estado = "ok";
+    $("fazer").innerHTML = `O programa foi fechado depois de encerrar a noite.<span class="segunda">Tudo certo. Para retomar, abra o atalho de novo.</span>`;
+    $("conexao").textContent = "Programa fechado.";
+    return;
+  }
   $("banda").dataset.estado = "problema";
-  $("fazer").innerHTML = `A tela perdeu contato com o programa.<span class="segunda">Se o terminal fechou, rode o mesmo comando de novo: a sessão retoma de onde parou. Sem contato <span data-desde="${foraDesde}">${ha(foraDesde)}</span>.</span>`;
+  $("fazer").innerHTML = `A tela perdeu contato com o programa.<span class="segunda">Se a janela do programa fechou, abra o atalho de novo e clique Retomar: a sessão segue de onde parou. Sem contato <span data-desde="${foraDesde}">${ha(foraDesde)}</span>.</span>`;
   $("conexao").textContent = "Sem contato com o programa.";
 }
 async function atualiza(forca) {
@@ -823,10 +1017,15 @@ async function atualiza(forca) {
   foraDesde = null;
   ultimo = e; SITE = e.site || "#";
   $("conexao").textContent = `Conectado; dados de ${hora(e.agora)}.`;
-  const itens = desenhaFaixa(e);  // muda sem evento novo (áudio, chamadas em curso, envio)
+  desenhaDestino(e);
+  desenhaPreparo(e);
+  const f = fase(e);
+  const itens = ANTES.includes(f) || f === "encerrada" ? [] : desenhaFaixa(e);  // muda sem evento novo (áudio, chamadas em curso, envio)
   oQueFazer(e, itens);
-  $("marcar").hidden = !!e.meta.inicio_debate;
-  $("remarcar").hidden = !e.meta.inicio_debate;
+  $("marcar").hidden = f !== "rodando" || !!e.meta.inicio_debate;
+  $("remarcar").hidden = f !== "rodando" || !e.meta.inicio_debate;
+  $("encerrar").hidden = !(e.situacao && e.situacao.fase) || f !== "rodando";
+  if (f !== "rodando") $("confirma-encerrar").hidden = true;
   tique();
   if (e.versao === versao && !forca) return;
   versao = e.versao;
@@ -890,6 +1089,15 @@ $("marcar").onclick = (ev) => {
   if (confirm("Marcar o 00:00 do debate agora (abertura do mediador)?"))
     acao("inicio", {}, ev.target, "00:00 marcado.").then(() => { ev.target.disabled = false; });
 };
+$("comecar").onclick = (ev) => {
+  const botao = ev.target;
+  botao.dataset.clicado = "1";
+  botao.textContent = "Começando…";
+  acao("comecar", {}, botao, "Começou: a captura está ligando.").finally(() => { delete botao.dataset.clicado; });
+};
+$("encerrar").onclick = pedeEncerrar;
+$("encerrar-nao").onclick = () => { $("confirma-encerrar").hidden = true; };
+$("encerrar-sim").onclick = (ev) => acao("encerrar", {}, ev.target, "Encerrando a noite…").then(() => { ev.target.disabled = false; });
 $("remarcar").onclick = (ev) => {
   if (confirm("Remarcar o 00:00 para AGORA? Todas as minutagens passam a contar deste instante."))
     acao("inicio", {}, ev.target, "00:00 remarcado.").then(() => { ev.target.disabled = false; });

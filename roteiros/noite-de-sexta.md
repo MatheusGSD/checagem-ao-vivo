@@ -1,6 +1,10 @@
 # Noite de sexta (23/10/2026, Globo, 21h20): checklist do operador
 
-Um comando põe a noite de pé: `scripts/noite.py`. Ele cuida de:
+A noite começa com **duplo clique** no atalho `iniciar\Noite do debate.cmd` (na pasta do projeto). Sem terminal:
+
+**duplo clique → conferir a lista na tela → Começar → Marcar 00:00 → aprovar a fila → Encerrar a noite.**
+
+Por trás, o atalho roda `scripts/noite.py`, que cuida de:
 
 - captura do som do computador, gravada em arquivo;
 - transcrição e quem fala;
@@ -14,7 +18,7 @@ Tudo roda no notebook principal. O notebook reserva só grava (ver `roteiros/not
 
 ### Na sexta de manhã ou à tarde
 
-- [ ] **Ensaio geral audível nos dois notebooks**, na tomada: o áudio da Band tocando no navegador e capturado pelo loopback (passo a passo no fim deste arquivo).
+- [ ] **Ensaio geral audível nos dois notebooks**, na tomada: o áudio da Band tocando no navegador e capturado pelo loopback, com o atalho `iniciar\Ensaio.cmd` (passo a passo no fim deste arquivo).
 - [ ] **Base em dia:**
   - `python -P scripts/base_checagens.py atualizar`, que puxa as checagens do último dia;
   - `python -P scripts/base_checagens.py fato-ou-fake`, que só lê o que mudou.
@@ -23,7 +27,7 @@ Tudo roda no notebook principal. O notebook reserva só grava (ver `roteiros/not
   - os nomes dos mediadores;
   - os temas do telão;
   - os nomes citados que se espera ouvir.
-- [ ] **Credenciais do site:** `python -P scripts/publicador.py verifica` tem que terminar em `ok: origin/main aceita push`. Se falhar, resolva o login do git (Git Credential Manager) agora, não às 21h.
+- [ ] **Credenciais do site:** a tela confere sozinha ("Credenciais do site" na lista, com um push simulado). Se ficar vermelho, rode `python -P scripts/publicador.py verifica` num terminal e resolva o login do git (Git Credential Manager) agora, não às 21h.
 - [ ] **Chaves:** o `.env` da raiz tem `ANTHROPIC_API_KEY` e `GOOGLE_FACTCHECK_KEY`.
 
 ### Às 20h30
@@ -33,26 +37,37 @@ Tudo roda no notebook principal. O notebook reserva só grava (ver `roteiros/not
 - [ ] **Notificações do Windows desligadas** ("Não perturbe"). O loopback grava **tudo** que toca no computador: nenhum outro vídeo, aviso ou música até o fim.
 - [ ] **g1 tocando na saída padrão do Windows**, com o som do player no máximo e sem mudo. Confira em Configurações > Som > Saída qual é a padrão. O teste da tarde gravou de "Speakers (Realtek(R) Audio) [Loopback]".
 
-### Às 21h00: subir a noite
+### Às 21h00: abrir a noite
+
+- [ ] **Duplo clique em `iniciar\Noite do debate.cmd`.** Abre uma janela preta (deixe aberta: ela mostra o que o programa faz) e, em instantes, a tela do operador no navegador, em **http://127.0.0.1:8765/**.
+- [ ] A faixa **laranja** no alto diz **Site de verdade**. No ensaio ela é **roxa** e diz "Ensaio: cópia local do site". Se estiver roxa às 21h, feche e abra o atalho certo.
+- [ ] A tela abre em **"Pronto para começar"**. Os modelos carregam sozinhos ("Carregando…", uns 30 s a 1 min); o botão **Começar** só libera depois. Até o clique, nada é gravado, publicado nem enviado ao Claude.
+- [ ] **Confira a lista**, que a tela preenche sozinha:
+  - **Som do computador:** o dispositivo capturado (a saída onde o g1 toca, com "[Loopback]") e um medidor. Dê play no g1 e veja o medidor subir;
+  - **Credenciais do site:** "Site aceita envio" (push simulado, nada é enviado);
+  - **Energia:** "Na tomada, em Melhor desempenho". Na bateria fica vermelho;
+  - **Base de checagens:** quantas checagens e quando foi atualizada;
+  - **Chave do Claude** presente;
+  - **Publicação automática:** ligada (com o limiar) ou desligada (toda ligação passa por você);
+  - **Aviso** laranja se faltar `data/vocabulario_globo.json`: a noite roda assim mesmo, com o vocabulário da Band.
+- [ ] **Notebook reserva gravando** (`falas.py gravar`, ver o roteiro dele).
+- [ ] **Clique Começar.** A captura, a transcrição, a base (a primeira atualização roda logo e leva uns 5 min) e o envio ao site ligam. A tela vira a mesa de sempre: a linha "O que fazer agora" diz o próximo passo e a faixa de estado tem uma luz por parte da noite (Áudio com o medidor, Análise, Site, Base e Publicação automática).
+- [ ] As luzes de Áudio, Análise, Site e Base estão verdes. "Automática desligada" aparece como ajuste (círculo vazio), não como erro.
+- [ ] Antes do 00:00, as falas ficam retidas e nada vai para o Claude. Isso é normal.
+
+O atalho roda, na pasta do projeto:
 
 ```powershell
-python -P scripts/noite.py ao-vivo --publicar --vocabulario data/vocabulario_globo.json --prompt "Debate presidencial na Globo, segundo turno. Lula e Flávio Bolsonaro."
+python -P scripts/iniciar.py noite
+# = python -P scripts/noite.py ao-vivo --esperar-comecar --publicar --destino real --prompt "Debate presidencial na Globo, segundo turno. Lula e Flávio Bolsonaro." --vocabulario data/vocabulario_globo.json
 ```
 
-- [ ] O terminal mostra:
-  - quantas checagens a base tem;
-  - se a publicação automática está ligada e com qual limiar;
-  - `publicador -> origin/main`;
-  - o endereço da tela.
-- [ ] A tela abre em **http://127.0.0.1:8765/**. No topo, a linha "O que fazer agora" diz o próximo passo. Abaixo dela, a faixa de estado tem uma luz por parte da noite: Áudio ("Ouvindo", com o medidor de som), Análise, Site, Base e Publicação automática. A primeira atualização da base roda logo ao começar e leva uns 5 min.
-- [ ] As luzes de Áudio, Análise, Site e Base estão verdes. "Automática desligada" aparece como ajuste (círculo vazio), não como erro.
-- [ ] **Notebook reserva gravando** (`falas.py gravar`, ver o roteiro dele).
-- [ ] Antes do 00:00, as falas ficam retidas e nada vai para o Claude. Isso é normal.
+Pelo terminal funciona como antes: sem `--esperar-comecar`, `noite.py ao-vivo --publicar ...` começa sozinho assim que os modelos carregam, e o Enter marca o 00:00.
 
 ## Durante o debate
 
-- [ ] **00:00 na abertura do mediador.** Use Enter no terminal ou o botão amarelo "Marcar 00:00" na tela; os dois marcam a sessão e a linha de falas.
-  - Depois de marcado, o Enter não remarca. Para corrigir, digite `remarcar` e Enter.
+- [ ] **00:00 na abertura do mediador:** o botão amarelo **Marcar 00:00** na tela (ou Enter na janela preta). Os dois marcam a sessão e a linha de falas. O botão só aparece depois do Começar.
+  - Para corrigir, use "Remarcar 00:00" na tela (marca agora), ou digite `remarcar` e Enter na janela preta.
   - Se marcou atrasado, corrija para o horário certo:
 
     ```powershell
@@ -74,8 +89,9 @@ python -P scripts/noite.py ao-vivo --publicar --vocabulario data/vocabulario_glo
 | API do Claude | A extração ou a confirmação de uma fala falhou (rede, sobrecarga). A fala fica sem análise, porque a sessão não tenta de novo. | Anote a minutagem. Se acontecer muito, confira a internet e o status da Anthropic. |
 | API do Google (base) | Buscas da atualização falharam, ou o RSS do Fato ou Fake não respondeu. | Nada: a sessão segue com a base anterior, e a próxima atualização tenta de novo em 10 min. |
 | Publicação | O push para o site falhou. O publicador tenta de novo a cada 15 s, sem perder mudanças. | Confira a internet. "Authentication failed": rode `publicador.py verifica` noutro terminal. |
+| A tela diz "perdeu contato com o programa" | A janela preta fechou ou o programa travou. | Duplo clique no atalho de novo (abaixo). |
 
-- [ ] **Se o processo travar ou fechar:** rode **o mesmo comando** de novo. Ele:
+- [ ] **Se o programa travar ou a janela preta fechar:** duplo clique no mesmo atalho. A tela abre em **"Pronto para retomar"**, com a fila, o placar e o 00:00 de antes já à vista. Clique **Retomar** (um clique; não precisa marcar o 00:00 de novo). Ele:
   - reconstrói a sessão pelo registro (`data/sessao_globo/eventos.jsonl`);
   - termina as análises que ficaram pela metade;
   - segue com o mesmo 00:00, numa gravação nova;
@@ -86,14 +102,14 @@ python -P scripts/noite.py ao-vivo --publicar --vocabulario data/vocabulario_glo
 
 ## Depois do debate
 
-- [ ] **Ctrl+C** no terminal da noite, depois das considerações finais. A saída limpa:
-  - para o áudio e fecha o WAV;
+- [ ] **Encerrar a noite**, depois das considerações finais: o botão no canto da banda da tela. Ele pede confirmação na própria tela (e diz quantas ligações ainda estão na fila) e faz a saída limpa:
+  - para o áudio e fecha o WAV (as gravações ficam guardadas);
   - espera as análises em curso;
   - grava `data/sessao_globo/painel.json`;
   - faz o último envio.
 
-  Espere a linha `encerrada às ...`.
-- [ ] **Fila pendente:** a fila só existe com o processo rodando. Para aprovar com calma depois, abra só a tela e o publicador sobre a mesma pasta, sem áudio. Nada é refeito.
+  Espere a tela dizer **"Noite encerrada. Já pode fechar a janela do programa"** e conferir "Último envio ao site: feito". Só então feche a janela preta. (Ctrl+C na janela preta faz o mesmo.)
+- [ ] **Fila pendente:** depois de encerrar, a tela não aprova mais. Para aprovar com calma depois, feche a janela preta e abra só a tela e o publicador sobre a mesma pasta, sem áudio. Nada é refeito.
 
   ```powershell
   python -P scripts/aprovacao.py --publicar
@@ -119,18 +135,19 @@ python -P scripts/noite.py ao-vivo --publicar --vocabulario data/vocabulario_glo
 No notebook principal, na tomada, com "Melhor desempenho" e a reserva gravando em paralelo:
 
 1. Abra o vídeo da Band no navegador, no ponto 4:19:41 (15581 s da gravação, a abertura do Escriba) ou no confronto livre.
-2. Suba a noite numa pasta de ensaio, sem `--publicar` (nada vai para o site).
+2. **Duplo clique em `iniciar\Ensaio.cmd`.** Nada vai para o GitHub:
+   - a faixa no alto é **roxa** ("Ensaio: cópia local do site");
+   - o ensaio publica numa cópia descartável do site, montada sozinha em `%TEMP%\checagem-ao-vivo-ensaio`; a página do leitor dessa cópia fica em **http://127.0.0.1:8766/globo/** (o link está na faixa roxa);
+   - a sessão fica em `data/ensaio/sessao_tela`, separada da noite. Abrir de novo retoma o ensaio; **`iniciar\Ensaio do zero.cmd`** guarda o ensaio anterior ao lado (`sessao_tela-AAAAMMDD-HHMMSS`) e recomeça, com a cópia do site refeita.
 
-   ```powershell
-   python -P scripts/noite.py ao-vivo --pasta data/ensaio/sessao_audivel --sem-base
-   ```
-
-   Atenção: o ensaio chama o Claude de verdade. Pelo ensaio seco, são ~8 chamadas por minuto de confronto livre (~13 mil tokens de entrada por minuto).
-3. Dê play e aperte Enter na abertura do mediador.
-4. Deixe tocar uns 20 min, com um trecho de confronto livre.
-5. No meio, feche o terminal e rode o mesmo comando de novo, para conferir a retomada com o loopback.
-6. Ctrl+C. Meça e registre em `data/ensaio/relatorio.md`:
-   - **atraso fim da fala → entrega:** está no terminal como `(+N s)` e em `falas.jsonl`, campo `atraso_s`;
+   Atenção: o ensaio chama o Claude de verdade depois do 00:00. Pelo ensaio seco, são ~8 chamadas por minuto de confronto livre (~13 mil tokens de entrada por minuto). A base também atualiza a cada 10 min, como na noite.
+3. Confira a lista, dê play e veja o medidor de som subir. Clique **Começar** e, na abertura do mediador, **Marcar 00:00**.
+4. Deixe tocar uns 20 min, com um trecho de confronto livre. Aprove uma ligação e veja-a na página do leitor da cópia.
+5. No meio, feche a janela preta e dê duplo clique em `Ensaio.cmd` de novo: a tela deve abrir em "Pronto para retomar". Clique Retomar.
+6. **Encerrar a noite** na tela. Meça e registre em `data/ensaio/relatorio.md`:
+   - **atraso fim da fala → entrega:** está na janela preta como `(+N s)` e em `falas.jsonl`, campo `atraso_s`;
    - **acerto de texto e de quem fala:** `scripts/falas_medir.py` contra o Escriba, como no ticket 09;
    - **Mediação pelo som do computador:** confira o limiar 0,51 com a voz dos mediadores, a ressalva do ticket 08;
    - **reserva:** a gravação do notebook reserva tem o mesmo áudio.
+
+Pelo terminal, o ensaio é `python -P scripts/iniciar.py ensaio [--do-zero] [--porta 8765] [--porta-site 8766]`.

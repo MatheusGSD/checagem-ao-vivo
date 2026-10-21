@@ -64,6 +64,7 @@ def estado(sessao, situacao=None):
     o motivo: um ajuste da noite, não um erro) e a situação da noite (situacao(): dicionário curto, da
     integração ao vivo)."""
     versao = len(sessao.eventos)  # lida antes: um evento no meio só faz a próxima busca redesenhar
+    sit = situacao() if situacao else None
     dados = sessao.exporta()
     todos = sessao.erros()
     erros = [e for e in todos if e["etapa"] != "limiar"]
@@ -83,11 +84,11 @@ def estado(sessao, situacao=None):
         "painel_erros": painel_de_erros(erros),
         "automatica": {"limiar": limiar, "motivo": motivo if limiar is None else None},
         "base": {"checagens": len(sessao.indice.registros)},
-        "site": SITE,
+        "site": ((sit or {}).get("destino") or {}).get("url") or SITE,
         "andamento": sessao.andamento(),
         "chamadas_claude_em_curso": sessao.chamadas_em_curso(),
         "contagens": sessao.contagens(),
-        "situacao": situacao() if situacao else None,
+        "situacao": sit,
     }
 
 
@@ -102,8 +103,11 @@ def _acoes(sessao):
     }
 
 
-def _handler(sessao, situacao=None):
+def _handler(sessao, situacao=None, controle=None):
     acoes = _acoes(sessao)
+    if controle:  # a noite (noite.Noite): Começar/Retomar e Encerrar; a fila só vale com ela rodando
+        acoes = {nome: (lambda f: lambda c: (controle.aceita_acoes(), f(c)))(f) for nome, f in acoes.items()}
+        acoes.update(comecar=lambda c: controle.pede_comecar(), encerrar=lambda c: controle.pede_encerrar())
 
     class Tela(BaseHTTPRequestHandler):
         server_version = "TelaDeAprovacao"
@@ -162,10 +166,11 @@ def _handler(sessao, situacao=None):
     return Tela
 
 
-def serve(sessao, porta=PORTA, situacao=None):
+def serve(sessao, porta=PORTA, situacao=None, controle=None):
     """Sobe a tela numa thread e devolve o servidor. porta=0 escolhe uma livre. situacao(): o que mostrar
-    da noite no cabeçalho (falas, última fala, base...)."""
-    servidor = ThreadingHTTPServer((HOST, porta), _handler(sessao, situacao))
+    da noite no cabeçalho (falas, última fala, base...). controle: a noite, com pede_comecar(),
+    pede_encerrar() e aceita_acoes() (levantam ValueError com o motivo, que vai para a tela)."""
+    servidor = ThreadingHTTPServer((HOST, porta), _handler(sessao, situacao, controle))
     servidor.daemon_threads = True
     threading.Thread(target=servidor.serve_forever, name="tela-de-aprovacao", daemon=True).start()
     return servidor

@@ -65,4 +65,5 @@ O notebook reserva em si ainda não foi testado: o dispositivo padrão dele pode
    python -P scripts/noite.py pos-debate reserva-globo-2026-10-23.wav --zero S --publicar
    ```
 
+Antes, feche a janela preta da noite (o atalho `Noite do debate.cmd` usa a mesma pasta e a mesma porta).
 Se a sessão da noite já tem falas, o pós-debate continua da última fala entregue. Sem `--pasta`, ele usa `data/sessao_globo`, a mesma pasta da noite.
