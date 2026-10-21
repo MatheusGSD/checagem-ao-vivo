@@ -4,7 +4,6 @@
     "titulo": "Lula × Flávio: o que as agências já checaram",
     "debate": "Debate do 2º turno · TV Globo · 23/10/2026",
     "inicio_debate": null,
-    "atualizado_em": "2026-10-20T12:00:00-03:00",
     "exemplo": false,
     "encerrado": false,
     "fontes": [
@@ -13,7 +12,7 @@
         "url": "https://developers.google.com/fact-check/tools/api"
       },
       {
-        "nome": "Fato ou Fake: RSS e sitemap",
+        "nome": "RSS e sitemap do Fato ou Fake (g1)",
         "url": "https://g1.globo.com/fato-ou-fake/"
       }
     ],
@@ -51,6 +50,10 @@
         "via": "ClaimReview na API do Google"
       },
       {
+        "nome": "Fato ou Fake (g1)",
+        "via": "RSS do Fato ou Fake e sitemap do g1"
+      },
+      {
         "nome": "Folha - UOL",
         "via": "ClaimReview na API do Google"
       },
@@ -78,13 +81,23 @@
       },
       {
         "nome": "Lupa",
-        "motivo": "Não publica dados estruturados (ClaimReview) e não autorizou a coleta até 22/10."
+        "motivo": "Não publica dados estruturados (ClaimReview) e não autorizou o uso dos metadados até a publicação deste painel."
       }
     ],
     "modelo": "claude-sonnet-5-5",
     "modelos_que_responderam": [],
-    "prompts": [],
-    "limiar_automatico": null
+    "prompts": [
+      {
+        "arquivo": "prompts/extrair_afirmacoes.md",
+        "sha256": "d1583d0e26d20dba654a357c49527c8912e6d8cf7c90f0c807fa25dcd597d02a"
+      },
+      {
+        "arquivo": "prompts/confirmar_ligacao.md",
+        "sha256": "63b23467ce87cb2815f4bf4e94efe1fc110e239fd20da3bd8a1bc1e6342bb65e"
+      }
+    ],
+    "limiar_automatico": null,
+    "atualizado_em": "2026-10-20T21:48:07-03:00"
   },
   "ligacoes": [],
   "sem_par": [],
