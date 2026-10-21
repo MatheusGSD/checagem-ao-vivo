@@ -81,6 +81,8 @@ python -P scripts/noite.py arquivo AUDIO --zero S [--inicio S --fim S] [--ritmo 
 python -P scripts/noite.py pos-debate [GRAVACAO.wav ...] --publicar                        # painel completo depois do debate
 ```
 
+**Sem terminal:** os atalhos de `iniciar/` (duplo clique) rodam `scripts/iniciar.py`. `Noite do debate.cmd` publica no site de verdade; `Ensaio.cmd` e `Ensaio do zero.cmd` publicam numa cópia local do site, servida em `http://127.0.0.1:8766/globo/`. Os dois abrem a tela em "Pronto para começar" (`noite.py --esperar-comecar`): os modelos carregam em segundo plano, a tela confere sozinha som, site, credenciais, base, energia e chave do Claude (`scripts/preparo.py`), e nada é capturado nem enviado antes do botão Começar (ou Retomar). O botão "Encerrar a noite" faz a saída limpa.
+
 ## Limitações
 
 - O tempo de fala é medido no áudio, com pausas e apartes, e não no relógio oficial. O gráfico do relógio escalona cada candidato para 15 min. A estimativa deixa 1min07 para Lula quando o tempo de Flávio acaba, e a mediação anunciou 1min08.
