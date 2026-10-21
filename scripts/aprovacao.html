@@ -3,302 +3,781 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Aprovação · checagem ao vivo</title>
+<meta name="color-scheme" content="light dark">
+<title>Mesa do operador</title>
 <style>
+  /* Tudo local: a tela funciona sem internet (fontes do sistema, nada de fora). */
   :root {
-    --fundo: #f4f2ee; --cartao: #fff; --tinta: #1d1d1b; --suave: #6b675f; --linha: #ddd8cf;
-    --lula: #b3261e; --flavio: #1f4e9c; --ok: #1b6e3c; --alerta: #a3470b; --erro: #b3261e;
-    --marca: #fff1a8; --foco: #1f4e9c;
+    --papel: #eceff2; --superficie: #ffffff; --afundado: #f5f7f9; --tinta: #15212c; --suave: #55626e;
+    --linha: #d2d9e0; --linha-forte: #aab5c0;
+    --lula: #b3261e; --flavio: #1f4e9c;
+    --ok: #12703a; --ok-fundo: #e3f2e8; --atencao: #8f4f00; --atencao-fundo: #fdf0dc;
+    --problema: #b42318; --problema-fundo: #fde8e6; --neutro: #6a7682; --neutro-fundo: #e6eaee;
+    --foco: #0b5cad; --marca: #fff0a6; --aprovar: #12703a; --aprovar-tinta: #ffffff;
+    --banda: #15212c; --banda-tinta: #f2f5f8; --banda-suave: #a9b6c2;
+    --sombra: 0 1px 2px rgba(21, 33, 44, .08);
+    --texto: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    --titulo: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    --citacao: Georgia, Cambria, "Times New Roman", serif;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-tema="claro"]) {
+    --papel: #0f151b; --superficie: #18212a; --afundado: #131b22; --tinta: #e3e9ef; --suave: #9daab6;
+    --linha: #2b3743; --linha-forte: #46535f;
+    --lula: #f08b84; --flavio: #8db4f2;
+    --ok: #5fcf8a; --ok-fundo: #15301f; --atencao: #f2b45c; --atencao-fundo: #33260f;
+    --problema: #ff8a7f; --problema-fundo: #3a1714; --neutro: #9daab6; --neutro-fundo: #222c35;
+    --foco: #8db4f2; --marca: #4d4513; --aprovar: #1f8a4c; --aprovar-tinta: #ffffff;
+    --banda: #070b0f; --banda-tinta: #eef2f6; --banda-suave: #8f9cab; --sombra: none; } }
+  :root[data-tema="escuro"] {
+    --papel: #0f151b; --superficie: #18212a; --afundado: #131b22; --tinta: #e3e9ef; --suave: #9daab6;
+    --linha: #2b3743; --linha-forte: #46535f;
+    --lula: #f08b84; --flavio: #8db4f2;
+    --ok: #5fcf8a; --ok-fundo: #15301f; --atencao: #f2b45c; --atencao-fundo: #33260f;
+    --problema: #ff8a7f; --problema-fundo: #3a1714; --neutro: #9daab6; --neutro-fundo: #222c35;
+    --foco: #8db4f2; --marca: #4d4513; --aprovar: #1f8a4c; --aprovar-tinta: #ffffff;
+    --banda: #070b0f; --banda-tinta: #eef2f6; --banda-suave: #8f9cab; --sombra: none;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--fundo); color: var(--tinta);
-         font: 15px/1.45 system-ui, "Segoe UI", Roboto, sans-serif; }
-  header { position: sticky; top: 0; z-index: 2; background: var(--tinta); color: #fff;
-           display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: center; padding: 10px 18px; }
-  header h1 { font-size: 16px; margin: 0; font-weight: 650; }
-  header .item { font-size: 13px; color: #d9d5cc; }
-  header .item b { color: #fff; font-weight: 600; }
-  header button { background: #fff; color: var(--tinta); }
-  #conexao { width: 10px; height: 10px; border-radius: 50%; background: #3cb371; display: inline-block; }
-  #conexao.fora { background: #e04a3f; }
-  main { padding: 14px 18px 40px; display: grid; gap: 18px; align-items: start;
-         grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-         grid-template-areas: "aviso aviso" "quadros quadros" "erros erros" "fila vivo" "fila resto"; }
-  @media (min-width: 1500px) {
-    main { grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) minmax(0, 4fr);
-           grid-template-areas: "aviso aviso aviso" "quadros quadros quadros" "erros erros erros" "fila vivo resto"; } }
-  @media (max-width: 1000px) {
-    main { grid-template-columns: 1fr; grid-template-areas: "aviso" "quadros" "erros" "fila" "vivo" "resto"; } }
-  #aviso { grid-area: aviso; } #quadros { grid-area: quadros; } #erros { grid-area: erros; }
-  #col-fila { grid-area: fila; } #col-vivo { grid-area: vivo; } #col-resto { grid-area: resto; }
-  /* o ao vivo rola por dentro: a fila continua à vista */
-  #vivo { max-height: 62vh; overflow-y: auto; padding-right: 4px; }
-  @media (max-width: 1000px) { #vivo { max-height: 50vh; } }
-  .fv { border-left: 3px solid var(--linha); background: var(--cartao); border-radius: 6px; padding: 7px 10px;
-        margin-bottom: 8px; font-size: 13px; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--papel); color: var(--tinta); font: 15px/1.5 var(--texto);
+         font-variant-numeric: tabular-nums; }
+  a { color: var(--foco); }
+  :focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+  button, input { font: inherit; color: inherit; }
+  .num { font-variant-numeric: tabular-nums; }
+  .quem-Lula { color: var(--lula); } .quem-Flávio { color: var(--flavio); }
+
+  /* ---------- banda do topo: relógio do debate + o que fazer agora ---------- */
+  .banda { background: var(--banda); color: var(--banda-tinta); position: sticky; top: 0; z-index: 5; }
+  .banda-in { max-width: 1680px; margin: 0 auto; padding: 14px 24px 12px; display: grid; gap: 4px 28px;
+              grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
+  .relogio { display: grid; gap: 0; }
+  .relogio .tempo { font: 600 44px/1 var(--titulo); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+  .relogio .rotulo { font-size: 13px; color: var(--banda-suave); }
+  .relogio.sem .tempo { color: var(--banda-suave); opacity: .55; }
+  .fazer { min-width: 0; border-left: 1px solid rgba(255, 255, 255, .16); padding-left: 28px; }
+  .fazer .rotulo { font-size: 13px; color: var(--banda-suave); }
+  .fazer p { margin: 2px 0 0; font: 600 22px/1.3 var(--titulo); }
+  .fazer p .segunda { display: block; font: 400 15px/1.4 var(--texto); color: var(--banda-suave); margin-top: 2px; }
+  .banda[data-estado="problema"] { background: #7d1a12; }
+  .banda[data-estado="problema"] .fazer { border-left-color: rgba(255, 255, 255, .3); }
+  .banda-acoes { display: flex; gap: 10px; align-items: center; }
+  .btn-zero { background: #ffd23f; color: #15212c; border: 0; border-radius: 10px; padding: 12px 20px;
+              font: 700 17px/1.1 var(--titulo); cursor: pointer; white-space: nowrap; }
+  .btn-zero:hover { background: #ffdc66; }
+  .btn-quieto { background: transparent; color: var(--banda-suave); border: 1px solid rgba(255, 255, 255, .22);
+                border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .btn-quieto:hover { color: var(--banda-tinta); border-color: rgba(255, 255, 255, .5); }
+
+  /* ---------- faixa de estado: uma lâmpada por parte da noite ---------- */
+  .faixa { background: var(--superficie); border-bottom: 1px solid var(--linha); box-shadow: var(--sombra); }
+  .faixa-in { max-width: 1680px; margin: 0 auto; padding: 10px 24px; display: grid; gap: 10px;
+              grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .lampada { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 2px 10px; align-items: start;
+             padding: 8px 12px; border-radius: 10px; min-width: 0; align-content: start; }
+  .lampada .luz { width: 12px; height: 12px; border-radius: 50%; margin-top: 5px; background: var(--neutro); }
+  .lampada .t { font-weight: 650; line-height: 1.35; overflow-wrap: anywhere; }
+  .lampada .s { grid-column: 2; font-size: 13px; color: var(--suave); line-height: 1.4; overflow-wrap: anywhere; }
+  .lampada .s a { white-space: nowrap; }
+  .lampada .s span[title] { text-decoration: underline dotted; cursor: help; }
+  .lampada .f { grid-column: 2; font-size: 13px; font-weight: 600; color: var(--problema); line-height: 1.4; }
+  .lampada[data-estado="ok"] .luz { background: var(--ok); box-shadow: 0 0 0 4px var(--ok-fundo); }
+  .lampada[data-estado="atencao"] { background: var(--atencao-fundo); }
+  .lampada[data-estado="atencao"] .luz { background: var(--atencao); border-radius: 2px; transform: rotate(45deg) scale(.9); }
+  .lampada[data-estado="atencao"] .f { color: var(--atencao); }
+  .lampada[data-estado="problema"] { background: var(--problema-fundo); box-shadow: inset 0 0 0 1px var(--problema); }
+  .lampada[data-estado="problema"] .luz { background: var(--problema); border-radius: 2px; }
+  .lampada[data-estado="neutro"] .luz { background: transparent; box-shadow: inset 0 0 0 2px var(--neutro); }
+  .medidor { display: inline-flex; gap: 2px; align-items: flex-end; height: 12px; margin-left: 6px; vertical-align: -1px; }
+  .medidor i { width: 4px; background: var(--linha-forte); border-radius: 1px; }
+  .medidor i:nth-child(1) { height: 4px; } .medidor i:nth-child(2) { height: 6px; } .medidor i:nth-child(3) { height: 8px; }
+  .medidor i:nth-child(4) { height: 10px; } .medidor i:nth-child(5) { height: 12px; }
+  .medidor i.aceso { background: var(--ok); }
+
+  /* ---------- corpo ---------- */
+  main { max-width: 1680px; margin: 0 auto; padding: 20px 24px 64px; display: grid; gap: 24px 28px;
+         grid-template-columns: minmax(0, 1.7fr) minmax(340px, 1fr); align-items: start; }
+  .col { display: grid; gap: 24px; min-width: 0; }
+  @media (max-width: 1180px) { .faixa-in { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 980px) {
+    main { grid-template-columns: minmax(0, 1fr); }
+    .banda-in { grid-template-columns: auto minmax(0, 1fr); }
+    .banda-acoes { grid-column: 1 / -1; }
+  }
+  @media (max-width: 640px) {
+    .banda-in, .faixa-in, main { padding-left: 16px; padding-right: 16px; }
+    .banda { position: static; }
+    .banda-in { grid-template-columns: minmax(0, 1fr); }
+    .fazer { border-left: 0; padding-left: 0; }
+    .relogio .tempo { font-size: 36px; }
+    .fazer p { font-size: 19px; }
+    .faixa-in { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  }
+  section > h2 { font: 650 19px/1.3 var(--titulo); margin: 0 0 12px; display: flex; align-items: baseline; gap: 10px;
+                 flex-wrap: wrap; }
+  section > h2 .n { font: 600 14px/1 var(--texto); background: var(--tinta); color: var(--papel); border-radius: 999px;
+                    padding: 3px 9px; }
+  section > h2 .aux { font: 400 13px/1.4 var(--texto); color: var(--suave); }
+  .vazio { color: var(--suave); padding: 18px 20px; border: 1px dashed var(--linha-forte); border-radius: 12px; }
+  .vazio b { color: var(--tinta); font-weight: 600; }
+
+  /* problemas */
+  #problemas:empty { display: none; }
+  .problema { background: var(--superficie); border: 1px solid var(--linha); border-left: 6px solid var(--problema);
+              border-radius: 12px; padding: 10px 16px; margin-bottom: 8px; font-size: 14px; }
+  .problema.atencao { border-left-color: var(--atencao); }
+  .problema.resolvido { border-left-color: var(--ok); }
+  .problema .o-que { font-weight: 650; }
+  .problema .acao { margin-top: 2px; }
+  .problema .quando { color: var(--suave); font-size: 13px; }
+  details.tecnico { margin-top: 6px; font-size: 13px; color: var(--suave); }
+  details.tecnico summary { cursor: pointer; }
+  details.tecnico code { display: block; white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 4px;
+                         background: var(--afundado); border-radius: 6px; padding: 6px 8px;
+                         font: 12px/1.45 Consolas, "Cascadia Mono", monospace; color: var(--tinta); }
+  #aviso { display: none; position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 9;
+           max-width: min(640px, calc(100vw - 32px)); padding: 12px 18px; border-radius: 10px; font-weight: 600;
+           background: var(--tinta); color: var(--papel); box-shadow: 0 6px 24px rgba(0, 0, 0, .25); }
+  #aviso.erro { background: var(--problema); color: #fff; }
+
+  /* ---------- cartão da fila ---------- */
+  .cartao { background: var(--superficie); border: 1px solid var(--linha); border-radius: 14px; margin-bottom: 18px;
+            box-shadow: var(--sombra); overflow: hidden; }
+  .cartao.ativa { border-color: var(--foco); box-shadow: 0 0 0 2px var(--foco); }
+  .cartao.novo { animation: chega 2s ease-out; }
+  @keyframes chega { from { box-shadow: 0 0 0 6px var(--marca); } }
+  @media (prefers-reduced-motion: reduce) { .cartao.novo { animation: none; } }
+  .cab { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; padding: 14px 20px 0; }
+  .cab .quem { font: 700 18px/1.2 var(--titulo); }
+  .cab .meta { color: var(--suave); font-size: 14px; }
+  .cab .meta b { color: var(--tinta); font-weight: 600; }
+  .cab .id { margin-left: auto; color: var(--suave); font-size: 13px; }
+  .lados { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 0; margin-top: 12px;
+           border-top: 1px solid var(--linha); }
+  @media (max-width: 760px) { .lados { grid-template-columns: minmax(0, 1fr); } .lado + .lado { border-left: 0 !important; border-top: 1px solid var(--linha); } }
+  .lado { padding: 14px 20px 16px; min-width: 0; }
+  .lado + .lado { border-left: 1px solid var(--linha); background: var(--afundado); }
+  .lado h3 { font: 600 13px/1.3 var(--texto); color: var(--suave); margin: 0 0 8px; }
+  .dito { font: 21px/1.42 var(--citacao); margin: 0; overflow-wrap: anywhere; }
+  .dito::before { content: "“"; } .dito::after { content: "”"; }
+  .afirmacao { margin: 10px 0 0; font-size: 15px; }
+  .afirmacao b { font-weight: 600; }
+  .editada { font-size: 12px; color: var(--suave); }
+  details.fala-toda { margin-top: 10px; font-size: 14px; color: var(--suave); }
+  details.fala-toda summary { cursor: pointer; }
+  details.fala-toda p { margin: 6px 0 0; font-family: var(--citacao); line-height: 1.55; color: var(--tinta); }
+  details.fala-toda mark { background: var(--marca); color: inherit; padding: 0 1px; }
+  .checagem { min-width: 0; }
+  .checagem + .checagem { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--linha); }
+  .checagem .qual { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+  .checagem .agencia { font-weight: 700; font-size: 16px; }
+  .checagem .data { color: var(--suave); font-size: 14px; }
+  .checagem .incluir { margin-left: auto; font-size: 13px; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  .checagem .incluir input { width: 16px; height: 16px; accent-color: var(--aprovar); }
+  .checagem.fora > :not(.qual) { opacity: .45; }
+  .frase { font: 17px/1.45 var(--citacao); margin: 6px 0 0; overflow-wrap: anywhere; }
+  .rotulo-dados { margin-top: 8px; font-size: 14px; }
+  .rotulo-dados b { font-weight: 650; }
+  .claude { margin-top: 8px; font-size: 14px; color: var(--suave); }
+  .claude b { color: var(--tinta); font-weight: 650; }
+  .confianca { display: inline-block; border-radius: 6px; padding: 0 7px; font-weight: 600; font-size: 13px; margin-right: 4px; }
+  .confianca.alta { background: var(--ok-fundo); color: var(--ok); }
+  .confianca.media { background: var(--atencao-fundo); color: var(--atencao); }
+  .confianca.baixa { background: var(--problema-fundo); color: var(--problema); }
+  .selo-linha { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin-top: 12px; }
+  a.abrir { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 650;
+            border: 1.5px solid var(--foco); color: var(--foco); border-radius: 9px; padding: 8px 14px; white-space: nowrap; }
+  a.abrir:hover { background: var(--foco); color: var(--superficie); }
+  a.abrir svg { width: 14px; height: 14px; }
+  label.selo { flex: 1 1 220px; display: grid; gap: 3px; font-size: 13px; color: var(--suave); }
+  input[type=text] { width: 100%; min-width: 0; border: 1.5px solid var(--linha-forte); background: var(--superficie);
+                     border-radius: 9px; padding: 8px 11px; font-size: 15px; }
+  input[type=text]::placeholder { color: var(--suave); opacity: .8; }
+  input[type=text]:focus { border-color: var(--foco); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--foco) 25%, transparent); }
+  .criterio { margin: 0; padding: 12px 20px; border-top: 1px solid var(--linha); font-size: 14px; background: var(--superficie); }
+  .criterio b { font-weight: 650; }
+  .decisao { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; padding: 14px 20px 16px;
+             border-top: 1px solid var(--linha); }
+  .btn { border-radius: 10px; padding: 10px 18px; font-weight: 650; cursor: pointer; border: 1.5px solid var(--linha-forte);
+         background: var(--superficie); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.aprovar { background: var(--aprovar); border-color: var(--aprovar); color: var(--aprovar-tinta);
+                 font: 700 18px/1.1 var(--titulo); padding: 13px 28px; }
+  .btn.aprovar:hover:not(:disabled) { filter: brightness(1.08); }
+  .btn.recusar { color: var(--problema); border-color: var(--problema); font: 700 18px/1.1 var(--titulo); padding: 12px 22px; }
+  .btn.recusar:hover:not(:disabled) { background: var(--problema-fundo); }
+  .btn.pequeno { padding: 7px 13px; font-size: 14px; }
+  .btn.perigo { color: var(--problema); border-color: var(--problema); }
+  .decisao .motivo { flex: 1 1 200px; }
+  .teclas { width: 100%; font-size: 12.5px; color: var(--suave); }
+  .cartao:not(.ativa) .teclas { display: none; }
+  kbd { font: 600 12px/1 var(--texto); border: 1px solid var(--linha-forte); border-bottom-width: 2px; border-radius: 5px;
+        padding: 2px 6px; background: var(--afundado); color: var(--tinta); }
+  details.editar { padding: 0 20px 14px; font-size: 14px; }
+  details.editar summary { cursor: pointer; color: var(--suave); }
+  details.editar .campos { display: grid; gap: 8px; margin-top: 8px; }
+  .ja-no-site { margin: 12px 20px 0; padding: 8px 12px; border-radius: 8px; background: var(--atencao-fundo); color: var(--atencao); font-size: 14px; }
+
+  /* ---------- painel lateral ---------- */
+  .bloco { background: var(--superficie); border: 1px solid var(--linha); border-radius: 14px; box-shadow: var(--sombra); }
+  table.placar { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.placar th, table.placar td { padding: 9px 14px; text-align: right; }
+  table.placar th:first-child, table.placar td:first-child { text-align: left; color: var(--suave); font-weight: 400; }
+  table.placar thead th { font: 700 16px/1.2 var(--titulo); border-bottom: 1px solid var(--linha); }
+  table.placar tbody tr + tr td { border-top: 1px solid var(--linha); }
+  table.placar td { font-weight: 600; font-size: 16px; }
+
+  .feed { padding: 4px 0; max-height: 70vh; overflow-y: auto; }
+  @media (max-width: 980px) { .feed { max-height: none; } }
+  .fv { border-left: 4px solid transparent; }
+  .fv + .fv { border-top: 1px solid var(--linha); }
   .fv.Lula { border-left-color: var(--lula); } .fv.Flávio { border-left-color: var(--flavio); }
-  .fv.mediacao { opacity: .6; background: transparent; }
-  .fv .texto { margin: 4px 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .fv .texto.inteiro { display: block; }
-  .fv ul { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 5px; }
-  .fv li { border-top: 1px dashed var(--linha); padding-top: 4px; }
-  .sit { font-size: 11px; font-weight: 700; text-transform: uppercase; border-radius: 4px; padding: 1px 6px;
-         background: #ece8df; color: var(--suave); white-space: nowrap; }
-  .sit.fila { background: var(--marca); color: var(--tinta); } .sit.publicada { background: #e0efe5; color: var(--ok); }
-  .sit.erro { background: #fdecea; color: #7a1a13; } .sit.analisando { background: #e7eefb; color: var(--foco); }
-  .sit.sem_par { background: #f3eee4; color: var(--alerta); }
-  .cands { color: var(--suave); margin-top: 3px; }
-  .pulso b.velho { color: #ffb3a8; }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); margin: 4px 0 10px; }
-  h2 .n { background: var(--tinta); color: #fff; border-radius: 10px; padding: 0 8px; margin-left: 6px; }
-  .vazio { color: var(--suave); font-style: italic; padding: 8px 0; }
-  .cartao { background: var(--cartao); border: 1px solid var(--linha); border-radius: 8px; padding: 12px 14px;
-            margin-bottom: 12px; }
-  .cartao.novo { animation: chega 1.6s ease-out; }
-  @keyframes chega { from { box-shadow: 0 0 0 3px var(--marca); } to { box-shadow: none; } }
-  .topo { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: 13px; color: var(--suave); }
-  .quem { font-weight: 700; }
-  .quem.Lula { color: var(--lula); } .quem.Flávio { color: var(--flavio); }
-  .nota { font-weight: 700; color: var(--tinta); }
-  .selo-origem { font-size: 11px; font-weight: 700; text-transform: uppercase; border-radius: 4px; padding: 1px 6px; }
-  .selo-origem.aprovada { background: #e0efe5; color: var(--ok); }
-  .selo-origem.automatica { background: #fbe9da; color: var(--alerta); }
-  .fala { margin: 8px 0 4px; }
-  .fala mark { background: var(--marca); padding: 0 1px; }
-  .reform { font-size: 14px; color: var(--suave); margin: 0 0 8px; }
-  .reform b { color: var(--tinta); font-weight: 600; }
-  .checagem { border-top: 1px dashed var(--linha); padding: 8px 0 4px; display: grid; gap: 4px; }
-  .checagem .cab { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
-  .agencia { font-weight: 700; }
-  .rotulo { font-weight: 600; }
-  .fonte-rotulo { font-size: 12px; color: var(--suave); }
-  .frase, .motivo { font-size: 13px; color: var(--suave); }
-  .motivo { font-style: italic; }
-  a.abre { font-weight: 600; color: var(--foco); }
-  label.selo { display: flex; gap: 8px; align-items: center; font-size: 13px; }
-  input[type=text] { font: inherit; font-size: 14px; padding: 5px 8px; border: 1px solid #bdb7ab; border-radius: 5px;
-                     min-width: 0; flex: 1; }
-  input[type=text]:focus, button:focus-visible { outline: 2px solid var(--foco); outline-offset: 1px; }
-  .acoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
-  button { font: inherit; font-size: 14px; font-weight: 600; border: 1px solid #bdb7ab; background: #fff;
-           border-radius: 5px; padding: 5px 12px; cursor: pointer; }
-  button.aprovar { background: var(--ok); border-color: var(--ok); color: #fff; }
-  button.perigo { color: var(--erro); border-color: var(--erro); }
-  button:disabled { opacity: .45; cursor: default; }
-  #quadros { display: flex; flex-wrap: wrap; gap: 8px; }
-  #quadros .quadro { border-radius: 6px; padding: 5px 10px; font-size: 13px; border: 1px solid var(--linha); }
-  #quadros .bem { background: #e0efe5; color: var(--ok); }
-  #quadros .antes { background: #fbe9da; color: var(--alerta); }
-  #quadros .mal { background: #fdecea; color: #7a1a13; border-color: #f1b8b2; font-weight: 600; }
-  #erros .erro { background: #fdecea; border: 1px solid #f1b8b2; color: #7a1a13; border-radius: 6px;
-                 padding: 6px 10px; margin-bottom: 6px; font-size: 13px; }
-  #aviso { display: none; background: #fdecea; color: #7a1a13; border-radius: 6px; padding: 8px 12px; }
-  details { margin-top: 18px; }
-  details.editar { margin: 4px 0 8px; display: grid; gap: 6px; }
-  details.editar summary { text-transform: none; letter-spacing: 0; font-size: 13px; }
-  details.editar label.selo { margin-top: 6px; }
-  details summary { cursor: pointer; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); }
-  .linha { font-size: 13px; border-bottom: 1px solid var(--linha); padding: 6px 0; }
+  .fv summary { list-style: none; cursor: pointer; padding: 9px 14px 9px 12px; display: grid; gap: 2px 10px;
+                grid-template-columns: 52px minmax(0, 1fr); align-items: baseline; }
+  .fv summary::-webkit-details-marker { display: none; }
+  .fv summary:hover { background: var(--afundado); }
+  .fv .min { color: var(--suave); font-size: 13px; }
+  .fv .linha1 { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; min-width: 0; }
+  .fv .quem { font-weight: 700; font-size: 14px; }
+  .fv .resumo-texto { grid-column: 2; font-size: 13.5px; color: var(--suave); white-space: nowrap; overflow: hidden;
+                      text-overflow: ellipsis; }
+  .fv.mediacao .quem, .fv.mediacao .resumo-texto { color: var(--suave); font-weight: 400; }
+  .fv[open] summary { background: var(--afundado); }
+  .fv[open] .resumo-texto { display: none; }
+  .fv .corpo { padding: 4px 16px 14px 74px; font-size: 14px; }
+  @media (max-width: 640px) { .fv .corpo { padding-left: 16px; } }
+  .fv .corpo .texto { font-family: var(--citacao); line-height: 1.55; margin: 0 0 8px; }
+  .fv .corpo ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .fv .corpo li { border-top: 1px dashed var(--linha); padding-top: 8px; }
+  .fv .corpo .porque { color: var(--suave); font-size: 13px; margin-top: 2px; }
+  .chip { display: inline-block; font-size: 12px; font-weight: 600; border-radius: 6px; padding: 1px 7px; white-space: nowrap;
+          background: var(--neutro-fundo); color: var(--suave); }
+  .chip.fila { background: var(--marca); color: var(--tinta); }
+  .chip.site { background: var(--ok-fundo); color: var(--ok); }
+  .chip.analisando { background: color-mix(in srgb, var(--foco) 14%, transparent); color: var(--foco); }
+  .chip.atencao { background: var(--atencao-fundo); color: var(--atencao); }
+  .chip.erro { background: var(--problema-fundo); color: var(--problema); }
+
+  /* publicadas, correções, outras */
+  .item { padding: 12px 16px; }
+  .item + .item { border-top: 1px solid var(--linha); }
+  .item .topo { display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; font-size: 13.5px; color: var(--suave); }
+  .item .topo b { color: var(--tinta); font-weight: 650; }
+  .item .citado { font: 16px/1.45 var(--citacao); margin: 4px 0 0; overflow-wrap: anywhere; }
+  .item .checs { margin: 6px 0 0; padding: 0; list-style: none; font-size: 14px; display: grid; gap: 2px; }
+  .item .checs .fonte { color: var(--suave); font-size: 12.5px; }
+  .item .links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px; font-size: 14px; }
+  details.corrigir { margin-top: 8px; font-size: 14px; }
+  details.corrigir summary { cursor: pointer; color: var(--suave); }
+  details.corrigir .linha-acao { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+  details.corrigir .linha-acao input { flex: 1 1 180px; }
+  details.corrigir .linha-acao .rot { flex-basis: 100%; font-size: 13px; color: var(--suave); }
+  .envio { font-size: 13px; color: var(--suave); padding: 10px 16px; border-top: 1px solid var(--linha); }
+  details.mais > summary { cursor: pointer; font: 650 16px/1.3 var(--titulo); padding: 12px 16px; }
+  details.mais > summary .aux { font: 400 13px var(--texto); color: var(--suave); margin-left: 6px; }
+  details.mais .item { font-size: 14px; }
+  details.mais + details.mais { border-top: 1px solid var(--linha); }
+  .rodape { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 20px; color: var(--suave); font-size: 13px; }
+  .rodape button { background: none; border: 0; padding: 0; color: var(--foco); cursor: pointer; text-decoration: underline; font-size: 13px; }
 </style>
 </head>
 <body>
-<header>
-  <h1 id="titulo">Aprovação · checagem ao vivo</h1>
-  <span class="item"><span id="conexao" title="conexão com a sessão"></span> <b id="relogio">--:--:--</b></span>
-  <span class="item">00:00: <b id="inicio">não marcado</b> <button id="marcar" type="button">Marcar 00:00 agora</button></span>
-  <span class="item">Automática: <b id="auto">desligada</b></span>
-  <span class="item pulso">áudio <b id="p-audio">—</b> · falas <b id="p-falas">0</b> · Claude <b id="p-claude">0</b> em curso · base <b id="p-base">—</b></span>
-  <span class="item" id="situacao"></span>
-  <span class="item">fila <b id="n-fila">0</b> · publicadas <b id="n-pub">0</b> · correções <b id="n-cor">0</b> · sem par <b id="n-sp">0</b></span>
+<header class="banda" id="banda" data-estado="ok">
+  <div class="banda-in">
+    <div class="relogio sem" id="relogio-debate">
+      <span class="tempo" id="tempo-debate">00:00</span>
+      <span class="rotulo" id="rotulo-debate">00:00 não marcado</span>
+    </div>
+    <div class="fazer">
+      <span class="rotulo">O que fazer agora</span>
+      <p id="fazer" aria-live="polite">Carregando a tela…</p>
+    </div>
+    <div class="banda-acoes">
+      <button type="button" class="btn-zero" id="marcar">Marcar 00:00</button>
+      <button type="button" class="btn-quieto" id="remarcar" hidden>Remarcar 00:00</button>
+    </div>
+  </div>
 </header>
+<div class="faixa" role="region" aria-label="Estado da noite">
+  <div class="faixa-in" id="faixa"></div>
+</div>
+
 <main>
-  <div id="aviso" role="alert"></div>
-  <section id="quadros" aria-label="erros por etapa"></section>
-  <section id="erros" aria-live="polite"></section>
-  <section id="col-fila">
-    <h2>Fila <span class="n" id="n-fila2">0</span></h2>
-    <div id="fila"></div>
-  </section>
-  <section id="col-vivo">
-    <h2>Ao vivo: cada fala e o que saiu dela</h2>
-    <div id="vivo" aria-live="off"></div>
-  </section>
-  <section id="col-resto">
-    <h2>Publicadas <span class="n" id="n-pub2">0</span></h2>
-    <div id="publicadas"></div>
-    <details open><summary>Correções (<span id="n-cor2">0</span>)</summary><div id="correcoes"></div></details>
-    <details><summary>Recusadas (<span id="n-rec">0</span>)</summary><div id="recusadas"></div></details>
-    <details><summary>Sem par (<span id="n-sp2">0</span>)</summary><div id="sem-par"></div></details>
-    <details><summary>Descartadas (<span id="n-desc">0</span>)</summary><div id="descartados"></div></details>
-  </section>
+  <div class="col">
+    <section id="problemas" aria-label="Problemas" aria-live="polite"></section>
+    <section aria-labelledby="h-fila">
+      <h2 id="h-fila">Ligações esperando você <span class="n" id="n-fila">0</span>
+        <span class="aux" id="aux-fila"></span></h2>
+      <div id="fila"></div>
+    </section>
+    <section aria-labelledby="h-pub">
+      <h2 id="h-pub">No site agora <span class="n" id="n-pub">0</span> <span class="aux" id="aux-pub"></span></h2>
+      <div class="bloco"><div id="publicadas"></div><div class="envio" id="envio"></div></div>
+    </section>
+    <section aria-labelledby="h-cor">
+      <h2 id="h-cor">Correções <span class="n" id="n-cor">0</span> <span class="aux">aparecem no site, com hora e motivo</span></h2>
+      <div class="bloco"><div id="correcoes"></div></div>
+    </section>
+    <section aria-label="Outras listas">
+      <div class="bloco">
+        <details class="mais"><summary>Recusadas <span class="aux" id="n-rec">0</span></summary><div id="recusadas"></div></details>
+        <details class="mais"><summary>Afirmações sem checagem <span class="aux" id="n-sp">0</span></summary><div id="sem-par"></div></details>
+        <details class="mais"><summary>Descartadas <span class="aux" id="n-desc">0</span></summary><div id="descartados"></div></details>
+        <details class="mais"><summary>Erros anteriores <span class="aux" id="n-err">0</span></summary><div id="erros-antigos"></div></details>
+      </div>
+    </section>
+  </div>
+  <div class="col">
+    <section aria-labelledby="h-placar">
+      <h2 id="h-placar">Placar da noite</h2>
+      <div class="bloco"><table class="placar" id="placar"></table></div>
+    </section>
+    <section aria-labelledby="h-vivo">
+      <h2 id="h-vivo">Ao vivo <span class="aux">cada fala e o que saiu dela; clique para abrir</span></h2>
+      <div class="bloco feed" id="vivo"></div>
+    </section>
+  </div>
+  <p class="rodape"><span id="conexao">Conectando…</span><span>Tela local, só nesta máquina.</span>
+    <button type="button" id="tema">Tema: automático</button></p>
 </main>
+<div id="aviso" role="status" aria-live="assertive"></div>
+
 <script>
 "use strict";
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const link = (u) => /^https?:\/\//i.test(u || "") ? esc(u) : "#";
-const num = (x) => (x == null ? "" : Number(x).toLocaleString("pt-BR", {maximumFractionDigits: 2}));
+const num = (x, casas = 2) => (x == null ? "" : Number(x).toLocaleString("pt-BR", {maximumFractionDigits: casas}));
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+const FUSO = {timeZone: "America/Sao_Paulo"};
+const hora = (iso) => iso ? new Date(iso).toLocaleTimeString("pt-BR", FUSO) : "";
+const horaCurta = (iso) => iso ? new Date(iso).toLocaleTimeString("pt-BR", {...FUSO, hour: "2-digit", minute: "2-digit"}) : "";
+const segundosDesde = (iso) => iso ? Math.max(0, (Date.now() - new Date(iso)) / 1000) : null;
+function ha(iso) {
+  const s = segundosDesde(iso);
+  if (s == null) return "";
+  if (s < 5) return "agora";
+  if (s < 60) return `há ${Math.floor(s)} s`;
+  if (s < 3600) return `há ${Math.floor(s / 60)} min`;
+  return `há ${Math.floor(s / 3600)} h ${String(Math.floor(s % 3600 / 60)).padStart(2, "0")}`;
+}
 function minutagem(s) {
-  if (s < 0) return "−" + minutagem(-s);  // a fala começou antes do 00:00
+  if (s == null) return "";
+  if (s < 0) return "−" + minutagem(-s);
   s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
   const p = (n) => String(n).padStart(2, "0");
   return h ? `${h}:${p(m)}:${p(ss)}` : `${p(m)}:${p(ss)}`;
 }
-const hora = (iso) => iso ? new Date(iso).toLocaleTimeString("pt-BR", {timeZone: "America/Sao_Paulo"}) : "";
+const quem = (q) => `<span class="quem-${esc(q)}">${esc(q)}</span>`;
+const ICONE_FORA = `<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3H3v10h10v-3M9 2h5v5M14 2 7 9"/></svg>`;
+const tipoAfirmacao = (t) => t === "numero" ? "número" : "fato";
+
+// a nota do Claude em palavras (prompts/confirmar_ligacao.md: 1 = mesmo fato, número e período; 0,7 = diferença pequena)
+function confianca(nota) {
+  if (nota >= 0.9) return ["alta", "mesma afirmação, segundo o Claude"];
+  if (nota >= 0.7) return ["media", "mesmo fato, com diferença pequena de redação ou detalhe"];
+  return ["baixa", "o Claude tem dúvida: confira com cuidado"];
+}
+
+// ---------- ações ----------
+let avisoTimer;
+function aviso(txt, erro) {
+  const a = $("aviso");
+  a.textContent = txt; a.className = erro ? "erro" : ""; a.style.display = txt ? "block" : "none";
+  clearTimeout(avisoTimer);
+  if (txt) avisoTimer = setTimeout(() => { a.style.display = "none"; }, erro ? 9000 : 4000);
+}
+async function acao(nome, corpo, botao, feito) {
+  if (botao) botao.disabled = true;
+  try {
+    const r = await fetch("/acao/" + nome, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(corpo)});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.erro || r.statusText);
+    if (feito) aviso(feito);
+    await atualiza(true);
+  } catch (e) {
+    aviso("Não foi feito: " + e.message, true);
+    if (botao) botao.disabled = false;
+  }
+}
+
+// ---------- erros em linguagem simples ----------
+const recente = (iso, s) => segundosDesde(iso) != null && segundosDesde(iso) < s;
+const ERROS_CLAUDE = ["extrair", "confirmar"];
+function traduz(x) {
+  const onde = x.quem ? ` (fala de ${x.quem} em ${minutagem(x.minutagem_s)})` : "";
+  const ultima = !x.tentativas || x.tentativa >= x.tentativas;
+  switch (x.etapa) {
+    case "transcricao": return {nivel: "problema", oque: "A transcrição do áudio caiu.",
+      fazer: "A noite recomeça sozinha em uns 5 s. Se o número de falas não voltar a subir, confira a saída de som padrão."};
+    case "audio": return {nivel: "problema", oque: "Nenhuma fala chega desde o 00:00.",
+      fazer: "O g1 parou, travou, está no mudo ou toca em outra saída? Volte o player."};
+    case "extrair": case "confirmar": return ultima
+      ? {nivel: "problema", oque: `O Claude não conseguiu analisar uma fala${onde}.`,
+         fazer: "Anote a minutagem. Se acontecer muito, confira a internet. A análise é refeita quando a sessão reabrir."}
+      : {nivel: "atencao", oque: `O Claude falhou numa fala${onde} e vai tentar de novo.`, fazer: "Nada a fazer por enquanto."};
+    case "base": return {nivel: "atencao", oque: "A atualização da base de checagens falhou.",
+      fazer: "Nada a fazer: a noite segue com a base anterior e tenta de novo em 10 min."};
+    case "publicar": return /voltou a funcionar/.test(x.mensagem)
+      ? {nivel: "resolvido", oque: "A publicação no site voltou a funcionar.", fazer: ""}
+      : {nivel: "problema", oque: "O site não recebeu a última mudança.",
+         fazer: "Confira a internet; o envio tenta de novo a cada 15 s sem perder nada. Se a mensagem fala em autenticação, rode publicador.py verifica noutro terminal."};
+    default: return {nivel: "problema", oque: "Erro interno da sessão.", fazer: "Anote a hora e avise quem cuida do código."};
+  }
+}
+function cartaoProblema(x) {
+  const t = traduz(x);
+  const el = document.createElement("div");
+  el.className = "problema " + (t.nivel === "problema" ? "" : t.nivel);
+  el.innerHTML = `<div class="o-que">${esc(t.oque)}</div>${t.fazer ? `<div class="acao">${esc(t.fazer)}</div>` : ""}
+    <div class="quando">às ${hora(x.em)} · <span data-desde="${esc(x.em)}">${ha(x.em)}</span></div>
+    <details class="tecnico"><summary>Detalhe técnico</summary><code>${esc(x.etapa)}: ${esc(x.mensagem)}</code></details>`;
+  return el;
+}
+
+// ---------- faixa de estado ----------
+function lampadas(e) {
+  const s = e.situacao, inicio = e.meta.inicio_debate, out = [];
+  const errosRecentes = (etapas, seg) => e.erros.filter((x) => etapas.includes(x.etapa) && recente(x.em, seg));
+
+  // 1. áudio
+  let a;
+  const idade = s ? segundosDesde(s.ultimo_audio_em) : null;
+  const medidor = (db) => {
+    const acesas = db == null ? 0 : Math.max(0, Math.min(5, Math.round((db + 60) / 10)));
+    return `<span class="medidor" aria-hidden="true">${[1, 2, 3, 4, 5].map((k) => `<i class="${k <= acesas ? "aceso" : ""}"></i>`).join("")}</span>`;
+  };
+  const semFala = errosRecentes(["audio"], 240).filter((x) => !s || !s.ultima_fala_em || new Date(s.ultima_fala_em) < new Date(x.em));
+  if (!s || s.linha === undefined) {
+    a = {estado: "neutro", t: "Sem áudio nesta tela", s: "Só aprovação. O áudio roda no comando da noite."};
+  } else if (/caiu/.test(s.linha)) {
+    a = {estado: "problema", t: "Áudio caiu", s: "Recomeçando sozinho em uns 5 s.", f: "Se não voltar em 1 min, rode o mesmo comando de novo."};
+  } else if (s.linha === "parada") {
+    a = {estado: "problema", t: "Captura parada", f: "Rode o mesmo comando de novo: a sessão retoma de onde parou."};
+  } else if (s.linha === "começando" || idade == null) {
+    a = {estado: "atencao", t: "Ligando a captura…", s: "O primeiro som chega em segundos."};
+  } else if (idade > 15) {
+    a = {estado: "problema", t: `Sem som há ${Math.floor(idade)} s`, f: "Confira se o g1 está tocando na saída de som padrão."};
+  } else if (semFala.length) {
+    a = {estado: "problema", t: "Nenhuma fala há 3 min", f: "O g1 parou ou está no mudo? Volte o player."};
+  } else if (inicio && s.nivel_audio_db != null && s.nivel_audio_db <= -55) {
+    a = {estado: "atencao", t: `Ouvindo, em silêncio ${medidor(s.nivel_audio_db)}`, s: "Nada tocando no último segundo. Intervalo? Senão, confira o mudo."};
+  } else {
+    a = {estado: "ok", t: `Ouvindo ${medidor(s.nivel_audio_db)}`,
+         s: `${s.nivel_audio_db != null && s.nivel_audio_db > -55 ? "som chegando" : "áudio chegando"}${s.ultima_fala_em ? `; última fala <span data-desde="${esc(s.ultima_fala_em)}">${ha(s.ultima_fala_em)}</span>` : ""}`};
+  }
+  out.push(a);
+
+  // 2. análise
+  const emCurso = e.chamadas_claude_em_curso;
+  const tentando = e.andamento.some((f) => f.analise === "tentando de novo" || f.afirmacoes.some((x) => x.situacao === "tentando de novo"));
+  const falhouClaude = errosRecentes(ERROS_CLAUDE, 600).filter((x) => !x.tentativas || x.tentativa >= x.tentativas);
+  const nFalas = s && s.falas != null ? s.falas : e.andamento.length;
+  if (falhouClaude.length) {
+    const x = falhouClaude[falhouClaude.length - 1];
+    out.push({estado: "problema", t: "O Claude falhou", s: x.quem ? `fala de ${esc(x.quem)} em ${minutagem(x.minutagem_s)}` : "",
+              f: "Anote a minutagem. Se repetir, confira a internet."});
+  } else if (tentando) {
+    out.push({estado: "atencao", t: "Claude tentando de novo", s: "Uma análise falhou e vai ser refeita em segundos."});
+  } else if (!inicio) {
+    out.push({estado: "neutro", t: "Análise espera o 00:00", s: "As falas ficam retidas até lá."});
+  } else if (emCurso) {
+    out.push({estado: "ok", t: `Analisando ${emCurso}`, s: `${plural(emCurso, "chamada", "chamadas")} ao Claude agora; ${plural(nFalas, "fala", "falas")} na noite`});
+  } else {
+    out.push({estado: "ok", t: "Análise em dia", s: `${plural(nFalas, "fala", "falas")} na noite`});
+  }
+
+  // 3. site
+  const p = s && s.publicacao;
+  const abrir = `<a href="${link(e.site)}" target="_blank" rel="noopener noreferrer">Abrir o site</a>`;
+  if (!p) {
+    out.push({estado: "neutro", t: "Site: não publica", s: `Sessão sem --publicar (ensaio). ${abrir}`});
+  } else if (p.ultimo_erro) {
+    out.push({estado: "problema", t: "Site sem atualizar", s: `${plural(p.falhas, "tentativa falhou", "tentativas falharam")}${p.ultimo_envio_em ? `; último envio às ${horaCurta(p.ultimo_envio_em)}` : ""}`,
+              f: "Confira a internet. Detalhe em Problemas."});
+  } else if (p.ultimo_envio_em) {
+    out.push({estado: "ok", t: `Site atualizado <span data-desde="${esc(p.ultimo_envio_em)}">${ha(p.ultimo_envio_em)}</span>`,
+              s: `${p.pendente ? "mudança nova sai em até 1 min. " : ""}${abrir}`});
+  } else if (p.pendente) {
+    out.push({estado: "atencao", t: "Enviando ao site…", s: abrir});
+  } else {
+    out.push({estado: "ok", t: "Site em dia", s: `Nada mudou desde o começo. ${abrir}`});
+  }
+
+  // 4. base
+  const falhouBase = errosRecentes(["base"], 900);
+  const nBase = e.base ? e.base.checagens.toLocaleString("pt-BR") : "?";
+  const quando = s && s.base_atualizada_em ? `atualizada às ${esc(s.base_atualizada_em.replace(/ \(\+(\d+)\)/, " (+$1 novas)"))}`
+    : s && s.linha !== undefined ? "primeira atualização em curso (uns 5 min)" : "sem atualização nesta tela";
+  out.push(falhouBase.length
+    ? {estado: "atencao", t: `Base: ${nBase} checagens`, s: quando, f: "A última atualização falhou. Nada a fazer: tenta de novo em 10 min."}
+    : {estado: "ok", t: `Base: ${nBase} checagens`, s: quando});
+
+  // 5. publicação automática (ajuste, não erro)
+  const au = e.automatica || {};
+  out.push(au.limiar == null
+    ? {estado: "neutro", t: "Automática desligada", s: `Toda ligação passa por você.${au.motivo ? ` <span title="${esc(au.motivo)}">Por quê?</span>` : ""}`}
+    : {estado: "ok", t: "Automática ligada", s: `Sai sozinha a nota ≥ ${num(au.limiar)}, 10 min após o 00:00.`});
+  return out;
+}
+
+function desenhaFaixa(e) {
+  const nomes = ["Áudio", "Análise", "Site", "Base", "Publicação automática"];
+  const itens = lampadas(e);
+  $("faixa").innerHTML = itens.map((x, i) => `<div class="lampada" data-estado="${x.estado}" aria-label="${nomes[i]}">
+    <span class="luz" aria-hidden="true"></span><span class="t">${x.t}</span>
+    ${x.s ? `<span class="s">${x.s}</span>` : ""}${x.f ? `<span class="f">${esc(x.f)}</span>` : ""}</div>`).join("");
+  return itens;
+}
+
+// ---------- o que fazer agora ----------
+function oQueFazer(e, itens) {
+  const n = e.fila.length, inicio = e.meta.inicio_debate;
+  const problema = itens.find((x) => x.estado === "problema");
+  const fila = n ? (n === 1 ? "1 ligação esperando você." : `${n} ligações esperando você. Comece pela de cima.`) : "";
+  let principal, segunda = "", estado = "ok";
+  if (problema) {
+    estado = "problema";
+    principal = `${problema.t.replace(/<[^>]+>/g, "").trim()}. ${problema.f || ""}`;
+    segunda = fila || (!inicio ? "Depois: marque o 00:00 quando o mediador abrir o debate." : "");
+  } else if (!inicio) {
+    principal = "Quando o mediador abrir o debate, clique Marcar 00:00.";
+    segunda = "Até lá as falas ficam retidas e nada vai para o Claude.";
+  } else if (n) {
+    principal = fila;
+    segunda = "Abra a checagem, digite o selo que a página mostra e aprove se é a mesma afirmação.";
+  } else {
+    principal = "Nada a fazer; acompanhe as falas.";
+    segunda = "Uma ligação nova aparece aqui com destaque e o título da aba mostra quantas esperam.";
+  }
+  $("fazer").innerHTML = `${esc(principal)}${segunda ? `<span class="segunda">${esc(segunda)}</span>` : ""}`;
+  $("banda").dataset.estado = estado;
+}
+
+// ---------- cartão da fila ----------
 function destaca(fala, trecho) {
   const i = fala.indexOf(trecho);
   if (i < 0) return esc(fala);
   return esc(fala.slice(0, i)) + "<mark>" + esc(trecho) + "</mark>" + esc(fala.slice(i + trecho.length));
 }
-
-async function acao(nome, corpo, botao) {
-  if (botao) botao.disabled = true;
-  try {
-    const r = await fetch("/acao/" + nome, {method: "POST", headers: {"Content-Type": "application/json"},
-                                           body: JSON.stringify(corpo)});
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.erro || r.statusText);
-    aviso("");
-    await atualiza(true);
-  } catch (e) {
-    aviso("Ação não feita: " + e.message);
-    if (botao) botao.disabled = false;
-  }
-}
-function aviso(txt) { $("aviso").textContent = txt; $("aviso").style.display = txt ? "block" : "none"; }
-
 function cartaoFila(p) {
   const el = document.createElement("article");
   el.className = "cartao novo";
+  el.dataset.id = p.id;
+  const varias = p.checagens.length > 1;
+  const jaNoSite = p.ja_publicadas.length;
   el.innerHTML = `
-    <div class="topo"><span>${esc(p.id)}</span><span>${minutagem(p.minutagem_s)}</span>
-      <span class="quem ${esc(p.quem)}">${esc(p.quem)}</span><span>${p.tipo === "numero" ? "número" : "fato perene"}</span>
-      <span>nota <span class="nota">${num(p.nota)}</span></span><span>proposta ${hora(p.proposta_em)}</span></div>
-    <p class="fala">${destaca(p.fala, p.trecho)}</p>
-    <p class="reform"><b>Afirmação:</b> ${esc(p.reformulacao)}${p.editada ? ' <span class="fonte-rotulo">(editada)</span>' : ""}</p>
-    ${p.ja_publicadas.length ? "" : `<details class="editar"><summary>Editar trecho e afirmação</summary>
+    <div class="cab">
+      <span class="quem quem-${esc(p.quem)}">${esc(p.quem)}</span>
+      <span class="meta">aos <b>${minutagem(p.minutagem_s)}</b> do debate</span>
+      <span class="meta">${tipoAfirmacao(p.tipo) === "número" ? "afirmação com número" : "afirmação de fato"}</span>
+      <span class="meta">proposta às ${horaCurta(p.proposta_em)}, <span data-desde="${esc(p.proposta_em)}">${ha(p.proposta_em)}</span>${p.ligada_depois ? "; checagem chegou depois da fala" : ""}</span>
+      <span class="id">${esc(p.id)}</span>
+    </div>
+    ${jaNoSite ? `<p class="ja-no-site">Esta ligação já está no site com ${plural(jaNoSite, "checagem", "checagens")}. Aprovar acrescenta as daqui; recusar não a tira do site.</p>` : ""}
+    <div class="lados">
+      <div class="lado">
+        <h3>O que foi dito</h3>
+        <p class="dito">${esc(p.trecho)}</p>
+        <p class="afirmacao"><b>Afirmação:</b> ${esc(p.reformulacao)}${p.editada ? ' <span class="editada">(editada por você)</span>' : ""}</p>
+        <details class="fala-toda"><summary>Ver a fala inteira</summary><p>${destaca(p.fala, p.trecho)}</p></details>
+      </div>
+      <div class="lado">
+        <h3>O que a agência checou${varias ? `: ${p.checagens.length} checagens, decida cada uma` : ""}</h3>
+        ${p.checagens.map((c, i) => {
+          const [nivel, palavras] = confianca(c.nota);
+          return `
+          <div class="checagem" data-url="${esc(c.url)}">
+            <div class="qual"><span class="agencia">${esc(c.agencia)}</span><span class="data">${esc(c.data || "sem data")}</span>
+              ${varias ? `<label class="incluir"><input type="checkbox" class="manter" checked> publicar esta</label>` : ""}</div>
+            <p class="frase">${esc(c.frase || "(a agência não informou a frase checada)")}</p>
+            <div class="rotulo-dados">Rótulo nos dados da agência: <b>${esc(c.rotulo || "sem rótulo")}</b></div>
+            <div class="claude"><span class="confianca ${nivel}">nota ${num(c.nota)}</span> <b>${esc(palavras)}.</b> ${esc(c.motivo)}</div>
+            <div class="selo-linha">
+              <a class="abrir" href="${link(c.url)}" target="_blank" rel="noopener noreferrer">Abrir a checagem ${ICONE_FORA}</a>
+              <label class="selo">Selo que a página mostra
+                <input type="text" class="selo" autocomplete="off" placeholder="${esc(c.rotulo ? `nos dados: ${c.rotulo}` : "digite o selo")}"></label>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>
+    <p class="criterio"><b>Aprove se a checagem trata da mesma afirmação</b> (mesmo sujeito, fato, número e período). Não julgue se é verdade. Selo vazio: vale o rótulo dos dados.</p>
+    <div class="decisao">
+      <button type="button" class="btn aprovar">Aprovar</button>
+      <button type="button" class="btn recusar">Recusar</button>
+      <input type="text" class="motivo" placeholder="Motivo da recusa (opcional)" aria-label="Motivo da recusa">
+      <span class="teclas">Teclado na ligação marcada: <kbd>A</kbd> aprova, <kbd>R</kbd> recusa, <kbd>O</kbd> abre a checagem, <kbd>S</kbd> vai ao selo, <kbd>↑</kbd> <kbd>↓</kbd> troca de ligação. Enter no selo aprova.</span>
+    </div>
+    ${jaNoSite ? "" : `<details class="editar"><summary>Editar o trecho ou a afirmação</summary><div class="campos">
       <label class="selo">Trecho (letra a letra da fala) <input type="text" class="novo-trecho" value="${esc(p.trecho)}"></label>
       <label class="selo">Afirmação <input type="text" class="nova-reform" value="${esc(p.reformulacao)}"></label>
-      <div class="acoes"><button type="button" class="salvar-edicao">Salvar edição</button></div></details>`}
-    ${p.ja_publicadas.length ? `<p class="reform"><b>Já no painel</b> (publicada sozinha com ${p.ja_publicadas.length} checagem${p.ja_publicadas.length > 1 ? "s" : ""}): aprovar acrescenta estas à mesma ligação; recusar não a tira do painel.</p>` : ""}
-    ${p.checagens.map((c, i) => `
-      <div class="checagem" data-url="${esc(c.url)}">
-        <div class="cab"><label><input type="checkbox" class="manter" checked> <span class="agencia">${esc(c.agencia)}</span></label>
-          <span>${esc(c.data || "sem data")}</span>
-          <span>dados: <span class="rotulo">${esc(c.rotulo || "sem rótulo")}</span></span>
-          <span>nota <span class="nota">${num(c.nota)}</span></span>
-          <a class="abre" href="${link(c.url)}" target="_blank" rel="noopener noreferrer">abrir checagem ↗</a></div>
-        <div class="frase">Checado: ${esc(c.frase)}</div>
-        <div class="motivo">${esc(c.motivo)}</div>
-        <label class="selo">Selo visível na página
-          <input type="text" class="selo" placeholder="vazio = “${esc(c.rotulo || "")}” dos dados da agência"></label>
-      </div>`).join("")}
-    <div class="acoes">
-      <button type="button" class="aprovar">Aprovar</button>
-      <input type="text" class="motivo-recusa" placeholder="motivo da recusa (opcional)">
-      <button type="button" class="perigo recusar">Recusar</button>
-    </div>`;
-  el.querySelector(".aprovar").onclick = (ev) => {
+      <div><button type="button" class="btn pequeno salvar-edicao">Salvar edição</button></div></div></details>`}`;
+  const aprovar = el.querySelector(".aprovar");
+  const confere = () => {
+    const algum = !varias || [...el.querySelectorAll(".manter")].some((x) => x.checked);
+    aprovar.disabled = !algum;
+    aprovar.title = algum ? "" : "Marque ao menos uma checagem para publicar, ou recuse.";
+    el.querySelectorAll(".checagem").forEach((d) => { const m = d.querySelector(".manter"); d.classList.toggle("fora", !!m && !m.checked); });
+  };
+  el.querySelectorAll(".manter").forEach((m) => { m.onchange = confere; });
+  el.aprova = () => {
+    if (aprovar.disabled) return;
     const selos = {}, manter = [];
     el.querySelectorAll(".checagem").forEach((d) => {
-      const url = d.dataset.url;
-      if (d.querySelector(".manter").checked) manter.push(url);
+      const url = d.dataset.url, m = d.querySelector(".manter");
+      if (!m || m.checked) manter.push(url);
       const s = d.querySelector("input.selo").value.trim();
       if (s) selos[url] = s;
     });
-    acao("aprovar", {ligacao_id: p.id, selos, manter}, ev.target);
+    acao("aprovar", {ligacao_id: p.id, selos, manter}, aprovar, `Aprovada (${p.id}). Vai ao site no próximo envio.`);
   };
+  el.recusa = () => acao("recusar", {ligacao_id: p.id, motivo: el.querySelector(".motivo").value},
+                         el.querySelector(".recusar"), `Recusada (${p.id}).`);
+  aprovar.onclick = el.aprova;
+  el.querySelector(".recusar").onclick = el.recusa;
+  el.querySelector(".motivo").onkeydown = (ev) => { if (ev.key === "Enter") el.recusa(); };
+  const selos = [...el.querySelectorAll("input.selo")];
+  selos.forEach((inp, i) => {
+    inp.onkeydown = (ev) => {
+      if (ev.key !== "Enter") return;
+      ev.preventDefault();
+      if (selos[i + 1]) selos[i + 1].focus(); else el.aprova();
+    };
+  });
   const salvar = el.querySelector(".salvar-edicao");
-  if (salvar) salvar.onclick = (ev) => acao("editar", {ligacao_id: p.id,
-    trecho: el.querySelector(".novo-trecho").value, reformulacao: el.querySelector(".nova-reform").value}, ev.target);
-  el.querySelector(".recusar").onclick = (ev) =>
-    acao("recusar", {ligacao_id: p.id, motivo: el.querySelector(".motivo-recusa").value}, ev.target);
+  if (salvar) salvar.onclick = (ev) => acao("editar", {ligacao_id: p.id, trecho: el.querySelector(".novo-trecho").value,
+    reformulacao: el.querySelector(".nova-reform").value}, ev.target, "Edição salva.");
+  el.addEventListener("focusin", () => marcaAtiva(p.id));
+  el.addEventListener("click", () => marcaAtiva(p.id));
   return el;
 }
 
-function cartaoPublicada(l) {
-  const el = document.createElement("article");
-  el.className = "cartao novo";
+// ligação marcada para o teclado
+let ativa = null;
+function marcaAtiva(id) {
+  ativa = id;
+  document.querySelectorAll("#fila .cartao").forEach((c) => c.classList.toggle("ativa", c.dataset.id === ativa));
+}
+function cartaoAtivo() { return document.querySelector(`#fila .cartao[data-id="${CSS.escape(ativa || "")}"]`); }
+document.addEventListener("keydown", (ev) => {
+  if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  const alvo = ev.target;
+  if (alvo.matches && alvo.matches("input, textarea, select, [contenteditable]")) {
+    if (ev.key === "Escape") alvo.blur();
+    return;
+  }
+  const cartoesFila = [...document.querySelectorAll("#fila .cartao")];
+  if (!cartoesFila.length) return;
+  const i = Math.max(0, cartoesFila.findIndex((c) => c.dataset.id === ativa));
+  const c = cartaoAtivo() || cartoesFila[0];
+  const k = ev.key.toLowerCase();
+  if (k === "arrowdown" || k === "j") { const n = cartoesFila[Math.min(i + 1, cartoesFila.length - 1)]; marcaAtiva(n.dataset.id); n.scrollIntoView({block: "nearest"}); ev.preventDefault(); }
+  else if (k === "arrowup" || k === "k") { const n = cartoesFila[Math.max(i - 1, 0)]; marcaAtiva(n.dataset.id); n.scrollIntoView({block: "nearest"}); ev.preventDefault(); }
+  else if (k === "a") { marcaAtiva(c.dataset.id); c.aprova(); }
+  else if (k === "r") { marcaAtiva(c.dataset.id); if (confirm(`Recusar ${c.dataset.id}? Recusar não tem volta.`)) c.recusa(); }
+  else if (k === "o") { marcaAtiva(c.dataset.id); const l = c.querySelector("a.abrir"); if (l) window.open(l.href, "_blank", "noopener"); }
+  else if (k === "s") { marcaAtiva(c.dataset.id); const s = c.querySelector("input.selo"); if (s) { s.focus(); ev.preventDefault(); } }
+});
+
+// ---------- publicadas, correções, outras ----------
+let SITE = "#";
+function itemPublicada(l) {
+  const el = document.createElement("div");
+  el.className = "item";
   el.innerHTML = `
-    <div class="topo"><span>${esc(l.id)}</span><span>${minutagem(l.minutagem_s)}</span>
-      <span class="quem ${esc(l.quem)}">${esc(l.quem)}</span>
-      <span class="selo-origem ${esc(l.origem)}">${l.origem === "automatica" ? "automática" : "aprovada"}</span>
-      <span>publicada ${hora(l.publicada_em)}</span>${l.ligada_depois ? "<span>ligada depois</span>" : ""}</div>
-    <p class="fala">“${esc(l.trecho)}”</p>
-    ${l.checagens.map((c) => `
-      <div class="checagem" data-url="${esc(c.url)}">
-        <div class="cab"><span class="agencia">${esc(c.agencia)}</span><span>${esc(c.data || "sem data")}</span>
-          <span class="rotulo">${esc(c.rotulo)}</span>
-          <span class="fonte-rotulo">${c.fonte_rotulo === "selo_da_pagina" ? "selo da página" : "rótulo conforme dados da agência"}</span>
-          ${c.origem && c.origem !== l.origem ? `<span class="selo-origem ${esc(c.origem)}">${c.origem === "automatica" ? "automática" : "aprovada"}</span>` : ""}
-          <a class="abre" href="${link(c.url)}" target="_blank" rel="noopener noreferrer">abrir checagem ↗</a></div>
-        <label class="selo">Corrigir rótulo <input type="text" class="novo-rotulo" placeholder="selo visível na página">
-          <button type="button" class="corrige">Corrigir</button></label>
-      </div>`).join("")}
-    <div class="acoes">
-      <input type="text" class="motivo-despub" placeholder="motivo (aparece nas correções)">
-      <button type="button" class="perigo despublicar" disabled>Despublicar</button>
-    </div>`;
-  el.querySelectorAll(".checagem").forEach((d) => {
+    <div class="topo"><b>${horaCurta(l.publicada_em)}</b><span>${quem(l.quem)} aos ${minutagem(l.minutagem_s)}</span>
+      <span>${l.origem === "automatica" ? "saiu sozinha" : "aprovada por você"}</span><span>${esc(l.id)}</span></div>
+    <p class="citado">“${esc(l.trecho)}”</p>
+    <ul class="checs">${l.checagens.map((c) => `<li><b>${esc(c.agencia)}</b>: ${esc(c.rotulo)}
+      <span class="fonte">${c.fonte_rotulo === "selo_da_pagina" ? "(selo da página)" : "(rótulo dos dados)"}</span></li>`).join("")}</ul>
+    <div class="links"><a href="${link(SITE)}#${encodeURIComponent(l.id)}" target="_blank" rel="noopener noreferrer">Ver no site</a>
+      ${l.checagens.map((c) => `<a href="${link(c.url)}" target="_blank" rel="noopener noreferrer">${esc(c.agencia)}</a>`).join("")}</div>
+    <details class="corrigir"><summary>Corrigir rótulo ou retirar do site</summary>
+      ${l.checagens.map((c) => `<div class="linha-acao" data-url="${esc(c.url)}"><span class="rot">${esc(c.agencia)}: hoje “${esc(c.rotulo)}”</span>
+        <input type="text" class="novo-rotulo" placeholder="selo certo, como na página" aria-label="Novo rótulo para ${esc(c.agencia)}">
+        <button type="button" class="btn pequeno corrige">Corrigir rótulo</button></div>`).join("")}
+      <div class="linha-acao"><span class="rot">Retirar do site: a ligação sai e o motivo vai para as correções públicas.</span>
+        <input type="text" class="motivo-despub" placeholder="Motivo (obrigatório)" aria-label="Motivo para retirar">
+        <button type="button" class="btn pequeno perigo despublicar" disabled>Retirar do site</button></div>
+    </details>`;
+  el.querySelectorAll(".linha-acao[data-url]").forEach((d) => {
     d.querySelector(".corrige").onclick = (ev) => {
       const rotulo = d.querySelector(".novo-rotulo").value.trim();
-      if (rotulo) acao("rotulo", {ligacao_id: l.id, url: d.dataset.url, rotulo}, ev.target);
+      if (rotulo) acao("rotulo", {ligacao_id: l.id, url: d.dataset.url, rotulo}, ev.target, "Rótulo corrigido; entra nas correções.");
     };
   });
   const motivo = el.querySelector(".motivo-despub"), botao = el.querySelector(".despublicar");
   motivo.oninput = () => { botao.disabled = !motivo.value.trim(); };
   botao.onclick = () => {
-    if (confirm(`Despublicar ${l.id}? Ela sai do painel e entra nas correções.`))
-      acao("despublicar", {ligacao_id: l.id, motivo: motivo.value}, botao);
+    if (confirm(`Retirar ${l.id} do site? Ela sai do painel e entra nas correções com o motivo.`))
+      acao("despublicar", {ligacao_id: l.id, motivo: motivo.value}, botao, "Retirada do site; entra nas correções.");
   };
   return el;
 }
+const item = (html) => { const d = document.createElement("div"); d.className = "item"; d.innerHTML = html; return d; };
 
-const SITUACAO = {fila: "na fila", publicada: "publicada", "publicada e fila": "publicada · resto na fila",
-  recusada: "recusada", despublicada: "despublicada", sem_par: "sem par", analisando: "analisando…",
-  "tentando de novo": "tentando de novo", erro: "erro"};
-const ANALISE = {analisando: "extraindo afirmações…", "tentando de novo": "falhou; tentando de novo", erro: "falhou (refeita ao reabrir)"};
-
+// ---------- ao vivo ----------
+const SIT = {fila: ["na fila", "fila"], publicada: ["no site", "site"], "publicada e fila": ["no site; resto na fila", "fila"],
+  recusada: ["recusada", ""], despublicada: ["retirada", ""], sem_par: ["sem checagem", ""], analisando: ["analisando…", "analisando"],
+  "tentando de novo": ["tentando de novo", "atencao"], erro: ["falhou", "erro"]};
+const abertos = new Set();
+function resumoFala(f) {
+  if (f.analise === "mediacao") return `<span class="chip">mediação</span>`;
+  if (f.analise === "analisando") return `<span class="chip analisando">analisando…</span>`;
+  if (f.analise === "tentando de novo") return `<span class="chip atencao">Claude tentando de novo</span>`;
+  if (f.analise === "erro") return `<span class="chip erro">análise falhou</span>`;
+  if (!f.afirmacoes.length && !f.descartadas.length) return `<span class="chip">nada checável</span>`;
+  const conta = {};
+  f.afirmacoes.forEach((a) => { const [t] = SIT[a.situacao] || [a.situacao]; conta[a.situacao] = conta[a.situacao] || {t, n: 0}; conta[a.situacao].n++; });
+  const ordem = ["fila", "publicada e fila", "publicada", "analisando", "tentando de novo", "erro", "sem_par", "recusada", "despublicada"];
+  const chips = ordem.filter((k) => conta[k]).map((k) => `<span class="chip ${(SIT[k] || [])[1] || ""}">${conta[k].n} ${esc(conta[k].t)}</span>`);
+  if (f.descartadas.length) chips.push(`<span class="chip">${f.descartadas.length} descartada${f.descartadas.length > 1 ? "s" : ""}</span>`);
+  return chips.join(" ");
+}
+function porque(a) {
+  switch (a.situacao) {
+    case "fila": return `Esperando você na fila (${esc(a.ligacao_id)}).`;
+    case "publicada": return `No site (${esc(a.ligacao_id)}).`;
+    case "publicada e fila": return `No site (${esc(a.ligacao_id)}); outra checagem dela espera na fila.`;
+    case "recusada": return `Você recusou (${esc(a.ligacao_id)}).`;
+    case "despublicada": return `Retirada do site (${esc(a.ligacao_id)}).`;
+    case "sem_par": return `Sem checagem: ${esc(a.veredito)}.${a.candidatas && a.candidatas.length ? " Mais próximas: " + a.candidatas.map((c) =>
+      `<a href="${link(c.url)}" target="_blank" rel="noopener noreferrer">${esc(c.agencia)}</a> (${esc(c.rotulo || "sem rótulo")}${c.data ? ", " + esc(c.data) : ""}): ${esc((c.frase || "").slice(0, 110))}`).join("; ") : ""}`;
+    case "analisando": return "O Claude está procurando checagens.";
+    case "tentando de novo": return "Falhou; o Claude tenta de novo em segundos.";
+    case "erro": return `Falhou; é refeita quando a sessão reabrir.${a.erro ? ` <span title="${esc(a.erro)}">Detalhe</span>` : ""}`;
+    default: return "";
+  }
+}
 function cartaoVivo(f) {
-  const el = document.createElement("article");
+  const el = document.createElement("details");
   el.className = `fv ${f.candidato ? esc(f.quem) : "mediacao"}`;
-  const atraso = f.atraso_s == null ? "" : `<span title="do fim da fala no áudio até a entrega">+${num(f.atraso_s)} s</span>`;
-  const estado = f.analise === "feita" ? (f.afirmacoes.length || f.descartadas.length ? "" : `<span class="sit">sem afirmação checável</span>`)
-    : f.analise === "mediacao" ? "" : `<span class="sit ${f.analise === "erro" ? "erro" : "analisando"}" title="${esc(f.erro || "")}">${ANALISE[f.analise] || esc(f.analise)}</span>`;
-  const afirmacao = (a) => {
-    const sit = a.situacao.split(" ")[0];
-    let extra = "";
-    if (a.situacao === "sem_par") {
-      extra = `<div class="cands">${esc(a.veredito)}${a.candidatas && a.candidatas.length ? ". Mais próximas: " + a.candidatas.map((c) =>
-        `<a class="abre" href="${link(c.url)}" target="_blank" rel="noopener noreferrer">${esc(c.agencia)}</a> (${esc(c.rotulo || "sem rótulo")}${c.data ? ", " + esc(c.data) : ""}): ${esc((c.frase || "").slice(0, 90))}`).join(" · ") : ""}</div>`;
-    } else if (a.erro) {
-      extra = `<div class="cands">${esc(a.erro)}</div>`;
-    }
-    return `<li><span class="sit ${esc(sit)}">${SITUACAO[a.situacao] || esc(a.situacao)}</span>${a.ligacao_id ? ` <span class="fonte-rotulo">${esc(a.ligacao_id)}</span>` : ""}
-      “${esc(a.trecho)}” <span class="fonte-rotulo">${a.tipo === "numero" ? "número" : "fato perene"}</span>
-      <div class="frase">${esc(a.reformulacao)}</div>${extra}</li>`;
-  };
-  el.innerHTML = `
-    <div class="topo"><span>${minutagem(f.inicio_s)}</span><span class="quem ${esc(f.quem)}">${esc(f.quem)}</span>${atraso}${estado}</div>
-    <p class="texto" title="clique para ver a fala inteira">${esc(f.texto)}</p>
-    ${f.afirmacoes.length || f.descartadas.length ? `<ul>${f.afirmacoes.map(afirmacao).join("")}${f.descartadas.map((d) =>
-      `<li><span class="sit">descartada</span> “${esc(d.trecho)}” <span class="fonte-rotulo">(${esc(d.motivo)})</span></li>`).join("")}</ul>` : ""}`;
-  el.querySelector(".texto").onclick = (ev) => ev.target.classList.toggle("inteiro");
+  el.open = abertos.has(f.id);
+  el.ontoggle = () => { if (el.open) abertos.add(f.id); else abertos.delete(f.id); };
+  const atraso = f.atraso_s == null ? "" : `<span class="chip" title="do fim da fala no áudio até chegar aqui">+${num(f.atraso_s, 0)} s</span>`;
+  el.innerHTML = `<summary><span class="min">${minutagem(f.inicio_s)}</span>
+      <span class="linha1"><span class="quem ${f.candidato ? "quem-" + esc(f.quem) : ""}">${esc(f.quem)}</span>${resumoFala(f)}${atraso}</span>
+      <span class="resumo-texto">${esc(f.texto)}</span></summary>
+    <div class="corpo"><p class="texto">${esc(f.texto)}</p>
+      ${f.erro && f.analise !== "feita" ? `<details class="tecnico"><summary>Detalhe técnico</summary><code>${esc(f.erro)}</code></details>` : ""}
+      ${f.afirmacoes.length || f.descartadas.length ? `<ul>${f.afirmacoes.map((a) => `<li><span class="chip ${(SIT[a.situacao] || [])[1] || ""}">${esc((SIT[a.situacao] || [a.situacao])[0])}</span>
+          “${esc(a.trecho)}” <span class="porque">(${tipoAfirmacao(a.tipo)})</span>
+          <div class="porque">${esc(a.reformulacao)}</div><div class="porque">${porque(a)}</div></li>`).join("")}
+        ${f.descartadas.map((d) => `<li><span class="chip">descartada</span> “${esc(d.trecho)}”<div class="porque">${esc(d.motivo)}</div></li>`).join("")}</ul>` : ""}
+    </div>`;
   return el;
 }
 
-function pulso(e) {
-  const s = e.situacao || {};
-  const audio = s.ultimo_audio_em ? new Date(s.ultimo_audio_em) : null;
-  const ha = audio ? Math.round((Date.now() - audio) / 1000) : null;
-  $("p-audio").textContent = audio ? `${hora(s.ultimo_audio_em)} (há ${ha} s)` : (e.situacao ? "nenhum ainda" : "—");
-  $("p-audio").classList.toggle("velho", ha != null && ha > 10);
-  $("p-falas").textContent = s.falas ?? e.andamento.length;
-  $("p-claude").textContent = e.chamadas_claude_em_curso;
-  $("p-base").textContent = s.base_atualizada_em || (e.situacao ? "ainda não" : "—");
+function desenhaPlacar(e) {
+  const c = e.contagens || {};
+  const nomes = Object.keys(c);
+  const linha = (rot, k) => `<tr><td>${rot}</td>${nomes.map((q) => `<td>${num(c[q][k])}</td>`).join("")}</tr>`;
+  $("placar").innerHTML = `<thead><tr><th></th>${nomes.map((q) => `<th class="quem-${esc(q)}">${esc(q)}</th>`).join("")}</tr></thead>
+    <tbody>${linha("Falas", "falas")}${linha("Afirmações checáveis", "afirmacoes")}${linha("Ligações propostas", "ligacoes")}${linha("No site agora", "publicadas")}</tbody>`;
 }
 
-// redesenha só os cartões que mudaram: o que o operador está digitando num cartão não se perde
+// redesenha só os itens que mudaram: o que o operador está digitando num cartão não se perde
 const cartoes = new Map();
 function sincroniza(caixa, itens, chave, desenha, vazio) {
   const vistos = new Set();
@@ -315,60 +794,122 @@ function sincroniza(caixa, itens, chave, desenha, vazio) {
   });
   for (const [k, c] of cartoes) if (k.startsWith(caixa.id + ":") && !vistos.has(k)) { c.el.remove(); cartoes.delete(k); }
   [...caixa.children].forEach((el) => { if (el.classList.contains("vazio")) el.remove(); });
-  if (!itens.length) caixa.innerHTML = `<div class="vazio">${vazio}</div>`;
+  if (!itens.length && vazio) caixa.insertAdjacentHTML("beforeend", `<div class="vazio">${vazio}</div>`);
 }
-const linha = (html) => { const d = document.createElement("div"); d.className = "linha"; d.innerHTML = html; return d; };
 
-let versao = -1, primeira = true;
+// ---------- ciclo ----------
+let versao = -1, primeira = true, ultimo = null, foraDesde = null;
+function tique() {
+  const e = ultimo;
+  const inicio = e && e.meta.inicio_debate;
+  $("relogio-debate").classList.toggle("sem", !inicio);
+  $("tempo-debate").textContent = inicio ? minutagem((Date.now() - new Date(inicio)) / 1000) : "00:00";
+  $("rotulo-debate").textContent = inicio ? `do debate · 00:00 às ${hora(inicio)}` : "00:00 não marcado";
+  document.querySelectorAll("[data-desde]").forEach((x) => { x.textContent = ha(x.dataset.desde); });
+}
+function semConexao() {
+  foraDesde = foraDesde || new Date().toISOString();
+  $("banda").dataset.estado = "problema";
+  $("fazer").innerHTML = `A tela perdeu contato com o programa.<span class="segunda">Se o terminal fechou, rode o mesmo comando de novo: a sessão retoma de onde parou. Sem contato <span data-desde="${foraDesde}">${ha(foraDesde)}</span>.</span>`;
+  $("conexao").textContent = "Sem contato com o programa.";
+}
 async function atualiza(forca) {
   let e;
   try {
     const r = await fetch("/estado", {cache: "no-store"});
+    if (!r.ok) throw new Error(r.statusText);
     e = await r.json();
-    $("conexao").classList.remove("fora");
-  } catch (err) { $("conexao").classList.add("fora"); return; }
-  pulso(e);  // o pulso muda sem evento novo (áudio chegando, chamadas em curso)
+  } catch (err) { semConexao(); return; }
+  foraDesde = null;
+  ultimo = e; SITE = e.site || "#";
+  $("conexao").textContent = `Conectado; dados de ${hora(e.agora)}.`;
+  const itens = desenhaFaixa(e);  // muda sem evento novo (áudio, chamadas em curso, envio)
+  oQueFazer(e, itens);
+  $("marcar").hidden = !!e.meta.inicio_debate;
+  $("remarcar").hidden = !e.meta.inicio_debate;
+  tique();
   if (e.versao === versao && !forca) return;
   versao = e.versao;
-  document.title = `(${e.fila.length}) Aprovação · checagem ao vivo`;
-  $("inicio").textContent = e.meta.inicio_debate ? hora(e.meta.inicio_debate) : "não marcado";
-  $("marcar").textContent = e.meta.inicio_debate ? "Remarcar 00:00 agora" : "Marcar 00:00 agora";
-  $("auto").textContent = e.meta.limiar_automatico == null ? "desligada"
-    : `nota ≥ ${num(e.meta.limiar_automatico)} depois de 10 min`;
-  for (const [ids, n] of [[["n-fila", "n-fila2"], e.fila.length], [["n-pub", "n-pub2"], e.publicadas.length],
-                          [["n-cor", "n-cor2"], e.correcoes.length], [["n-sp", "n-sp2"], e.sem_par.length],
-                          [["n-rec"], e.recusadas.length], [["n-desc"], e.descartados.length]])
-    ids.forEach((id) => { $(id).textContent = n; });
-  const recente = (x) => x && (Date.now() - new Date(x.em)) < 10 * 60 * 1000;
-  $("quadros").innerHTML = (e.painel_erros || []).map((q) =>
-    `<div class="quadro ${q.n ? (recente(q.ultimo) ? "mal" : "antes") : "bem"}" title="${q.ultimo ? esc(q.ultimo.mensagem) : ""}">
-      <b>${esc(q.nome)}</b> ${q.n ? `${q.n} erro${q.n > 1 ? "s" : ""} · último às ${hora(q.ultimo.em)}` : "ok"}</div>`).join("");
-  const s = e.situacao;
-  $("situacao").textContent = s ? `linha ${s.linha}` + (s.ultima_fala_em ? ` · última fala às ${hora(s.ultima_fala_em)}` : "") : "";
-  $("erros").innerHTML = e.erros.slice(-6).reverse().map((x) =>
-    `<div class="erro"><b>${esc(x.etapa)}</b> ${hora(x.em)}${x.quem ? ` · ${esc(x.quem)} ${minutagem(x.minutagem_s)}` : ""} — ${esc(x.mensagem)}</div>`).join("");
-  sincroniza($("fila"), e.fila, (p) => p.id, cartaoFila, "Nada esperando aprovação.");
-  sincroniza($("vivo"), e.andamento, (f) => f.id, cartaoVivo, "Nenhuma fala ainda. A primeira aparece aqui assim que fechar.");
-  const pubs = [...e.publicadas].sort((a, b) => b.minutagem_s - a.minutagem_s);
-  sincroniza($("publicadas"), pubs, (l) => l.id, cartaoPublicada, "Nenhuma ligação publicada.");
+  document.title = e.fila.length ? `(${e.fila.length}) esperando · Mesa do operador` : "Mesa do operador";
+
+  // problemas recentes (10 min) em destaque; o resto fica em "Erros anteriores"
+  const recentes = e.erros.filter((x) => recente(x.em, 600)), antigos = e.erros.filter((x) => !recente(x.em, 600));
+  sincroniza($("problemas"), recentes.slice(-4).reverse(), (x) => x.em + x.etapa + x.mensagem, cartaoProblema, "");
+  $("n-err").textContent = antigos.length;
+  sincroniza($("erros-antigos"), [...antigos].reverse(), (x) => x.em + x.etapa + x.mensagem, (x) => {
+    const t = traduz(x);
+    return item(`<div class="topo"><b>${hora(x.em)}</b><span>${esc(t.oque)}</span></div>
+      <details class="tecnico"><summary>Detalhe técnico</summary><code>${esc(x.etapa)}: ${esc(x.mensagem)}</code></details>`);
+  }, "Nenhum.");
+
+  $("n-fila").textContent = e.fila.length;
+  $("aux-fila").textContent = e.fila.length ? "a mais antiga primeiro" : "";
+  sincroniza($("fila"), e.fila, (p) => p.id, cartaoFila, e.meta.inicio_debate
+    ? "<b>Nada esperando você.</b> Quando o Claude achar uma checagem para o que um candidato disse, ela aparece aqui com destaque."
+    : "<b>A fila começa depois do 00:00.</b> Até lá as falas ficam retidas.");
+  if (!e.fila.some((p) => p.id === ativa)) ativa = e.fila.length ? e.fila[0].id : null;
+  marcaAtiva(ativa);
+
+  const pubs = [...e.publicadas].sort((a, b) => (b.publicada_em || "").localeCompare(a.publicada_em || ""));
+  $("n-pub").textContent = pubs.length;
+  $("aux-pub").innerHTML = `<a href="${link(SITE)}" target="_blank" rel="noopener noreferrer">abrir a página pública</a>`;
+  sincroniza($("publicadas"), pubs, (l) => l.id, itemPublicada, "Nenhuma ligação no site ainda.");
+  const pub = e.situacao && e.situacao.publicacao;
+  $("envio").innerHTML = !pub ? "Esta sessão não publica no site (rodando sem --publicar)."
+    : pub.ultimo_erro ? `Último envio ${pub.ultimo_envio_em ? `às ${hora(pub.ultimo_envio_em)}` : "ainda não houve"}. Agora falhando: ${plural(pub.falhas, "tentativa", "tentativas")}.`
+    : pub.ultimo_envio_em ? `Último envio ao site às ${hora(pub.ultimo_envio_em)}${pub.ultimo_commit ? ` (commit ${esc(pub.ultimo_commit.slice(0, 7))})` : ""}${pub.pendente ? "; uma mudança nova sai em até 1 min" : ""}.`
+    : pub.pendente ? "Enviando a primeira mudança ao site…" : "Nenhum envio necessário até agora: o site já tem este conteúdo.";
+
+  $("n-cor").textContent = e.correcoes.length;
   sincroniza($("correcoes"), [...e.correcoes].reverse(), (c) => `${c.tipo}:${c.ligacao_id}:${c.em}:${c.url || ""}`,
-    (c) => linha(c.tipo === "rotulo"
-      ? `<b>${esc(c.ligacao_id)}</b> rótulo corrigido às ${hora(c.em)} — ${esc(c.agencia)}: “${esc(c.rotulo_anterior)}” → “${esc(c.rotulo)}”`
-      : `<b>${esc(c.ligacao_id)}</b> retirada às ${hora(c.em)} — ${esc(c.motivo)}<br><span class="frase">“${esc(c.retirado.trecho)}”</span>`), "Nenhuma.");
-  sincroniza($("recusadas"), [...e.recusadas].reverse(), (p) => p.id, (p) => linha(
-    `<b>${esc(p.id)}</b> ${minutagem(p.minutagem_s)} ${esc(p.quem)} — “${esc(p.trecho)}”${p.motivo_recusa ? ` <i>(${esc(p.motivo_recusa)})</i>` : ""}`), "Nenhuma.");
-  sincroniza($("sem-par"), [...e.sem_par].reverse(), (a) => a.minutagem_s + a.trecho, (a) => linha(
-    `${minutagem(a.minutagem_s)} <span class="quem ${esc(a.quem)}">${esc(a.quem)}</span> — ${esc(a.reformulacao)}`), "Nenhuma.");
-  sincroniza($("descartados"), [...e.descartados].reverse(), (d) => d.id, (d) => linha(
-    `${minutagem(d.minutagem_s)} ${esc(d.quem)} — “${esc(d.trecho)}” <i>(${esc(d.motivo)})</i>`), "Nenhuma.");
+    (c) => item(c.tipo === "rotulo"
+      ? `<div class="topo"><b>${horaCurta(c.em)}</b><span>rótulo corrigido</span><span>${esc(c.ligacao_id)}</span></div>
+         <div>${esc(c.agencia)}: “${esc(c.rotulo_anterior)}” passou a “${esc(c.rotulo)}”</div>`
+      : `<div class="topo"><b>${horaCurta(c.em)}</b><span>retirada do site</span><span>${esc(c.ligacao_id)}</span></div>
+         <div>Motivo: ${esc(c.motivo)}</div><p class="citado">“${esc(c.retirado.trecho)}”</p>`), "Nenhuma correção.");
+
+  $("n-rec").textContent = e.recusadas.length;
+  sincroniza($("recusadas"), [...e.recusadas].reverse(), (p) => p.id, (p) => item(
+    `<div class="topo"><b>${minutagem(p.minutagem_s)}</b>${quem(p.quem)}<span>${esc(p.id)}</span></div>
+     <p class="citado">“${esc(p.trecho)}”</p>${p.motivo_recusa ? `<div>Motivo: ${esc(p.motivo_recusa)}</div>` : ""}`), "Nenhuma.");
+  $("n-sp").textContent = e.sem_par.length;
+  sincroniza($("sem-par"), [...e.sem_par].reverse(), (a) => a.minutagem_s + a.trecho, (a) => item(
+    `<div class="topo"><b>${minutagem(a.minutagem_s)}</b>${quem(a.quem)}</div><div>${esc(a.reformulacao)}</div>`), "Nenhuma.");
+  $("n-desc").textContent = e.descartados.length;
+  sincroniza($("descartados"), [...e.descartados].reverse(), (d) => d.id, (d) => item(
+    `<div class="topo"><b>${minutagem(d.minutagem_s)}</b>${quem(d.quem)}</div><div>“${esc(d.trecho)}”</div><div class="porque">${esc(d.motivo)}</div>`), "Nenhuma.");
+
+  desenhaPlacar(e);
+  sincroniza($("vivo"), e.andamento, (f) => f.id, cartaoVivo, e.meta.inicio_debate
+    ? "Nenhuma fala ainda. A primeira aparece aqui assim que fechar."
+    : "Nenhuma fala ainda. Antes do 00:00 elas ficam retidas.");
   if (primeira) { document.querySelectorAll(".novo").forEach((x) => x.classList.remove("novo")); primeira = false; }
 }
 
 $("marcar").onclick = (ev) => {
-  if (confirm("Marcar o 00:00 do debate agora (abertura do mediador)?")) acao("inicio", {}, ev.target).then(() => { ev.target.disabled = false; });
+  if (confirm("Marcar o 00:00 do debate agora (abertura do mediador)?"))
+    acao("inicio", {}, ev.target, "00:00 marcado.").then(() => { ev.target.disabled = false; });
 };
-const tique = () => { $("relogio").textContent = new Date().toLocaleTimeString("pt-BR", {timeZone: "America/Sao_Paulo"}); };
-tique();
+$("remarcar").onclick = (ev) => {
+  if (confirm("Remarcar o 00:00 para AGORA? Todas as minutagens passam a contar deste instante."))
+    acao("inicio", {}, ev.target, "00:00 remarcado.").then(() => { ev.target.disabled = false; });
+};
+
+// tema: automático (do sistema), claro ou escuro; só uma preferência desta máquina
+const TEMAS = ["automático", "claro", "escuro"];
+function aplicaTema(t) {
+  if (t === "automático") document.documentElement.removeAttribute("data-tema"); else document.documentElement.dataset.tema = t;
+  $("tema").textContent = "Tema: " + t;
+}
+let tema = "automático";
+try { tema = localStorage.getItem("tema-operador") || tema; } catch (err) { /* sem armazenamento: segue automático */ }
+aplicaTema(tema);
+$("tema").onclick = () => {
+  tema = TEMAS[(TEMAS.indexOf(tema) + 1) % TEMAS.length];
+  aplicaTema(tema);
+  try { localStorage.setItem("tema-operador", tema); } catch (err) { /* nada */ }
+};
+
 setInterval(tique, 500);
 atualiza(true);
 setInterval(atualiza, 1500);
