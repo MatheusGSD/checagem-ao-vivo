@@ -322,9 +322,13 @@ class Sessao:
                 raise AcaoInvalida(f"{ligacao_id}: o painel já mostra o selo “{c['rotulo']}” para essa checagem")
             self._registra({"tipo": "correcao_rotulo", "ligacao_id": ligacao_id, "url": url, "rotulo": rotulo.strip()})
 
-    def registra_erro(self, etapa, mensagem):
+    def registra_erro(self, etapa, mensagem, uma_vez=False):
         """Erro de fora da sessão (publicação, transcrição, API do Google...) para a tela do operador.
-        Fica no registro de eventos como os erros do Claude."""
+        Fica no registro de eventos como os erros do Claude. uma_vez: não registra de novo se a mesma
+        mensagem da mesma etapa já está lá (avisos dados a cada vez que a sessão abre)."""
+        with self._trava:
+            if uma_vez and any((e["etapa"], e["mensagem"]) == (etapa, str(mensagem)) for e in self._erros):
+                return
         self._registra({"tipo": "erro", "etapa": etapa, "fala_id": None, "quem": None, "minutagem_s": None,
                         "mensagem": str(mensagem)})
 
@@ -641,17 +645,30 @@ def sha256_prompt(nome):
 
 # ---------- limiar ----------
 
-def le_limiar(dados=None):
+def le_limiar(dados=None, modelo=None):
     """Limiar da publicação automática em <dados>/avaliacao/limiar.json ({"limiar": número ou null,
-    "origem", "em"}), escrito pela avaliação da Band. Sem arquivo ou com null: None (desligada).
+    "modelo", "origem", "em"}), escrito pela avaliação da Band. Devolve (limiar, motivo): o limiar, se
+    ele vale para `modelo` (padrão: MODELO, o da sessão), e motivo None; ou (None, por que a
+    publicação automática fica desligada): sem arquivo, sem limiar, ou limiar medido com outro modelo
+    (ou sem o modelo registrado), já que a nota de confiança de um modelo não vale para outro.
     dados: --dados, a variável CHECAGEM_DADOS ou a pasta data/ do checkout principal."""
+    modelo = modelo or MODELO
     arquivo = pasta_dados(dados) / "avaliacao" / "limiar.json"
     if not arquivo.exists():
-        return None
-    limiar = json.loads(arquivo.read_text(encoding="utf-8")).get("limiar")
+        return None, f"sem resultado da avaliação da Band ({arquivo})"
+    d = json.loads(arquivo.read_text(encoding="utf-8"))
+    limiar = d.get("limiar")
     if limiar is not None and not (isinstance(limiar, (int, float)) and 0 <= limiar <= 1):
         raise ValueError(f"{arquivo}: limiar deve ser um número entre 0 e 1 ou null, veio {limiar!r}")
-    return limiar
+    if limiar is None:
+        return None, f"a avaliação da Band não liberou nenhum limiar ({d.get('origem') or arquivo})"
+    if not d.get("modelo"):
+        return None, (f"o limiar {limiar} de {arquivo} não diz com que modelo foi medido; rode de novo "
+                      f"`avaliacao_band.py relatorio` (a sessão usa {modelo})")
+    if d["modelo"] != modelo:
+        return None, (f"o limiar {limiar} foi medido com {d['modelo']}, e a sessão usa {modelo}: a nota de "
+                      f"um modelo não vale para outro (refaça a avaliação da Band com {modelo})")
+    return limiar, None
 
 
 # ---------- repasse de falas gravadas (falas de referência da Band) ----------

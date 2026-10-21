@@ -207,6 +207,7 @@ def test_com_todas_certas_o_limiar_e_a_menor_nota(avaliacao, tmp_path):
 
     gravado = limiar_gravado(pasta)
     assert gravado["limiar"] == 0.7
+    assert gravado["modelo"] == "claude-sonnet-5-5"  # o limiar só vale para o modelo com que foi medido
     assert gravado["em"] == "2026-10-21T10:00:00-03:00"
     assert "4 ligações" in gravado["origem"]
 

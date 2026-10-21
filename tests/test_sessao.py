@@ -513,18 +513,42 @@ def test_com_a_publicacao_automatica_desligada_tudo_vai_para_a_fila(indice):
     assert dados["meta"]["limiar_automatico"] is None
 
 
+def grava_limiar(dados, **campos):
+    (dados / "avaliacao").mkdir(exist_ok=True)
+    (dados / "avaliacao" / "limiar.json").write_text(
+        json.dumps({"origem": "avaliação da Band", "em": "2026-10-22T10:00:00-03:00", **campos}), encoding="utf-8")
+
+
 def test_limiar_vem_do_resultado_da_avaliacao_e_sem_ele_fica_desligado(tmp_path):
     from sessao import le_limiar
 
-    assert le_limiar(tmp_path) is None  # sem arquivo
-    (tmp_path / "avaliacao").mkdir()
-    arquivo = tmp_path / "avaliacao" / "limiar.json"
-    arquivo.write_text(json.dumps({"limiar": None, "origem": "nenhuma nota passou", "em": "2026-10-22T10:00:00-03:00"}),
-                       encoding="utf-8")
-    assert le_limiar(tmp_path) is None
-    arquivo.write_text(json.dumps({"limiar": 0.85, "origem": "avaliação da Band", "em": "2026-10-22T10:00:00-03:00"}),
-                       encoding="utf-8")
-    assert le_limiar(tmp_path) == 0.85
+    limiar, motivo = le_limiar(tmp_path, modelo="claude-sonnet-5-5")  # sem arquivo
+    assert limiar is None and "avaliação" in motivo
+    grava_limiar(tmp_path, limiar=None, modelo="claude-sonnet-5-5")
+    assert le_limiar(tmp_path, modelo="claude-sonnet-5-5")[0] is None
+    grava_limiar(tmp_path, limiar=0.85, modelo="claude-sonnet-5-5")
+    assert le_limiar(tmp_path, modelo="claude-sonnet-5-5") == (0.85, None)
+
+
+def test_limiar_medido_com_outro_modelo_desliga_a_publicacao_automatica_e_diz_por_que(tmp_path):
+    from sessao import le_limiar
+
+    grava_limiar(tmp_path, limiar=0.85, modelo="claude-opus-5-5")
+
+    limiar, motivo = le_limiar(tmp_path, modelo="claude-sonnet-5-5")
+
+    assert limiar is None
+    assert "claude-opus-5-5" in motivo and "claude-sonnet-5-5" in motivo
+
+
+def test_limiar_sem_o_modelo_da_avaliacao_desliga_a_publicacao_automatica(tmp_path):
+    from sessao import le_limiar
+
+    grava_limiar(tmp_path, limiar=0.85)  # limiar.json de antes de o modelo ser gravado
+
+    limiar, motivo = le_limiar(tmp_path, modelo="claude-sonnet-5-5")
+
+    assert limiar is None and "modelo" in motivo
 
 
 def test_despublicar_tira_a_ligacao_da_lista_e_cria_a_correcao_com_horario_e_motivo(indice):

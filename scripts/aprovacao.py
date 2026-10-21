@@ -173,7 +173,7 @@ def main():
     a = ap.parse_args()
     dados = pasta_dados(a.dados)
     pasta = Path(a.pasta) if a.pasta else dados / "sessao_globo"
-    limiar = le_limiar(dados)
+    limiar, sem_limiar = le_limiar(dados)
     indice = Indice.da_pasta(pasta_base(dados))
     publicador = None
     if a.publicar:
@@ -189,9 +189,11 @@ def main():
                          ao_mudar_publicado=publicador.notifica if publicador else None)
     if publicador:
         publicador.notifica(sessao.exporta())  # a sessão não avisa o estado inicial
+    if sem_limiar:  # o operador vê na tela por que nada sai sozinho
+        sessao.registra_erro("limiar", f"publicação automática desligada: {sem_limiar}", uma_vez=True)
     print(f"base: {len(indice.registros)} checagens · registro: {pasta / 'eventos.jsonl'} "
           f"({len(sessao.eventos)} eventos) · publicação automática: "
-          + (f"nota ≥ {limiar} depois de 10 min" if limiar is not None else "desligada"), flush=True)
+          + (f"nota ≥ {limiar} depois de 10 min" if limiar is not None else f"desligada ({sem_limiar})"), flush=True)
     if publicador:
         print(f"publicador: {publicador.repo / publicador.arquivo} → {a.remoto}/{a.ramo}, "
               f"no máximo um push a cada {a.intervalo:g} s", flush=True)

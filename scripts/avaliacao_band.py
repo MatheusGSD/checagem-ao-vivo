@@ -21,8 +21,9 @@ DADOS/checagens/; tudo o que a avaliação gera fica em DADOS/avaliacao/ (ou --s
   rodada_completa/         idem, contra a base completa
   marcacao.xlsx            uma linha por ligação (fala × checagem); o operador marca certa/errada
   relatorio.md             precisão por faixa de nota em cada base e o limiar escolhido
-  limiar.json              {"limiar": nota ou null, "origem": texto, "em": ISO}; a sessão da noite
-                           do debate lê daqui (ausente ou null: publicação automática desligada)
+  limiar.json              {"limiar": nota ou null, "modelo": modelo avaliado, "origem": texto, "em": ISO};
+                           a sessão da noite do debate lê daqui (ausente, null ou medido com outro
+                           modelo que o da sessão: publicação automática desligada)
 """
 import json
 import os
@@ -273,7 +274,11 @@ def relatorio(avaliacao, minimo=MINIMO, relogio=None):
         n = next(t["ligacoes"] for t in tabela if t["limiar"] == limiar)
         origem = (f"avaliação da Band ({avaliacao / 'relatorio.md'}): {n} ligações com nota ≥ {limiar}, "
                   f"nenhuma errada, nas bases congelada e completa")
-    (avaliacao / "limiar.json").write_text(json.dumps({"limiar": limiar, "origem": origem, "em": agora},
+    modelo = _modelo_avaliado(avaliacao)
+    (avaliacao / "limiar.json").write_text(json.dumps({"limiar": limiar if modelo else None, "modelo": modelo,
+                                                       "origem": origem if modelo else
+                                                       f"{origem}; as rodadas não usaram um modelo só: {DESLIGADA}",
+                                                       "em": agora},
                                                       ensure_ascii=False, indent=1), encoding="utf-8")
     resultado = {"limiar": limiar, "origem": origem, "minimo": minimo, "ligacoes": len(linhas),
                  "sem_marcacao": sum(k not in marcas for k in linhas), "marcacoes_invalidas": invalidas,
@@ -281,6 +286,13 @@ def relatorio(avaliacao, minimo=MINIMO, relogio=None):
     (avaliacao / "relatorio.md").write_text(_relatorio_md(avaliacao, resultado, agora), encoding="utf-8")
     print((avaliacao / "relatorio.md").read_text(encoding="utf-8"))
     return resultado
+
+
+def _modelo_avaliado(avaliacao):
+    """O modelo pedido nas duas rodadas (o limiar só vale para ele), ou None se elas não usaram o mesmo."""
+    modelos = {json.loads((Path(avaliacao) / f"rodada_{base}" / "fila.json").read_text(encoding="utf-8"))
+               ["resumo"].get("modelo") for base in BASES}
+    return modelos.pop() if len(modelos) == 1 else None
 
 
 def _pct(x):
@@ -298,7 +310,8 @@ def _relatorio_md(avaliacao, r, agora):
         out += [f"**Decisão: limiar {r['limiar']}.** {r['origem']}.", "",
                 "O limiar vale por checagem: só pode ir sozinha ao painel a checagem cuja própria nota é ≥ "
                 "limiar (as demais checagens da mesma afirmação vão para a fila).", ""]
-    out += [f"Gravado em `{avaliacao / 'limiar.json'}`.", ""]
+    out += [f"Gravado em `{avaliacao / 'limiar.json'}`, com o modelo avaliado ({_modelo_avaliado(avaliacao)}): "
+            "a sessão só usa o limiar com esse mesmo modelo.", ""]
     if c:
         out += ["## Bases", "",
                 f"- completa: {c['checagens_na_base_completa']} checagens",
