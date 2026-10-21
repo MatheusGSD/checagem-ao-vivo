@@ -1,0 +1,37 @@
+# Publica docs/ no GitHub Pages a cada push na main que mexa no site (o publicador empurra
+# docs/globo/data/painel.json até 1 vez por minuto na noite do debate). Publicar pelo Actions, e não
+# direto do ramo, tira o site do limite flexível de 10 builds por hora do Pages e pula o Jekyll.
+# Configurações > Pages > Source precisa estar em "GitHub Actions".
+name: Publica o site
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Um envio por vez; os que chegam no meio esperam e só o mais recente da fila roda (o anterior em
+# curso não é cancelado, para não deixar uma publicação pela metade).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publica:
+    environment:
+      name: github-pages
+      url: ${{ steps.publicacao.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: publicacao
+        uses: actions/deploy-pages@v5
