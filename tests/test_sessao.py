@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 
+from agente import RespostaInvalida
 from base_checagens import Indice
 from contrato_painel import valida
 from sessao import Sessao
@@ -272,17 +273,27 @@ def test_falha_do_claude_numa_fala_fica_registrada_e_a_sessao_segue(indice):
 
     def chamar(etapa, prompt, conteudo, schema):
         if FALA_PIX in conteudo:
-            raise SystemExit("extrair: o modelo recusou")  # como agente.chama faz numa recusa
+            raise RespostaInvalida("extrair: o modelo recusou")  # como agente.chama faz numa recusa
         return dublê(etapa, prompt, conteudo, schema)
 
     s = Sessao(indice, chamar=chamar, relogio=relogio)
     s.recebe_fala("Flávio", 400.0, FALA_PIX)
     s.recebe_fala("Lula", 754.3, FALA_DESEMPREGO)
 
-    [erro] = s.erros()
-    assert (erro["quem"], erro["minutagem_s"]) == ("Flávio", 400.0)
-    assert "recusou" in erro["mensagem"]
+    assert {(e["quem"], e["minutagem_s"]) for e in s.erros()} == {("Flávio", 400.0)}
+    assert "recusou" in s.erros()[0]["mensagem"]
     assert len(s.fila()) == 1
+
+
+def test_pedido_de_encerrar_o_processo_durante_a_chamada_nao_vira_erro_da_fala(indice):
+    def chamar(etapa, prompt, conteudo, schema):
+        raise SystemExit("encerrando")  # Ctrl+Break, sys.exit de outra parte: não é falha do Claude
+
+    s = Sessao(indice, chamar=chamar, relogio=relogio)
+
+    with pytest.raises(SystemExit):
+        s.recebe_fala("Flávio", 400.0, FALA_PIX)
+    assert s.erros() == []
 
 
 # ---------- operador: aprovação, publicação automática, correções e retomada ----------

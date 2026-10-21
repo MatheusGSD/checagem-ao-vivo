@@ -35,6 +35,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from agente import RespostaInvalida  # noqa: E402
 from comum import BRASILIA, le_jsonl, pasta_dados  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -49,6 +50,10 @@ CONFIRMACOES_EM_PARALELO = 4
 NUMERO_DESDE = "2025-01-01"  # afirmações numéricas só ligam com checagens a partir desta data
 AQUECIMENTO_S = 600  # nos primeiros 10 min desde o 00:00 nada é publicado sozinho
 EVENTOS_DE_PUBLICACAO = ("inicio", "aprovacao", "publicacao_automatica", "recusa", "despublicacao", "correcao_rotulo")
+# falhas de uma chamada ao Claude que viram erro da fala: rede, API, resposta fora do formato e a recusa ou
+# o corte (agente.RespostaInvalida, que é um SystemExit para encerrar a linha de comando); outros
+# SystemExit (pedido de encerrar o processo) passam
+FALHAS_DO_CLAUDE = (Exception, RespostaInvalida)
 
 TXT = {"type": "string"}
 ESQUEMA_EXTRACAO = {
@@ -371,7 +376,7 @@ class Sessao:
         try:
             saida, reg = self._chamar(f"extrair_{fala['id']}", EXTRAIR,
                                       f"Quem fala: {fala['quem']}\n\nFala:\n{fala['texto']}", ESQUEMA_EXTRACAO)
-        except (Exception, SystemExit) as e:  # agente.chama encerra com SystemExit em recusa ou corte
+        except FALHAS_DO_CLAUDE as e:
             return [_erro("extrair", fala["id"], fala["quem"], fala["inicio_s"], e)]
         extraidas = [{"id": f"{fala['id']}a{k}", "fala_id": fala["id"], "quem": fala["quem"],
                       "minutagem_s": fala["inicio_s"], **a}
@@ -401,7 +406,7 @@ class Sessao:
             conteudo = (f"Afirmação\n  quem disse: {a['quem']}\n  trecho: {a['trecho']}\n"
                         f"  reformulação: {a['reformulacao']}\n  tipo: {a['tipo']}\n\nCandidatas:\n" + "\n".join(linhas))
             saida, reg = self._chamar(f"confirmar_{a['id']}", CONFIRMAR, conteudo, ESQUEMA_CONFIRMACAO)
-        except (Exception, SystemExit) as e:
+        except FALHAS_DO_CLAUDE as e:
             return {**_erro("confirmar", a["fala_id"], a["quem"], a["minutagem_s"], e), "afirmacao": a}
         por_url = {r["url"]: r for r in candidatas}
         confirmadas, ignoradas, vistas = [], [], set()
