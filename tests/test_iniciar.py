@@ -3,12 +3,14 @@ o vocabulário da Globo (ou avisa na tela que ele falta); o ensaio publica numa 
 sozinha numa pasta temporária e servida aqui, numa pasta de sessão própria que pode recomeçar do zero; os
 dois abrem o navegador quando a tela responde."""
 import json
+import os
 import threading
 import time
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from iniciar import (PROMPT_GLOBO, SiteDeEnsaio, argumentos, do_zero, espera_e_abre, prepara_site_de_ensaio)
+from iniciar import (PROMPT_GLOBO, SiteDeEnsaio, apaga_copia, argumentos, do_zero, espera_e_abre,
+                     prepara_site_de_ensaio)
 from publicador import Publicador
 from test_publicador import commits, dados, remoto  # noqa: F401 - remoto é fixture
 
@@ -56,6 +58,20 @@ def test_ensaio_publica_numa_copia_local_do_site_servida_aqui_sem_tocar_o_remoto
     assert commits(nu) == antes  # nada foi para o remoto de verdade
     assert prepara_site_de_ensaio(copia, raiz=repo) == publicar_em  # reaberto, segue a mesma cópia
     site.fecha()
+
+
+def test_ensaio_do_zero_refaz_a_copia_do_site_mesmo_com_os_objetos_do_git_somente_leitura(tmp_path, remoto):
+    _, repo = remoto
+    copia = tmp_path / "copia"
+    prepara_site_de_ensaio(copia, raiz=repo)
+    (copia / "repo" / "sobra.txt").write_text("da cópia anterior", encoding="utf-8")
+    somente_leitura = [f for f in copia.rglob("*") if f.is_file() and not os.access(f, os.W_OK)]
+
+    apaga_copia(copia)
+    publicar_em = prepara_site_de_ensaio(copia, raiz=repo)
+
+    assert somente_leitura or os.name != "nt"  # no Windows, o git deixa os objetos somente leitura
+    assert (publicar_em / ".git").exists() and not (publicar_em / "sobra.txt").exists()
 
 
 def test_ensaio_do_zero_guarda_a_sessao_anterior_ao_lado_e_comeca_vazio(tmp_path):

@@ -18,8 +18,10 @@ Uso:
   python -P scripts/iniciar.py ensaio [--do-zero] [--porta 8765] [--porta-site 8766] [--dados D] [--sem-navegador]
 """
 import mimetypes
+import os
 import shutil
 import socket
+import stat
 import subprocess
 import sys
 import tempfile
@@ -63,6 +65,19 @@ def _git(*args, **kw):
     return r.stdout.strip()
 
 
+def apaga_copia(copia):
+    """Apaga a cópia do site. No Windows os objetos do git são somente leitura e o rmtree comum para no
+    meio, deixando um repo/ pela metade que faz o clone seguinte falhar: tira o somente leitura e tenta de
+    novo. O que ainda assim não sair (arquivo aberto por outra janela) vira erro aqui, com o caminho."""
+    def _libera(funcao, caminho, _exc):
+        os.chmod(caminho, stat.S_IWRITE)
+        funcao(caminho)
+
+    copia = Path(copia)
+    if copia.exists():
+        shutil.rmtree(copia, onexc=_libera)
+
+
 def prepara_site_de_ensaio(copia=COPIA_DO_SITE, raiz=RAIZ):
     """Uma cópia descartável do site em `copia`: site.git (o "remoto", com o ramo main = o commit atual
     desta pasta) e repo/ (o clone em que o publicador grava e de onde empurra). Devolve repo/. Se a cópia
@@ -71,7 +86,7 @@ def prepara_site_de_ensaio(copia=COPIA_DO_SITE, raiz=RAIZ):
     nu, repo = copia / "site.git", copia / "repo"
     if (nu / "HEAD").exists() and (repo / ".git").exists():
         return repo
-    shutil.rmtree(copia, ignore_errors=True)
+    apaga_copia(copia)
     copia.mkdir(parents=True, exist_ok=True)
     _git("init", "-q", "--bare", "-b", "main", str(nu))
     _git("--git-dir", str(nu), "fetch", "-q", "--no-tags", str(raiz), "+HEAD:refs/heads/main")
@@ -195,7 +210,7 @@ def main(argv=None):
         if a.do_zero:
             if guardada := do_zero(pasta):
                 print(f"ensaio do zero: a sessão anterior ficou em {guardada}", flush=True)
-            shutil.rmtree(a.copia, ignore_errors=True)
+            apaga_copia(a.copia)
         if not porta_livre(a.porta_site):
             sys.exit(f"A porta {a.porta_site} (cópia local do site) já está em uso. Feche a outra janela do ensaio.")
         repo = prepara_site_de_ensaio(a.copia)
