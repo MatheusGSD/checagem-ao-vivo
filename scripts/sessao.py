@@ -30,10 +30,12 @@ import os
 import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from comum import BRASILIA, le_jsonl, pasta_dados  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
 PROMPTS = RAIZ / "prompts"
@@ -41,7 +43,6 @@ EXTRAIR = "extrair_afirmacoes.md"
 CONFIRMAR = "confirmar_ligacao.md"
 # modelo da extração e da confirmação; o limiar da avaliação da Band só vale para o modelo avaliado
 MODELO = os.environ.get("CHECAGEM_MODELO", "claude-sonnet-5-5")
-BRASILIA = timezone(timedelta(hours=-3))
 CANDIDATOS = ("Lula", "Flávio")
 N_CANDIDATAS = 8
 CONFIRMACOES_EM_PARALELO = 4
@@ -79,22 +80,26 @@ class AcaoInvalida(ValueError):
 
 class Sessao:
     def __init__(self, indice, chamar=None, relogio=None, ao_registrar=None, meta=None,
-                 ao_mudar_publicado=None):
+                 ao_mudar_publicado=None, ao_marcar_inicio=None):
         """indice: base_checagens.Indice. chamar(etapa, prompt, conteudo, schema) -> (saída, registro),
         por padrão agente.chama. relogio() -> datetime com fuso. ao_registrar(evento) recebe cada
         evento assim que acontece, antes de ele valer (para o registro só de acréscimo). meta: campos
         de `meta` do arquivo de dados que mudam o padrão (título, debate, início do debate,
         limiar_automatico...). ao_mudar_publicado(dados) recebe o arquivo de dados exportado sempre
         que o conteúdo público muda (tudo menos `meta.atualizado_em`): é o gancho do publicador.
-        Ele roda com a sessão travada; deve ser rápido e não chamar ações da sessão."""
+        Ele roda com a sessão travada; deve ser rápido e não chamar ações da sessão.
+        ao_marcar_inicio(instante) recebe o 00:00 (datetime) cada vez que ele é marcado (pela tela ou
+        pelo terminal), depois de registrado; não é chamado ao repetir o registro."""
         self.indice = indice
         self._meta = meta or {}
         self._chamar = chamar or _chamar_padrao
         self._relogio = relogio or (lambda: datetime.now(BRASILIA))
         self._ao_registrar = ao_registrar
         self._ao_mudar_publicado = ao_mudar_publicado
+        self._ao_marcar_inicio = ao_marcar_inicio
         self._trava = threading.RLock()  # falas, tela de aprovação e publicador rodam em threads
         self._publico = None  # último conteúdo público avisado a ao_mudar_publicado
+        self._agencias_cache = (None, None)  # (tamanho da base, agências do painel) de _agencias
         self.eventos = []
         self._falas = []
         self._propostas = []
@@ -118,7 +123,7 @@ class Sessao:
         """O conteúdo público atual passa a ser a referência de ao_mudar_publicado (o publicador grava
         o estado inicial por conta própria, ao começar)."""
         if self._ao_mudar_publicado:
-            self._publico = self._conteudo_publico(self.exporta())
+            self._publico = conteudo_publico(self.exporta())
 
     @classmethod
     def reconstroi(cls, indice, eventos, **kw):
@@ -139,7 +144,7 @@ class Sessao:
         fsync) antes de valer. Uma última linha cortada por um travamento é descartada."""
         arquivo = Path(pasta) / "eventos.jsonl"
         arquivo.parent.mkdir(parents=True, exist_ok=True)
-        eventos = le_eventos(arquivo)
+        eventos = le_jsonl(arquivo, corta_incompleta=True)
         registro = arquivo.open("a", encoding="utf-8")
 
         def grava(evento):
@@ -246,7 +251,9 @@ class Sessao:
             instante = datetime.fromisoformat(instante)
         if instante.tzinfo is None:
             raise AcaoInvalida("o 00:00 precisa de fuso horário")
-        self._registra({"tipo": "inicio", "instante": instante.isoformat(timespec="seconds")})
+        evento = self._registra({"tipo": "inicio", "instante": instante.isoformat(timespec="seconds")})
+        if self._ao_marcar_inicio:
+            self._ao_marcar_inicio(datetime.fromisoformat(evento["instante"]))
 
     def aprova(self, ligacao_id, selos=None, manter=None):
         """Publica uma ligação da fila. selos = {URL da checagem: selo visível na página da agência};
@@ -401,7 +408,7 @@ class Sessao:
         for c in saida["confirmadas"]:
             if c["url"] in por_url and 0 <= c["nota"] <= 1 and c["url"] not in vistas:
                 vistas.add(c["url"])
-                confirmadas.append({"checagem": _resumo(por_url[c["url"]]), "nota": c["nota"], "motivo": c["motivo"]})
+                confirmadas.append({"checagem": _metadados_da_checagem(por_url[c["url"]]), "nota": c["nota"], "motivo": c["motivo"]})
             else:  # URL que não estava entre as candidatas, nota fora de 0 a 1 ou repetida
                 ignoradas.append(c)
         return {"tipo": "confirmacao", "afirmacao": a, "candidatas": [r["id"] for r in candidatas],
@@ -440,14 +447,9 @@ class Sessao:
         if not self._ao_mudar_publicado:
             return
         dados = self.exporta()
-        if (publico := self._conteudo_publico(dados)) != self._publico:
+        if (publico := conteudo_publico(dados)) != self._publico:
             self._publico = publico
             self._ao_mudar_publicado(dados)
-
-    @staticmethod
-    def _conteudo_publico(dados):
-        return json.dumps({**dados, "meta": {k: v for k, v in dados["meta"].items() if k != "atualizado_em"}},
-                          sort_keys=True, ensure_ascii=False)
 
     def _aplica(self, e):
         if e["tipo"] in EVENTOS_DE_PUBLICACAO:
@@ -548,7 +550,7 @@ class Sessao:
         from agencias import agencias_do_painel
 
         n = len(self.indice.registros)
-        if getattr(self, "_agencias_cache", (None,))[0] != n:
+        if self._agencias_cache[0] != n:
             self._agencias_cache = (n, agencias_do_painel(self.indice.registros))
         return self._agencias_cache[1]
 
@@ -571,12 +573,20 @@ class Sessao:
         }
 
 
+
+
+def conteudo_publico(dados):
+    """O conteúdo público do arquivo de dados, comparável: tudo menos o horário da última atualização."""
+    return json.dumps({**dados, "meta": {k: v for k, v in dados["meta"].items() if k != "atualizado_em"}},
+                      sort_keys=True, ensure_ascii=False)
+
+
 def _erro(etapa, fala_id, quem, minutagem_s, excecao):
     return {"tipo": "erro", "etapa": etapa, "fala_id": fala_id, "quem": quem, "minutagem_s": minutagem_s,
             "mensagem": f"{type(excecao).__name__}: {excecao}"}
 
 
-def _resumo(r):
+def _metadados_da_checagem(r):
     """O que a ligação guarda da checagem (só metadados)."""
     return {k: r.get(k) for k in ("id", "agencia", "data", "rotulo", "url", "frase")}
 
@@ -585,31 +595,13 @@ def sha256_prompt(nome):
     return hashlib.sha256((PROMPTS / nome).read_text(encoding="utf-8").encode()).hexdigest()
 
 
-# ---------- persistência e limiar ----------
-
-def le_eventos(arquivo):
-    """Os eventos de um registro .jsonl (vazio se o arquivo não existe). Uma última linha incompleta,
-    de um travamento no meio da gravação, é cortada do arquivo para o registro seguir só de acréscimo."""
-    arquivo = Path(arquivo)
-    if not arquivo.exists():
-        return []
-    bruto = arquivo.read_bytes()
-    linhas = bruto.split(b"\n")
-    eventos = [json.loads(linha) for linha in linhas[:-1] if linha.strip()]
-    if linhas[-1].strip():  # sem o \n final: gravação interrompida
-        with arquivo.open("r+b") as f:
-            f.truncate(len(bruto) - len(linhas[-1]))
-    return eventos
-
+# ---------- limiar ----------
 
 def le_limiar(dados=None):
     """Limiar da publicação automática em <dados>/avaliacao/limiar.json ({"limiar": número ou null,
     "origem", "em"}), escrito pela avaliação da Band. Sem arquivo ou com null: None (desligada).
     dados: --dados, a variável CHECAGEM_DADOS ou a pasta data/ do checkout principal."""
-    from base_checagens import raiz_principal
-
-    pasta = Path(dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data")
-    arquivo = pasta / "avaliacao" / "limiar.json"
+    arquivo = pasta_dados(dados) / "avaliacao" / "limiar.json"
     if not arquivo.exists():
         return None
     limiar = json.loads(arquivo.read_text(encoding="utf-8")).get("limiar")
@@ -618,63 +610,74 @@ def le_limiar(dados=None):
     return limiar
 
 
-# ---------- repasse das falas de referência da Band ----------
+# ---------- repasse de falas gravadas (falas de referência da Band) ----------
 
-def band(falas_json, pasta_base_checagens, saida, paralelo=3):
-    """Passa as falas de bloco1_final.json pela sessão, com o Claude de verdade, e grava em `saida`:
-    painel.json (arquivo de dados da página), fila.json (ligações propostas, descartes e erros),
-    eventos.jsonl (registro da sessão) e agente/ (cada chamada ao Claude)."""
-    import json
-    import threading
+def le_falas(falas_json):
+    """Falas de referência (bloco1_final.json): [(quem, segundos desde a primeira fala, texto)]."""
+    turnos = json.loads(Path(falas_json).read_text(encoding="utf-8"))["turns"]
+    t0 = turnos[0]["start"]
+    return [(t["speaker"], round(t["start"] - t0, 1), t["text"]) for t in turnos]
 
-    import agente
+
+def repassa(falas, pasta_base, saida, chamar=None, paralelo=3, meta=None, resumo=None):
+    """Passa as falas [(quem, início em s, texto)] por uma sessão nova contra a base em `pasta_base` e
+    grava em `saida`: eventos.jsonl (registro da sessão, com cada chamada), painel.json (arquivo de dados
+    da página), fila.json (resumo, ligações propostas, descartes e erros) e agente/ (entrada e saída de
+    cada chamada ao Claude, quando é o de verdade). chamar: padrão agente.chama com MODELO. meta: os
+    campos de `meta` da sessão. resumo: campos a mais no resumo, que é devolvido. Se nenhuma fala de
+    candidato chegou a ser analisada (todas as chamadas falharam), sai sem gravar painel nem fila."""
     from base_checagens import Indice
 
     saida = Path(saida)
-    if (saida / "eventos.jsonl").exists():
-        sys.exit(f"{saida} já tem um repasse; escolha outra pasta com --saida")
     saida.mkdir(parents=True, exist_ok=True)
-    turnos = json.loads(Path(falas_json).read_text(encoding="utf-8"))["turns"]
-    t0 = turnos[0]["start"]
-    indice = Indice.da_pasta(Path(pasta_base_checagens))
-    print(f"base: {len(indice.registros)} checagens; falas: {len(turnos)}")
+    indice = Indice.da_pasta(Path(pasta_base))
+    print(f"{saida.name}: base com {len(indice.registros)} checagens; {len(falas)} falas")
+    if chamar is None:
+        import agente
 
-    trava, uso = threading.Lock(), {"chamadas": 0, "entrada": 0, "saida": 0}
+        def chamar(etapa, prompt, conteudo, schema):
+            return agente.chama(etapa, prompt, conteudo, schema, logs=saida / "agente", modelo=MODELO)
 
-    def chamar(etapa, prompt, conteudo, schema):
-        out, reg = agente.chama(etapa, prompt, conteudo, schema, logs=saida / "agente", modelo=MODELO)
-        with trava:
-            uso["chamadas"] += 1
-            uso["entrada"] += reg["tokens"]["entrada"]
-            uso["saida"] += reg["tokens"]["saida"]
-        return out, reg
+    with (saida / "eventos.jsonl").open("a", encoding="utf-8") as registro:
+        def grava(evento):
+            registro.write(json.dumps(evento, ensure_ascii=False) + "\n")
+            registro.flush()
 
-    eventos = (saida / "eventos.jsonl").open("a", encoding="utf-8")
+        s = Sessao(indice, chamar=chamar, ao_registrar=grava, meta=meta)
+        s.recebe_falas(falas, paralelo=paralelo)
 
-    def registra(evento):
-        eventos.write(json.dumps(evento, ensure_ascii=False) + "\n")
-        eventos.flush()
-
-    s = Sessao(indice, chamar=chamar, ao_registrar=registra, meta={
-        "debate": "Debate do 2º turno · Band · 18/10/2026 · confronto livre (teste da sessão de checagem)",
-        "encerrado": True,
-    })
-    s.recebe_falas([(t["speaker"], round(t["start"] - t0, 1), t["text"]) for t in turnos], paralelo=paralelo)
-    eventos.close()
-
+    if any(q in CANDIDATOS for q, _, _ in falas) and not any(e["tipo"] == "afirmacoes" for e in s.eventos):
+        sys.exit(f"{saida.name}: todas as chamadas falharam ({s.erros()[0]['mensagem'][:300]}); "
+                 f"apague {saida} e rode de novo")
     dados = s.exporta()
     (saida / "painel.json").write_text(json.dumps(dados, ensure_ascii=False, indent=1), encoding="utf-8")
+    chamadas = [e["chamada"] for e in s.eventos if e.get("chamada")]
     resumo = {
-        "falas": len(turnos), "falas_de_candidato": sum(t["speaker"] in CANDIDATOS for t in turnos),
+        **(resumo or {}), "pasta_base": str(pasta_base), "checagens_na_base": len(indice.registros),
+        "falas": len(falas), "falas_de_candidato": sum(q in CANDIDATOS for q, _, _ in falas),
         "afirmacoes": sum(len(e["afirmacoes"]) for e in s.eventos if e["tipo"] == "afirmacoes"),
         "ligacoes_propostas": len(s.fila()), "sem_par": len(dados["sem_par"]),
-        "descartados": len(s.descartados()), "erros": len(s.erros()),
-        "chamadas_claude": uso["chamadas"], "tokens": {"entrada": uso["entrada"], "saida": uso["saida"]},
-        "base": str(pasta_base_checagens), "checagens_na_base": len(indice.registros),
+        "descartados": len(s.descartados()), "erros": len(s.erros()), "chamadas_claude": len(chamadas),
+        "tokens": {k: sum(c["tokens"][k] for c in chamadas) for k in ("entrada", "saida")},
+        "modelo": dados["meta"]["modelo"],
+        "modelos_que_responderam": sorted({c.get("modelo_respondeu") for c in chamadas} - {None}),
     }
     (saida / "fila.json").write_text(json.dumps({
         "resumo": resumo, "fila": s.fila(), "descartados": s.descartados(), "erros": s.erros(),
     }, ensure_ascii=False, indent=1), encoding="utf-8")
+    return resumo
+
+
+def band(falas_json, pasta_base_checagens, saida, paralelo=3):
+    """Passa as falas de bloco1_final.json pela sessão, com o Claude de verdade, e grava em `saida` o
+    que `repassa` grava."""
+    saida = Path(saida)
+    if (saida / "eventos.jsonl").exists():
+        sys.exit(f"{saida} já tem um repasse; escolha outra pasta com --saida")
+    resumo = repassa(le_falas(falas_json), pasta_base_checagens, saida, paralelo=paralelo, meta={
+        "debate": "Debate do 2º turno · Band · 18/10/2026 · confronto livre (teste da sessão de checagem)",
+        "encerrado": True,
+    })
     print(json.dumps(resumo, ensure_ascii=False, indent=1))
     print(f"-> {saida / 'painel.json'}, {saida / 'fila.json'}, {saida / 'eventos.jsonl'}")
 
@@ -682,7 +685,7 @@ def band(falas_json, pasta_base_checagens, saida, paralelo=3):
 def main():
     import argparse
 
-    from base_checagens import pasta_base, raiz_principal
+    from base_checagens import pasta_base
 
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("comando", choices=["band"])
@@ -691,7 +694,7 @@ def main():
     ap.add_argument("--saida", help="pasta de saída (padrão: data/sessao_band/ do checkout principal)")
     ap.add_argument("--paralelo", type=int, default=3, help="falas analisadas ao mesmo tempo")
     a = ap.parse_args()
-    dados = raiz_principal() / "data"
+    dados = pasta_dados()
     band(a.falas or dados / "bloco1_final.json", pasta_base(a.dados), a.saida or dados / "sessao_band", a.paralelo)
 
 

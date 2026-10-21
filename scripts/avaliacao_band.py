@@ -32,7 +32,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-BRASILIA = timezone(timedelta(hours=-3))
+from comum import BRASILIA, pasta_dados, raiz_principal  # noqa: E402
+from sessao import le_falas, repassa  # noqa: E402
+
 CORTE = datetime(2026, 10, 18, 21, 59, tzinfo=BRASILIA)  # início do debate da Band
 
 
@@ -94,81 +96,20 @@ BASES = ("congelada", "completa")
 
 def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base=""):
     """Passa as falas [(quem, início em s, texto)] pela sessão contra a base em `pasta_base` e grava
-    em `saida`: eventos.jsonl (registro da sessão, com cada chamada), fila.json (ligações propostas,
-    descartes, erros e resumo), painel.json e agente/ (entrada e saída de cada chamada ao Claude, quando
-    é o de verdade). Uma rodada já terminada (com fila.json) não é refeita."""
-    import threading
-
-    from base_checagens import Indice
-    import sessao
-    from sessao import CANDIDATOS, Sessao
-
+    em `saida` o que sessao.repassa grava (eventos.jsonl, fila.json, painel.json e agente/). Uma rodada
+    já terminada (com fila.json) não é refeita."""
     saida = Path(saida)
     if (saida / "fila.json").exists():
         print(f"{saida.name}: já rodada, aproveitando {saida / 'fila.json'}")
         return json.loads((saida / "fila.json").read_text(encoding="utf-8"))["resumo"]
     if (saida / "eventos.jsonl").exists():
         sys.exit(f"{saida} tem uma rodada interrompida (eventos.jsonl sem fila.json): apague a pasta e rode de novo")
-    saida.mkdir(parents=True, exist_ok=True)
-    indice = Indice.da_pasta(Path(pasta_base))
-    print(f"{saida.name}: base {nome_base} com {len(indice.registros)} checagens; {len(falas)} falas")
-
-    if chamar is None:
-        import agente
-
-        def chamar(etapa, prompt, conteudo, schema):
-            return agente.chama(etapa, prompt, conteudo, schema, logs=saida / "agente", modelo=sessao.MODELO)
-
-    trava, uso = threading.Lock(), {"chamadas": 0, "entrada": 0, "saida": 0}
-    respondeu = set()
-
-    def chamar_e_contar(etapa, prompt, conteudo, schema):
-        out, reg = chamar(etapa, prompt, conteudo, schema)
-        with trava:
-            uso["chamadas"] += 1
-            uso["entrada"] += reg["tokens"]["entrada"]
-            uso["saida"] += reg["tokens"]["saida"]
-            respondeu.add(reg.get("modelo_respondeu"))
-        return out, reg
-
-    with (saida / "eventos.jsonl").open("a", encoding="utf-8") as eventos:
-        def registra(evento):
-            eventos.write(json.dumps(evento, ensure_ascii=False) + "\n")
-            eventos.flush()
-
-        s = Sessao(indice, chamar=chamar_e_contar, ao_registrar=registra, meta={
-            "debate": f"Debate do 2º turno · Band · 18/10/2026 · avaliação com a base {nome_base}",
-            "encerrado": True,
-        })
-        s.recebe_falas(falas, paralelo=paralelo)
-
-    candidatas = sum(q in CANDIDATOS for q, _, _ in falas)
-    if candidatas and len(s.erros()) >= candidatas:  # nenhuma chamada deu certo: não vale como rodada
-        sys.exit(f"{saida.name}: todas as chamadas falharam ({s.erros()[0]['mensagem'][:300]}); "
-                 f"apague {saida} e rode de novo")
-    dados = s.exporta()
-    (saida / "painel.json").write_text(json.dumps(dados, ensure_ascii=False, indent=1), encoding="utf-8")
-    resumo = {
-        "base": nome_base, "pasta_base": str(pasta_base), "checagens_na_base": len(indice.registros),
-        "falas": len(falas), "falas_de_candidato": sum(q in CANDIDATOS for q, _, _ in falas),
-        "afirmacoes": sum(len(e["afirmacoes"]) for e in s.eventos if e["tipo"] == "afirmacoes"),
-        "ligacoes_propostas": len(s.fila()), "sem_par": len(dados["sem_par"]),
-        "descartados": len(s.descartados()), "erros": len(s.erros()),
-        "chamadas_claude": uso["chamadas"], "tokens": {"entrada": uso["entrada"], "saida": uso["saida"]},
-        "modelo": dados["meta"]["modelo"], "modelos_que_responderam": sorted(m for m in respondeu if m),
-    }
-    (saida / "fila.json").write_text(json.dumps({
-        "resumo": resumo, "fila": s.fila(), "descartados": s.descartados(), "erros": s.erros(),
-    }, ensure_ascii=False, indent=1), encoding="utf-8")
+    resumo = repassa(falas, pasta_base, saida, chamar=chamar, paralelo=paralelo, resumo={"base": nome_base}, meta={
+        "debate": f"Debate do 2º turno · Band · 18/10/2026 · avaliação com a base {nome_base}",
+        "encerrado": True,
+    })
     print(json.dumps(resumo, ensure_ascii=False))
     return resumo
-
-
-def le_falas(falas_json):
-    """Falas de referência (bloco1_final.json): [(quem, segundos desde a primeira fala, texto)]."""
-    turnos = json.loads(Path(falas_json).read_text(encoding="utf-8"))["turns"]
-    t0 = turnos[0]["start"]
-    return [(t["speaker"], round(t["start"] - t0, 1), t["text"]) for t in turnos]
 
 
 # ---------- planilha de marcação ----------
@@ -431,8 +372,6 @@ class Duble:
 def main():
     import argparse
 
-    from base_checagens import raiz_principal
-
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("comando", choices=["rodar", "relatorio"])
     ap.add_argument("--dados", help="pasta de dados (padrão: CHECAGEM_DADOS ou data/ do checkout principal)")
@@ -444,7 +383,7 @@ def main():
     ap.add_argument("--paralelo", type=int, default=3, help="falas analisadas ao mesmo tempo")
     ap.add_argument("--minimo", type=int, default=MINIMO, help="ligações acima do limiar, todas certas")
     a = ap.parse_args()
-    dados = Path(a.dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data")
+    dados = pasta_dados(a.dados)
     saida = Path(a.saida) if a.saida else dados / "avaliacao"
     if a.comando == "rodar":
         if not a.duble and not os.environ.get("ANTHROPIC_API_KEY"):  # num worktree o .env só existe no checkout principal

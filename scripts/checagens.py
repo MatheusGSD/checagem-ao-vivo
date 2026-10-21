@@ -16,10 +16,12 @@ Do Fato ou Fake a coleta guarda só o `recorte` (URL, título com o selo e data)
 import html
 import json
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from xml.etree import ElementTree
+
+from comum import BRASILIA
 
 DATA_NA_URL = re.compile(r"/(20\d\d)/(\d\d)/(\d\d)/")
 
@@ -105,7 +107,6 @@ def _google_explorer(texto, coletado_em, busca):
 
 FOF_AGENCIA = "Fato ou Fake (g1)"
 FOF_SITE = "g1.globo.com"
-BRASILIA = timezone(timedelta(hours=-3))
 # selo no começo do título: "É #FAKE que…", "É #FATO: …", "#NÃOÉBEMASSIM: …" (às vezes sem o #, como em
 # "É FATO: …" ou "#É FAKE …", e às vezes depois do assunto, como em "Diogo Jota: É #FAKE que…"). Resumos
 # com várias checagens ("Veja o que é #FATO ou #FAKE…") e notícias da seção sem selo não têm rótulo

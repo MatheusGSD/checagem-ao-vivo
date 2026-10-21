@@ -5,7 +5,7 @@ tests/fixtures/base_sessao.json mais checagens publicadas depois do debate da Ba
 """
 import json
 import shutil
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -17,7 +17,7 @@ from base_checagens import Indice, atualiza_indice
 from test_sessao import pedido, resposta
 
 FIXTURES = Path(__file__).parent / "fixtures"
-BRASILIA = timezone(timedelta(hours=-3))
+from comum import BRASILIA  # noqa: E402
 
 DESEMPREGO_2025 = "https://example.org/aosfatos/desemprego-2025"
 DESEMPREGO_BAND = "https://example.org/lupa/debate-band-desemprego"  # revisada depois do debate

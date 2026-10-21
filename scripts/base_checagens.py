@@ -29,7 +29,6 @@ import argparse
 import json
 import os
 import re
-import subprocess
 import sys
 import threading
 import time
@@ -40,6 +39,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from agencias import carrega as politica_de_agencias, separa  # noqa: E402
 from checagens import junta, normaliza, recorte, url_canonica  # noqa: E402
+from comum import le_jsonl, pasta_dados, raiz_principal  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
 API = "https://factchecktools.googleapis.com/v1alpha1/claims:search"
@@ -55,19 +55,8 @@ SITEMAP_DIA = re.compile(r"/sitemap/g1/(\d{4})/(\d\d)/(\d\d)_\d+\.xml$")
 FOF_DESDE = "2025-01-01"
 
 
-def raiz_principal():
-    """Raiz do checkout principal (num worktree, data/ e .env só existem lá)."""
-    try:
-        comum = subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], cwd=RAIZ,
-                               capture_output=True, text=True, check=True).stdout.strip()
-        return Path(comum).parent
-    except (OSError, subprocess.CalledProcessError):
-        return RAIZ
-
-
 def pasta_base(dados=None):
-    dados = dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data"
-    return Path(dados) / "checagens"
+    return pasta_dados(dados) / "checagens"
 
 
 def chave_google():
@@ -290,10 +279,7 @@ def coleta_fof_sitemap(g1, pasta, saida, desde=FOF_DESDE, log=print):
 
 def le_brutos(pasta):
     """Todas as páginas brutas, da coleta mais antiga para a mais nova."""
-    for arq in sorted((pasta / "brutos").glob("*/*.jsonl")):
-        for linha in arq.read_text(encoding="utf-8").splitlines():
-            if linha.strip():
-                yield json.loads(linha)
+    return le_varios(sorted((pasta / "brutos").glob("*/*.jsonl")))
 
 
 def reconstroi(pasta):
@@ -312,10 +298,9 @@ def le_base(pasta):
     return json.loads((pasta / "base.json").read_text(encoding="utf-8"))["registros"]
 
 
-def le_jsonl(arquivos):
-    for arq in arquivos:
-        if Path(arq).exists():
-            yield from (json.loads(linha) for linha in Path(arq).read_text(encoding="utf-8").splitlines() if linha.strip())
+def le_varios(arquivos):
+    """As páginas brutas de vários arquivos JSONL, em ordem."""
+    return [pag for arq in arquivos for pag in le_jsonl(arq)]
 
 
 def incorpora(pasta, paginas):
@@ -355,7 +340,7 @@ def atualiza(pasta, termos, chave, dias=1, pausa=PAUSA_S, pausa_google=0.5, log=
         if not ao_erro:
             raise
         ao_erro(f"RSS do Fato ou Fake: {type(e).__name__}: {e}")
-    novos = incorpora(pasta, le_jsonl(saidas))
+    novos = incorpora(pasta, le_varios(saidas))
     log(f"atualização {inicio}: {len(novos)} checagens novas "
         + ", ".join(f"{ag} {n}" for ag, n in Counter(r["agencia"] for r in novos).most_common()))
     return novos
@@ -537,7 +522,7 @@ def main():
                  **({"pausa": a.pausa, "pausa_google": a.pausa} if a.pausa is not None else {}))
         return
     if a.comando == "incorporar":  # arquivos brutos (.jsonl) coletados à parte
-        novos = incorpora(pasta, le_jsonl(a.frases))
+        novos = incorpora(pasta, le_varios(a.frases))
         print(f"base: {len(novos)} registros novos " + ", ".join(
             f"{ag} {n}" for ag, n in Counter(r["agencia"] for r in novos).most_common()))
         return
@@ -547,7 +532,7 @@ def main():
         coleta_fof_rss(g1, saida)
         print(f"coleta do Fato ou Fake desde {a.desde} → {saida}")
         print(f"páginas lidas: {coleta_fof_sitemap(g1, pasta, saida, desde=a.desde)}")
-        novos = incorpora(pasta, le_jsonl([saida]))
+        novos = incorpora(pasta, le_varios([saida]))
         print(f"base: {len(novos)} registros novos do Fato ou Fake: "
               + ", ".join(f"{s} {n}" for s, n in Counter(r["rotulo"] for r in novos).most_common()))
 

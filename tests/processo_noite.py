@@ -17,7 +17,7 @@ from base_checagens import Indice  # noqa: E402
 from falas import Fala  # noqa: E402
 from noite import Noite  # noqa: E402
 from publicador import Publicador  # noqa: E402
-from sessao import BRASILIA  # noqa: E402
+from comum import BRASILIA  # noqa: E402
 from test_sessao import (DESEMPREGO, FALA_DESEMPREGO, FALA_LICENCA, FALA_MEDIACAO, FALA_PIX,  # noqa: E402
                          FIXTURES, LICENCA_2022, PIX, afirmacao, pedido, resposta)
 

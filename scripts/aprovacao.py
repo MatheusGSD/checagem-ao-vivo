@@ -155,9 +155,9 @@ def serve(sessao, porta=PORTA, situacao=None):
 
 def main():
     import argparse
-    import os
 
-    from base_checagens import Indice, pasta_base, raiz_principal
+    from base_checagens import Indice, pasta_base
+    from comum import pasta_dados
     from sessao import Sessao, le_limiar
 
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
@@ -171,7 +171,7 @@ def main():
     ap.add_argument("--ramo", default="main", help="ramo publicado pelo Pages (padrão: main)")
     ap.add_argument("--intervalo", type=float, default=60, help="segundos mínimos entre pushes (padrão: 60)")
     a = ap.parse_args()
-    dados = Path(a.dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data")
+    dados = pasta_dados(a.dados)
     pasta = Path(a.pasta) if a.pasta else dados / "sessao_globo"
     limiar = le_limiar(dados)
     indice = Indice.da_pasta(pasta_base(dados))

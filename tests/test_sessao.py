@@ -6,7 +6,7 @@ por sentido roda de verdade (multilingual-e5-small) sobre a base de exemplo de 2
 fictícias em tests/fixtures/base_sessao.json.
 """
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -16,7 +16,7 @@ from contrato_painel import valida
 from sessao import Sessao
 
 FIXTURES = Path(__file__).parent / "fixtures"
-BRASILIA = timezone(timedelta(hours=-3))
+from comum import BRASILIA  # noqa: E402
 
 DESEMPREGO_2025 = "https://example.org/aosfatos/desemprego-2025"
 DESEMPREGO_2023 = "https://example.org/estadao/desemprego-2023"

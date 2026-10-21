@@ -20,7 +20,6 @@ Linha de comando:
 """
 import argparse
 import json
-import os
 import queue
 import subprocess
 import sys
@@ -38,7 +37,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from vozes import MEDIACAO, TAXA  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
-DADOS = Path(os.environ.get("CHECAGEM_DADOS", r"C:\dev\debate_lulavsflavio\data"))
 MODELO_WHISPER = "large-v3-turbo"
 PROMPT = "Debate presidencial, segundo turno. Lula e Flávio Bolsonaro."
 JANELA_VOZ_S = 3.0  # quem fala é decidido em janelas de pelo menos ~3 s (relatório do ticket 08)
@@ -601,7 +599,7 @@ def main(argv=None):
         p.add_argument("--saida", help="registro JSONL (pedaços, lotes e falas)")
         p.add_argument("--prompt", default=PROMPT)
         p.add_argument("--vocabulario", default=str(RAIZ / "data" / "vocabulario.json"))
-        p.add_argument("--dados", help="pasta de dados (padrão: CHECAGEM_DADOS ou C:\\dev\\debate_lulavsflavio\\data)")
+        p.add_argument("--dados", help="pasta de dados (padrão: CHECAGEM_DADOS ou data/ do checkout principal)")
     gr = sub.add_parser("gravar", help="só grava o som do Windows (sem transcrever); Ctrl+C encerra")
     gr.add_argument("--gravar", required=True)
     gr.add_argument("--dispositivo", type=int)
@@ -621,9 +619,10 @@ def main(argv=None):
             blocos.close()  # fecha o WAV e o stream antes de sair
         print(f"{fonte.posicao():.0f} s gravados.")
         return
+    from comum import pasta_dados
     from vozes import Reconhecedor
 
-    dados = Path(a.dados) if a.dados else DADOS
+    dados = pasta_dados(a.dados)
     if a.cmd == "loopback":
         fonte, zero = FonteLoopback(a.gravar, a.dispositivo), None
     else:

@@ -25,12 +25,15 @@ import sys
 import tempfile
 import threading
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from comum import BRASILIA  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
 ARQUIVO = "docs/globo/data/painel.json"
-BRASILIA = timezone(timedelta(hours=-3))
 INTERVALO = 60.0
 ESPERA_ERRO = 15.0
 TENTATIVAS_SE_O_REMOTO_ANDOU = 3
@@ -67,6 +70,17 @@ class Publicador:
         with self._cond:
             self._dados, self._versao = dados, self._versao + 1
             self._cond.notify()
+
+    def difere_do_remoto(self, dados, chave=lambda d: d):
+        """Se o ramo publicado no remoto ainda não tem este conteúdo (comparado por `chave(dados)`, ex.
+        sem o horário da última atualização). Rodando de novo depois de um travamento, o remoto já pode
+        ter tudo, e não há o que enviar. Na dúvida (sem rede, sem o arquivo no remoto), difere."""
+        rastreio = f"refs/remotes/{self.remoto}/{self.ramo}"
+        try:
+            self._git_ok("fetch", "--quiet", "--no-tags", self.remoto, f"+refs/heads/{self.ramo}:{rastreio}")
+            return chave(json.loads(self._git_ok("show", f"{rastreio}:{self.arquivo}"))) != chave(dados)
+        except (ErroGit, ValueError, KeyError, TypeError):
+            return True
 
     def encerra(self, timeout=60):
         """Envia o que falta (sem esperar o intervalo; uma tentativa) e para a thread. True se nada
@@ -156,7 +170,7 @@ class Publicador:
     def _git_ok(self, *args, **kw):
         codigo, saida, erro = self._git(*args, **kw)
         if codigo:
-            raise ErroGit(f"git {args[0]}: {_resumo(erro or saida)}")
+            raise ErroGit(f"git {args[0]}: {_ultimas_linhas(erro or saida)}")
         return saida
 
     @staticmethod
@@ -180,7 +194,7 @@ class Publicador:
             if codigo == 0:
                 return commit
             if not _remoto_andou(saida + "\n" + erro):
-                raise ErroGit(f"git push: {_resumo(erro or saida)}")
+                raise ErroGit(f"git push: {_ultimas_linhas(erro or saida)}")
         raise ErroGit(f"o ramo {self.ramo} mudou no remoto durante {TENTATIVAS_SE_O_REMOTO_ANDOU} envios seguidos")
 
     def _commit(self, base, blob, dados):
@@ -203,7 +217,8 @@ def _remoto_andou(erro):
     return any(s in erro for s in ("non-fast-forward", "fetch first", "[rejected]", "stale info"))
 
 
-def _resumo(texto):
+def _ultimas_linhas(texto):
+    """As últimas linhas de uma mensagem do git (sem as dicas), numa linha só, para a tela."""
     linhas = [l for l in texto.splitlines() if l.strip() and not l.startswith("hint:")]
     return " | ".join(linhas[-3:]) or "erro sem mensagem"
 

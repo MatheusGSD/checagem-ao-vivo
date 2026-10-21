@@ -43,19 +43,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from sessao import BRASILIA, Sessao  # noqa: E402
-
-
-class SessaoDaNoite(Sessao):
-    """A sessão de checagem, avisando a noite quando o 00:00 é marcado (pela tela ou pelo terminal)."""
-
-    ao_marcar_inicio = None
-
-    def marca_inicio(self, instante=None):
-        super().marca_inicio(instante)
-        if self.ao_marcar_inicio:
-            inicio = next(e for e in reversed(self.eventos) if e["tipo"] == "inicio")
-            self.ao_marcar_inicio(datetime.fromisoformat(inicio["instante"]))
+from comum import BRASILIA, le_jsonl, pasta_dados  # noqa: E402
+from sessao import Sessao, conteudo_publico  # noqa: E402
 
 
 class Noite:
@@ -82,12 +71,11 @@ class Noite:
         self._atualiza_base, self._intervalo_base = atualiza_base, intervalo_base
         self._log = log
         self.publicador = publicador
-        self._ja_entregues = _le_jsonl(self.pasta / "falas.jsonl")  # falas de rodadas anteriores
+        self._ja_entregues = le_jsonl(self.pasta / "falas.jsonl")  # falas de rodadas anteriores
         # fim (s desde o 00:00) da última fala entregue à sessão: a linha nova segue dali
         self._ultimo_fim = max((f["fim_s"] for f in self._ja_entregues), default=None)
-        self.sessao = SessaoDaNoite.abre(self.pasta, indice, chamar=chamar, relogio=relogio, meta=meta,
-                                         ao_mudar_publicado=self._mudou_publicado)
-        self.sessao.ao_marcar_inicio = self._zero_da_linha
+        self.sessao = Sessao.abre(self.pasta, indice, chamar=chamar, relogio=relogio, meta=meta,
+                                  ao_mudar_publicado=self._mudou_publicado, ao_marcar_inicio=self._zero_da_linha)
         self._analises = ThreadPoolExecutor(max_workers=paralelo, thread_name_prefix="analise")
         self._falas = (self.pasta / "falas.jsonl").open("a", encoding="utf-8")
         self._trava = threading.Lock()
@@ -107,7 +95,7 @@ class Noite:
     def comeca(self):
         dados = self.sessao.exporta()
         self._grava_painel(dados)
-        if self.publicador and _difere_do_remoto(self.publicador, dados):
+        if self.publicador and self.publicador.difere_do_remoto(dados, conteudo_publico):
             self.publicador.notifica(dados)
         if self._porta is not None:
             from aprovacao import serve
@@ -294,43 +282,6 @@ class Noite:
         self._threads.append(th)
 
 
-def _le_jsonl(arquivo):
-    """Linhas JSON de um arquivo (vazio se não existe); uma última linha cortada por um travamento é
-    ignorada."""
-    if not Path(arquivo).exists():
-        return []
-    out = []
-    for linha in Path(arquivo).read_text(encoding="utf-8").splitlines():
-        try:
-            out.append(json.loads(linha))
-        except json.JSONDecodeError:
-            pass
-    return out
-
-
-def _publico(dados):
-    """O conteúdo público do arquivo de dados: tudo menos o horário da última atualização."""
-    return {**dados, "meta": {k: v for k, v in dados["meta"].items() if k != "atualizado_em"}}
-
-
-def _difere_do_remoto(publicador, dados):
-    """Se o ramo publicado no remoto já tem este conteúdo público (rodando de novo depois de um
-    travamento), não há o que enviar. Na dúvida (sem rede, sem arquivo), envia."""
-    import subprocess
-
-    ref = f"refs/remotes/{publicador.remoto}/{publicador.ramo}"
-    try:
-        for args in (["fetch", "--quiet", "--no-tags", publicador.remoto, f"+refs/heads/{publicador.ramo}:{ref}"],
-                     ["show", f"{ref}:{publicador.arquivo}"]):
-            r = subprocess.run(["git", "-C", str(publicador.repo), *args], capture_output=True, timeout=60,
-                               env={**os.environ, "GIT_TERMINAL_PROMPT": "0"})
-            if r.returncode:
-                return True
-        return _publico(json.loads(r.stdout.decode("utf-8"))) != _publico(dados)
-    except (OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError):
-        return True
-
-
 def _agora():
     return datetime.now(BRASILIA).isoformat(timespec="milliseconds")
 
@@ -450,7 +401,7 @@ def main(argv=None):
 
     import agente
     import base_checagens
-    from base_checagens import Indice, pasta_base, raiz_principal
+    from base_checagens import Indice, pasta_base
     from falas import PROMPT
     from sessao import MODELO, le_limiar
 
@@ -486,7 +437,7 @@ def main(argv=None):
                        help="arquivo/pos-debate: sai quando a gravação acaba (padrão: a tela segue aberta para a fila)")
     a = ap.parse_args(argv)
 
-    dados = Path(a.dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data")
+    dados = pasta_dados(a.dados)
     pasta = Path(a.pasta) if a.pasta else dados / "sessao_globo"
     limiar = le_limiar(dados)
     indice = Indice.da_pasta(pasta_base(dados))
