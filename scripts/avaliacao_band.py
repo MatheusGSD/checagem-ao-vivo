@@ -21,8 +21,9 @@ DADOS/checagens/; tudo o que a avaliação gera fica em DADOS/avaliacao/ (ou --s
   rodada_completa/         idem, contra a base completa
   marcacao.xlsx            uma linha por ligação (fala × checagem); o operador marca certa/errada
   relatorio.md             precisão por faixa de nota em cada base e o limiar escolhido
-  limiar.json              {"limiar": nota ou null, "origem": texto, "em": ISO}; a sessão da noite
-                           do debate lê daqui (ausente ou null: publicação automática desligada)
+  limiar.json              {"limiar": nota ou null, "modelo": modelo avaliado, "origem": texto, "em": ISO};
+                           a sessão da noite do debate lê daqui (ausente, null ou medido com outro
+                           modelo que o da sessão: publicação automática desligada)
 """
 import json
 import os
@@ -32,7 +33,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-BRASILIA = timezone(timedelta(hours=-3))
+from comum import BRASILIA, pasta_dados, raiz_principal  # noqa: E402
+from sessao import le_falas, repassa  # noqa: E402
+
 CORTE = datetime(2026, 10, 18, 21, 59, tzinfo=BRASILIA)  # início do debate da Band
 
 
@@ -92,83 +95,22 @@ def congela(origem, destino, corte=CORTE, origens=("revisao",)):
 BASES = ("congelada", "completa")
 
 
-def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base=""):
+def rodada(falas, pasta_base, saida, chamar=None, paralelo=3, nome_base="", **kw):
     """Passa as falas [(quem, início em s, texto)] pela sessão contra a base em `pasta_base` e grava
-    em `saida`: eventos.jsonl (registro da sessão, com cada chamada), fila.json (ligações propostas,
-    descartes, erros e resumo), painel.json e agente/ (entrada e saída de cada chamada ao Claude, quando
-    é o de verdade). Uma rodada já terminada (com fila.json) não é refeita."""
-    import threading
-
-    from base_checagens import Indice
-    import sessao
-    from sessao import CANDIDATOS, Sessao
-
+    em `saida` o que sessao.repassa grava (eventos.jsonl, fila.json, painel.json e agente/). Uma rodada
+    já terminada (com fila.json) não é refeita. kw: os de sessao.repassa (esperas_entre_tentativas)."""
     saida = Path(saida)
     if (saida / "fila.json").exists():
         print(f"{saida.name}: já rodada, aproveitando {saida / 'fila.json'}")
         return json.loads((saida / "fila.json").read_text(encoding="utf-8"))["resumo"]
     if (saida / "eventos.jsonl").exists():
         sys.exit(f"{saida} tem uma rodada interrompida (eventos.jsonl sem fila.json): apague a pasta e rode de novo")
-    saida.mkdir(parents=True, exist_ok=True)
-    indice = Indice.da_pasta(Path(pasta_base))
-    print(f"{saida.name}: base {nome_base} com {len(indice.registros)} checagens; {len(falas)} falas")
-
-    if chamar is None:
-        import agente
-
-        def chamar(etapa, prompt, conteudo, schema):
-            return agente.chama(etapa, prompt, conteudo, schema, logs=saida / "agente", modelo=sessao.MODELO)
-
-    trava, uso = threading.Lock(), {"chamadas": 0, "entrada": 0, "saida": 0}
-    respondeu = set()
-
-    def chamar_e_contar(etapa, prompt, conteudo, schema):
-        out, reg = chamar(etapa, prompt, conteudo, schema)
-        with trava:
-            uso["chamadas"] += 1
-            uso["entrada"] += reg["tokens"]["entrada"]
-            uso["saida"] += reg["tokens"]["saida"]
-            respondeu.add(reg.get("modelo_respondeu"))
-        return out, reg
-
-    with (saida / "eventos.jsonl").open("a", encoding="utf-8") as eventos:
-        def registra(evento):
-            eventos.write(json.dumps(evento, ensure_ascii=False) + "\n")
-            eventos.flush()
-
-        s = Sessao(indice, chamar=chamar_e_contar, ao_registrar=registra, meta={
-            "debate": f"Debate do 2º turno · Band · 18/10/2026 · avaliação com a base {nome_base}",
-            "encerrado": True,
-        })
-        s.recebe_falas(falas, paralelo=paralelo)
-
-    candidatas = sum(q in CANDIDATOS for q, _, _ in falas)
-    if candidatas and len(s.erros()) >= candidatas:  # nenhuma chamada deu certo: não vale como rodada
-        sys.exit(f"{saida.name}: todas as chamadas falharam ({s.erros()[0]['mensagem'][:300]}); "
-                 f"apague {saida} e rode de novo")
-    dados = s.exporta()
-    (saida / "painel.json").write_text(json.dumps(dados, ensure_ascii=False, indent=1), encoding="utf-8")
-    resumo = {
-        "base": nome_base, "pasta_base": str(pasta_base), "checagens_na_base": len(indice.registros),
-        "falas": len(falas), "falas_de_candidato": sum(q in CANDIDATOS for q, _, _ in falas),
-        "afirmacoes": sum(len(e["afirmacoes"]) for e in s.eventos if e["tipo"] == "afirmacoes"),
-        "ligacoes_propostas": len(s.fila()), "sem_par": len(dados["sem_par"]),
-        "descartados": len(s.descartados()), "erros": len(s.erros()),
-        "chamadas_claude": uso["chamadas"], "tokens": {"entrada": uso["entrada"], "saida": uso["saida"]},
-        "modelo": dados["meta"]["modelo"], "modelos_que_responderam": sorted(m for m in respondeu if m),
-    }
-    (saida / "fila.json").write_text(json.dumps({
-        "resumo": resumo, "fila": s.fila(), "descartados": s.descartados(), "erros": s.erros(),
-    }, ensure_ascii=False, indent=1), encoding="utf-8")
+    resumo = repassa(falas, pasta_base, saida, chamar=chamar, paralelo=paralelo, resumo={"base": nome_base}, **kw, meta={
+        "debate": f"Debate do 2º turno · Band · 18/10/2026 · avaliação com a base {nome_base}",
+        "encerrado": True,
+    })
     print(json.dumps(resumo, ensure_ascii=False))
     return resumo
-
-
-def le_falas(falas_json):
-    """Falas de referência (bloco1_final.json): [(quem, segundos desde a primeira fala, texto)]."""
-    turnos = json.loads(Path(falas_json).read_text(encoding="utf-8"))["turns"]
-    t0 = turnos[0]["start"]
-    return [(t["speaker"], round(t["start"] - t0, 1), t["text"]) for t in turnos]
 
 
 # ---------- planilha de marcação ----------
@@ -332,7 +274,11 @@ def relatorio(avaliacao, minimo=MINIMO, relogio=None):
         n = next(t["ligacoes"] for t in tabela if t["limiar"] == limiar)
         origem = (f"avaliação da Band ({avaliacao / 'relatorio.md'}): {n} ligações com nota ≥ {limiar}, "
                   f"nenhuma errada, nas bases congelada e completa")
-    (avaliacao / "limiar.json").write_text(json.dumps({"limiar": limiar, "origem": origem, "em": agora},
+    modelo = _modelo_avaliado(avaliacao)
+    (avaliacao / "limiar.json").write_text(json.dumps({"limiar": limiar if modelo else None, "modelo": modelo,
+                                                       "origem": origem if modelo else
+                                                       f"{origem}; as rodadas não usaram um modelo só: {DESLIGADA}",
+                                                       "em": agora},
                                                       ensure_ascii=False, indent=1), encoding="utf-8")
     resultado = {"limiar": limiar, "origem": origem, "minimo": minimo, "ligacoes": len(linhas),
                  "sem_marcacao": sum(k not in marcas for k in linhas), "marcacoes_invalidas": invalidas,
@@ -340,6 +286,13 @@ def relatorio(avaliacao, minimo=MINIMO, relogio=None):
     (avaliacao / "relatorio.md").write_text(_relatorio_md(avaliacao, resultado, agora), encoding="utf-8")
     print((avaliacao / "relatorio.md").read_text(encoding="utf-8"))
     return resultado
+
+
+def _modelo_avaliado(avaliacao):
+    """O modelo pedido nas duas rodadas (o limiar só vale para ele), ou None se elas não usaram o mesmo."""
+    modelos = {json.loads((Path(avaliacao) / f"rodada_{base}" / "fila.json").read_text(encoding="utf-8"))
+               ["resumo"].get("modelo") for base in BASES}
+    return modelos.pop() if len(modelos) == 1 else None
 
 
 def _pct(x):
@@ -357,7 +310,8 @@ def _relatorio_md(avaliacao, r, agora):
         out += [f"**Decisão: limiar {r['limiar']}.** {r['origem']}.", "",
                 "O limiar vale por checagem: só pode ir sozinha ao painel a checagem cuja própria nota é ≥ "
                 "limiar (as demais checagens da mesma afirmação vão para a fila).", ""]
-    out += [f"Gravado em `{avaliacao / 'limiar.json'}`.", ""]
+    out += [f"Gravado em `{avaliacao / 'limiar.json'}`, com o modelo avaliado ({_modelo_avaliado(avaliacao)}): "
+            "a sessão só usa o limiar com esse mesmo modelo.", ""]
     if c:
         out += ["## Bases", "",
                 f"- completa: {c['checagens_na_base_completa']} checagens",
@@ -394,7 +348,7 @@ def _relatorio_md(avaliacao, r, agora):
 
 # ---------- tudo junto ----------
 
-def avalia(dados, falas_json, saida=None, chamar=None, paralelo=3, origens=("revisao",)):
+def avalia(dados, falas_json, saida=None, chamar=None, paralelo=3, origens=("revisao",), **kw):
     """Congela a base de DADOS/checagens, roda a sessão contra as duas versões e grava a planilha."""
     dados = Path(dados)
     saida = Path(saida) if saida else dados / "avaliacao"
@@ -403,30 +357,33 @@ def avalia(dados, falas_json, saida=None, chamar=None, paralelo=3, origens=("rev
         print(json.dumps(congela(completa, saida / "base_congelada", origens=origens), ensure_ascii=False, indent=1))
     falas = le_falas(falas_json)
     for base, pasta in (("congelada", saida / "base_congelada"), ("completa", completa)):
-        rodada(falas, pasta, saida / f"rodada_{base}", chamar=chamar, paralelo=paralelo, nome_base=base)
+        rodada(falas, pasta, saida / f"rodada_{base}", chamar=chamar, paralelo=paralelo, nome_base=base, **kw)
     return planilha(saida)
 
 
 class Duble:
-    """Claude de mentira para ensaiar o comando sem gastar chamadas: extrai a primeira frase de cada
-    fala como afirmação e confirma a primeira candidata com nota 0,5."""
+    """Claude de mentira para ensaiar o comando sem gastar chamadas: em cada fala, a primeira frase vira
+    a afirmação, e a primeira checagem da base que chegar entre as candidatas é confirmada com nota 0,5.
+    Reconhece a fala e as candidatas pelo texto e pelas URLs que chegam no pedido, não pela forma dele.
+    falas: textos das falas; urls: URLs das checagens da base."""
+
+    def __init__(self, falas, urls):
+        self.falas, self.urls = list(falas), list(urls)
 
     def __call__(self, etapa, prompt, conteudo, schema):
-        if schema.get("required") == ["afirmacoes"]:
-            fala = conteudo.split("Fala:\n", 1)[1]
+        if "afirmacoes" in schema["properties"]:
+            fala = max((f for f in self.falas if f in conteudo), key=len, default="")
             frase = fala.split(". ")[0].strip()
             saida = {"afirmacoes": [{"trecho": frase, "reformulacao": frase, "tipo": "perene"}] if frase else []}
         else:
-            urls = [linha.split("URL: ", 1)[1] for linha in conteudo.splitlines() if linha.startswith("- URL: ")]
-            saida = {"confirmadas": [{"url": urls[0], "nota": 0.5, "motivo": "dublê"}] if urls else []}
+            url = next((u for u in self.urls if u in conteudo), None)
+            saida = {"confirmadas": [{"url": url, "nota": 0.5, "motivo": "dublê"}] if url else []}
         return saida, {"etapa": etapa, "modelo_respondeu": "dublê", "prompt_sha256": "0" * 64,
                        "tokens": {"entrada": 0, "saida": 0}}
 
 
 def main():
     import argparse
-
-    from base_checagens import raiz_principal
 
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("comando", choices=["rodar", "relatorio"])
@@ -439,7 +396,7 @@ def main():
     ap.add_argument("--paralelo", type=int, default=3, help="falas analisadas ao mesmo tempo")
     ap.add_argument("--minimo", type=int, default=MINIMO, help="ligações acima do limiar, todas certas")
     a = ap.parse_args()
-    dados = Path(a.dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data")
+    dados = pasta_dados(a.dados)
     saida = Path(a.saida) if a.saida else dados / "avaliacao"
     if a.comando == "rodar":
         if not a.duble and not os.environ.get("ANTHROPIC_API_KEY"):  # num worktree o .env só existe no checkout principal
@@ -448,7 +405,13 @@ def main():
                 nome, _, valor = linha.partition("=")
                 if nome.strip() == "ANTHROPIC_API_KEY" and valor.strip():
                     os.environ["ANTHROPIC_API_KEY"] = valor.strip()
-        avalia(dados, a.falas or dados / "bloco1_final.json", saida, chamar=Duble() if a.duble else None,
+        falas = a.falas or dados / "bloco1_final.json"
+        duble = None
+        if a.duble:
+            from base_checagens import le_base
+
+            duble = Duble([x for _, _, x in le_falas(falas)], [r["url"] for r in le_base(dados / "checagens")])
+        avalia(dados, falas, saida, chamar=duble,
                paralelo=a.paralelo, origens=("revisao", "publicacao") if a.aceitar_publicacao else ("revisao",))
     else:
         relatorio(saida, minimo=a.minimo)

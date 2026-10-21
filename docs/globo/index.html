@@ -276,7 +276,7 @@ const ARQUIVO = arquivoDados();
 const INTERVALO = 30000;
 document.getElementById("baixar").href = ARQUIVO;
 
-function checagem(c, tipo) {
+function checagem(c, tipo, mista) {
   const d = dia(c.data);
   // números: a data vem em destaque, porque o dado pode ter mudado desde a checagem
   const data = !d ? `<p class="dt">Checagem sem data</p>`
@@ -286,13 +286,19 @@ function checagem(c, tipo) {
     <p class="ag">${esc(c.agencia)}</p>
     <span class="rotulo">${esc(c.rotulo)}</span>
     ${c.fonte_rotulo === "dados_da_agencia" ? `<p class="fonte-rot">rótulo conforme dados da agência</p>` : ""}
+    ${mista ? `<p class="fonte-rot">${c.origem === "automatica" ? "publicada automaticamente" : "aprovada por uma pessoa"}</p>` : ""}
     ${data}
     <a href="${esc(link(c.url))}" target="_blank" rel="noopener">Ler a checagem<span aria-hidden="true"> ↗</span></a>
   </div>`;
 }
 
 function ligacao(l, nova) {
-  const origem = l.origem === "automatica"
+  // cada checagem diz como entrou: numa ligação publicada sozinha, o operador pode ter aprovado outras depois
+  const origens = new Set(l.checagens.map(c => c.origem || l.origem));
+  const mista = origens.size > 1;
+  const origem = mista
+    ? `<span class="selo ia"><i></i>Parte publicada automaticamente, parte aprovada por uma pessoa</span>`
+    : origens.has("automatica")
     ? `<span class="selo ia"><i></i>Publicada automaticamente</span>`
     : `<span class="selo pessoa"><i></i>Aprovada por uma pessoa</span>`;
   const n = l.checagens.length;
@@ -301,7 +307,7 @@ function ligacao(l, nova) {
     <p class="txt">“${esc(l.trecho)}”</p>
     <p class="res"><b>Afirmação:</b> ${esc(l.reformulacao)}</p>
     <p class="chk-h">${n === 1 ? "Checagem anterior" : `${n} checagens anteriores`}</p>
-    <div class="chks">${l.checagens.map(c => checagem(c, l.tipo)).join("")}</div>
+    <div class="chks">${l.checagens.map(c => checagem(c, l.tipo, mista)).join("")}</div>
   </article>`;
 }
 
@@ -338,6 +344,14 @@ function correcao(c, d) {
   </article>`;
 }
 
+// a API pode refazer uma chamada recusada num modelo de reserva: o painel diz quais modelos de fato responderam
+function respondeu(m) {
+  const r = m.modelos_que_responderam || [];
+  if (!r.length) return "";
+  if (r.length === 1 && r[0] === m.modelo) return `<p>Todas as respostas vieram desse modelo.</p>`;
+  return `<p>Modelos que de fato responderam: ${r.map(x => `<code>${esc(x)}</code>`).join(", ")}. Quando o modelo pedido recusa uma chamada, a API pode refazê-la num modelo de reserva.</p>`;
+}
+
 function metodo(m) {
   const limiar = m.limiar_automatico == null
     ? "<p><b>Publicação automática desligada.</b> Toda ligação é aprovada por uma pessoa antes de aparecer.</p>"
@@ -350,7 +364,7 @@ function metodo(m) {
     <div><h3>Agências incluídas</h3><ul>${m.agencias_incluidas.map(a => `<li><b>${esc(a.nome)}</b>: ${esc(a.via)}</li>`).join("")}</ul></div>
     <div><h3>Agências fora do painel</h3>${m.agencias_excluidas.length ? `<ul>${m.agencias_excluidas.map(a => `<li><b>${esc(a.nome)}</b>: ${esc(a.motivo)}</li>`).join("")}</ul>` : "<p>Nenhuma.</p>"}</div>
     <div><h3>Publicação</h3>${limiar}</div>
-    <div><h3>Modelo de IA</h3><p><code>${esc(m.modelo)}</code>, nas duas etapas: separar as afirmações e confirmar cada ligação.</p></div>
+    <div><h3>Modelo de IA</h3><p><code>${esc(m.modelo)}</code>, nas duas etapas: separar as afirmações e confirmar cada ligação.</p>${respondeu(m)}</div>
     <div><h3>Instruções fixas do modelo</h3>${prompts}</div>`;
 }
 

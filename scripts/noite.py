@@ -12,7 +12,9 @@ O que roda junto (ver `Noite`):
 
 O 00:00 é marcado uma vez (botão da tela ou Enter no terminal) e vale para a sessão (minutagem e
 aquecimento de 10 min da publicação automática) e para a linha de falas. A publicação automática usa o
-limiar de <dados>/avaliacao/limiar.json (sem ele, desligada).
+limiar de <dados>/avaliacao/limiar.json (sem ele, ou medido com outro modelo, desligada). Ao vivo, o
+aquecimento conta no relógio; com `arquivo` e `pos-debate`, no relógio da gravação (a minutagem da fala),
+para o repasse depois do debate não publicar sozinho os 10 primeiros minutos.
 
 Retomada: rodar o mesmo comando com a mesma --pasta reconstrói a sessão pelo registro, termina as
 análises interrompidas, entrega à sessão as falas que ficaram só em falas.jsonl e segue a partir da última
@@ -27,7 +29,7 @@ Uso:
       Continua a sessão da pasta a partir da última fala entregue.
 
 Opções comuns: --dados D (CHECAGEM_DADOS ou data/ do checkout principal) · --pasta P (padrão
-D/sessao_globo) · --porta 8765 · --prompt/--vocabulario (Whisper) · --sem-base · --intervalo-base 600 ·
+D/sessao_globo) · --porta 8765 · --prompt/--vocabulario (Whisper) · --sem-base · --intervalo-base 600 · --explorer-emergencia ·
 --publicar [--repo R] [--remoto origin] [--ramo main] [--intervalo 60].
 """
 import json
@@ -43,25 +45,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from sessao import BRASILIA, Sessao  # noqa: E402
-
-
-class SessaoDaNoite(Sessao):
-    """A sessão de checagem, avisando a noite quando o 00:00 é marcado (pela tela ou pelo terminal)."""
-
-    ao_marcar_inicio = None
-
-    def marca_inicio(self, instante=None):
-        super().marca_inicio(instante)
-        if self.ao_marcar_inicio:
-            inicio = next(e for e in reversed(self.eventos) if e["tipo"] == "inicio")
-            self.ao_marcar_inicio(datetime.fromisoformat(inicio["instante"]))
+from comum import BRASILIA, le_jsonl, pasta_dados  # noqa: E402
+from sessao import Sessao, conteudo_publico  # noqa: E402
 
 
 class Noite:
     def __init__(self, pasta, indice, fabrica_linha, chamar=None, relogio=None, meta=None, paralelo=3,
                  recomeca_se_acabar=False, reinicios=20, espera_reinicio=5.0, atualiza_base=None,
-                 intervalo_base=600.0, porta=None, publicador=None, alerta_sem_fala_s=None, log=print):
+                 intervalo_base=600.0, porta=None, publicador=None, alerta_sem_fala_s=None, log=print,
+                 esperas_entre_tentativas=None, relogio_da_gravacao=False):
         """pasta: pasta da sessão. fabrica_linha(desde_s) -> linha de falas (iterável de falas.Fala, com
         marcar_zero(instante) e parar()) que entrega só as falas que terminam depois de `desde_s` (segundos
         desde o 00:00; None = do começo). chamar, relogio, meta: os da Sessao. recomeca_se_acabar: ao vivo,
@@ -73,7 +65,9 @@ class Noite:
         qualquer livre; None = sem tela), em `self.tela`. publicador: publicador.Publicador, avisado a cada
         mudança pública; ao começar, só recebe o estado se ele difere do que o remoto já tem.
         alerta_sem_fala_s: ao vivo, avisa na tela (uma vez) quando passa esse tempo sem nenhuma fala
-        depois do 00:00 (g1 parado, som no dispositivo errado)."""
+        depois do 00:00 (g1 parado, som no dispositivo errado). esperas_entre_tentativas: o da Sessao
+        (padrão: sessao.ESPERAS_ENTRE_TENTATIVAS_S). relogio_da_gravacao: pós-debate; os 10 min de
+        aquecimento da publicação automática contam no áudio (Sessao(aquecimento_pela_gravacao))."""
         self.pasta = Path(pasta)
         self.pasta.mkdir(parents=True, exist_ok=True)
         self._fabrica_linha = fabrica_linha
@@ -82,12 +76,14 @@ class Noite:
         self._atualiza_base, self._intervalo_base = atualiza_base, intervalo_base
         self._log = log
         self.publicador = publicador
-        self._ja_entregues = _le_jsonl(self.pasta / "falas.jsonl")  # falas de rodadas anteriores
+        self._ja_entregues = le_jsonl(self.pasta / "falas.jsonl")  # falas de rodadas anteriores
         # fim (s desde o 00:00) da última fala entregue à sessão: a linha nova segue dali
         self._ultimo_fim = max((f["fim_s"] for f in self._ja_entregues), default=None)
-        self.sessao = SessaoDaNoite.abre(self.pasta, indice, chamar=chamar, relogio=relogio, meta=meta,
-                                         ao_mudar_publicado=self._mudou_publicado)
-        self.sessao.ao_marcar_inicio = self._zero_da_linha
+        self.sessao = Sessao.abre(self.pasta, indice, chamar=chamar, relogio=relogio, meta=meta,
+                                  ao_mudar_publicado=self._mudou_publicado, ao_marcar_inicio=self._zero_da_linha,
+                                  aquecimento_pela_gravacao=relogio_da_gravacao,
+                                  **({"esperas_entre_tentativas": esperas_entre_tentativas}
+                                     if esperas_entre_tentativas is not None else {}))
         self._analises = ThreadPoolExecutor(max_workers=paralelo, thread_name_prefix="analise")
         self._falas = (self.pasta / "falas.jsonl").open("a", encoding="utf-8")
         self._trava = threading.Lock()
@@ -107,7 +103,7 @@ class Noite:
     def comeca(self):
         dados = self.sessao.exporta()
         self._grava_painel(dados)
-        if self.publicador and _difere_do_remoto(self.publicador, dados):
+        if self.publicador and self.publicador.difere_do_remoto(dados, conteudo_publico):
             self.publicador.notifica(dados)
         if self._porta is not None:
             from aprovacao import serve
@@ -125,8 +121,14 @@ class Noite:
         self.sessao.marca_inicio(instante)
 
     def situacao(self):
-        """O que a tela mostra da noite, no cabeçalho."""
+        """O que a tela mostra da noite, no cabeçalho: a linha, as falas entregues, o último áudio que
+        chegou da fonte (a linha diz, se souber: ultimo_audio() em segundos de time.time()) e a base."""
+        with self._trava:
+            linha = self._linha
+        ultimo = getattr(linha, "ultimo_audio", lambda: None)()
         return {"linha": self._estado_linha, "falas": self._n_falas, "ultima_fala_em": self._ultima_fala,
+                "ultimo_audio_em": datetime.fromtimestamp(ultimo, BRASILIA).isoformat(timespec="milliseconds")
+                if ultimo else None,
                 "base_atualizada_em": self._base}
 
     def espera(self, timeout=None):
@@ -173,7 +175,7 @@ class Noite:
                 if na_sessao[chave]:
                     na_sessao[chave] -= 1
                 else:
-                    self._analises.submit(self._recebe, *chave)
+                    self._analises.submit(self._recebe, *chave, f.get("atraso_s"))
         except Exception as e:  # noqa: BLE001
             self.sessao.registra_erro("sessao", f"retomada: {type(e).__name__}: {e}")
         finally:
@@ -248,13 +250,13 @@ class Noite:
             self._ultima_fala = _agora()
         self._log(_texto_da_fala(fala))
         self._pronto.wait()
-        self._analises.submit(self._recebe, fala.quem, fala.inicio_s, fala.texto)
+        self._analises.submit(self._recebe, fala.quem, fala.inicio_s, fala.texto, fala.atraso_s)
 
-    def _recebe(self, quem, inicio_s, texto):
+    def _recebe(self, quem, inicio_s, texto, atraso_s=None):
         """A fala na sessão. Falhas do Claude a sessão já registra (etapas extrair e confirmar); o que
         mais escapar vai para a tela em vez de sumir na thread."""
         try:
-            self.sessao.recebe_fala(quem, inicio_s, texto)
+            self.sessao.recebe_fala(quem, inicio_s, texto, atraso_s=atraso_s)
         except Exception as e:  # noqa: BLE001
             self.sessao.registra_erro("sessao", f"fala de {quem} em {inicio_s:.0f} s: {type(e).__name__}: {e}")
 
@@ -294,51 +296,15 @@ class Noite:
         self._threads.append(th)
 
 
-def _le_jsonl(arquivo):
-    """Linhas JSON de um arquivo (vazio se não existe); uma última linha cortada por um travamento é
-    ignorada."""
-    if not Path(arquivo).exists():
-        return []
-    out = []
-    for linha in Path(arquivo).read_text(encoding="utf-8").splitlines():
-        try:
-            out.append(json.loads(linha))
-        except json.JSONDecodeError:
-            pass
-    return out
-
-
-def _publico(dados):
-    """O conteúdo público do arquivo de dados: tudo menos o horário da última atualização."""
-    return {**dados, "meta": {k: v for k, v in dados["meta"].items() if k != "atualizado_em"}}
-
-
-def _difere_do_remoto(publicador, dados):
-    """Se o ramo publicado no remoto já tem este conteúdo público (rodando de novo depois de um
-    travamento), não há o que enviar. Na dúvida (sem rede, sem arquivo), envia."""
-    import subprocess
-
-    ref = f"refs/remotes/{publicador.remoto}/{publicador.ramo}"
-    try:
-        for args in (["fetch", "--quiet", "--no-tags", publicador.remoto, f"+refs/heads/{publicador.ramo}:{ref}"],
-                     ["show", f"{ref}:{publicador.arquivo}"]):
-            r = subprocess.run(["git", "-C", str(publicador.repo), *args], capture_output=True, timeout=60,
-                               env={**os.environ, "GIT_TERMINAL_PROMPT": "0"})
-            if r.returncode:
-                return True
-        return _publico(json.loads(r.stdout.decode("utf-8"))) != _publico(dados)
-    except (OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError):
-        return True
-
-
 def _agora():
     return datetime.now(BRASILIA).isoformat(timespec="milliseconds")
 
 
 def _texto_da_fala(f):
-    m, seg = divmod(int(f.inicio_s), 60)
+    m, seg = divmod(int(abs(f.inicio_s)), 60)
+    sinal = "-" if f.inicio_s < 0 else ""  # começou antes do 00:00
     atraso = f" (+{f.atraso_s:.0f} s)" if f.atraso_s is not None else ""
-    return f"[{m // 60:d}:{m % 60:02d}:{seg:02d}] {f.quem}{atraso}: {f.texto}"
+    return f"[{sinal}{m // 60:d}:{m % 60:02d}:{seg:02d}] {f.quem}{atraso}: {f.texto}"
 
 
 # ---------------------------------------------------------------- linhas de verdade (scripts/falas.py)
@@ -379,6 +345,9 @@ class LinhaAoVivo:
     def parar(self):
         self.linha.parar()
 
+    def ultimo_audio(self):
+        return self.linha.ultimo_audio_s
+
     def __iter__(self):
         return iter(self.linha)
 
@@ -402,6 +371,9 @@ class LinhaDeArquivos:
         self._parar.set()
         if self._atual:
             self._atual.parar()
+
+    def ultimo_audio(self):
+        return self._atual.ultimo_audio_s if self._atual else None
 
     def __iter__(self):
         from falas import FonteArquivo, LinhaDeFalas
@@ -450,7 +422,7 @@ def main(argv=None):
 
     import agente
     import base_checagens
-    from base_checagens import Indice, pasta_base, raiz_principal
+    from base_checagens import Indice, pasta_base
     from falas import PROMPT
     from sessao import MODELO, le_limiar
 
@@ -476,6 +448,9 @@ def main(argv=None):
                        help="nomes do debate para o Whisper (JSON com 'termos')")
         p.add_argument("--paralelo", type=int, default=3, help="falas analisadas ao mesmo tempo (padrão 3)")
         p.add_argument("--sem-base", action="store_true", help="não atualiza a base durante a noite")
+        p.add_argument("--explorer-emergencia", action="store_true",
+                       help="reserva de emergência: atualiza a base pelo buscador interno do Fact Check Explorer "
+                            "no lugar da API oficial (desligado por padrão)")
         p.add_argument("--intervalo-base", type=float, default=600, help="segundos entre atualizações (padrão 600)")
         p.add_argument("--publicar", action="store_true", help="envia o painel ao site (publicador.py)")
         p.add_argument("--repo", help="repositório do site (padrão: este)")
@@ -486,9 +461,9 @@ def main(argv=None):
                        help="arquivo/pos-debate: sai quando a gravação acaba (padrão: a tela segue aberta para a fila)")
     a = ap.parse_args(argv)
 
-    dados = Path(a.dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data")
+    dados = pasta_dados(a.dados)
     pasta = Path(a.pasta) if a.pasta else dados / "sessao_globo"
-    limiar = le_limiar(dados)
+    limiar, sem_limiar = le_limiar(dados)
     indice = Indice.da_pasta(pasta_base(dados))
     transcritor, reconhecedor = _carrega_modelos(a, dados)
 
@@ -510,8 +485,8 @@ def main(argv=None):
     if not a.sem_base:
         termos = base_checagens.termos_de_busca(Path(base_checagens.RAIZ) / "data" / "buscas_checagens.json")
         atualiza_base = lambda ao_erro: base_checagens.atualiza(  # noqa: E731
-            pasta_base(dados), termos, base_checagens.chave_google(), dias=1, log=lambda m: print(f"[base] {m}", flush=True),
-            ao_erro=ao_erro)
+            pasta_base(dados), termos, None if a.explorer_emergencia else base_checagens.chave_google(), dias=1, log=lambda m: print(f"[base] {m}", flush=True),
+            ao_erro=ao_erro, explorer=a.explorer_emergencia)
 
     if a.cmd == "ao-vivo":
         fabrica = lambda desde: LinhaAoVivo(pasta, transcritor, reconhecedor, a.dispositivo)  # noqa: E731
@@ -529,12 +504,16 @@ def main(argv=None):
                                                                **({"encerrado": True} if a.cmd == "pos-debate" else {})},
                   paralelo=a.paralelo, recomeca_se_acabar=a.cmd == "ao-vivo", atualiza_base=atualiza_base,
                   intervalo_base=a.intervalo_base, porta=a.porta, publicador=publicador,
-                  alerta_sem_fala_s=180 if a.cmd == "ao-vivo" else None, log=lambda m: print(m, flush=True))
+                  alerta_sem_fala_s=180 if a.cmd == "ao-vivo" else None, log=lambda m: print(m, flush=True),
+                  relogio_da_gravacao=a.cmd != "ao-vivo")  # arquivo e pós-debate: o relógio é o do áudio
     sessao_ref["s"] = noite.sessao
+    if sem_limiar:  # o operador vê na tela por que nada sai sozinho
+        noite.sessao.registra_erro("limiar", f"publicação automática desligada: {sem_limiar}", uma_vez=True)
     if a.cmd == "pos-debate" and noite._inicio() is None:
         _marca_inicio_pela_gravacao(noite, _gravacoes(a, pasta, None)[0])
     print(f"sessão: {pasta} ({len(noite.sessao.eventos)} eventos no registro) · base: {len(indice.registros)} checagens · "
-          f"modelo: {MODELO} · publicação automática: " + (f"nota >= {limiar} depois de 10 min" if limiar is not None else "desligada")
+          f"modelo: {MODELO} · publicação automática: "
+          + (f"nota >= {limiar} depois de 10 min" if limiar is not None else f"desligada ({sem_limiar})")
           + (f" · publicador -> {a.remoto}/{a.ramo}" if publicador else " · sem publicar"), flush=True)
     noite.comeca()
     print(f"tela de aprovação: http://127.0.0.1:{noite.tela.server_address[1]}/", flush=True)

@@ -9,7 +9,7 @@
     },
     {
       "nome": "Lupa",
-      "motivo": "Não publica dados estruturados (ClaimReview) e não autorizou a coleta até 22/10.",
+      "motivo": "Não publica dados estruturados (ClaimReview) e não autorizou o uso dos metadados até a publicação deste painel.",
       "nota": "Padrão até a Lupa autorizar por escrito; com a autorização, sai desta lista.",
       "nomes_na_fonte": ["Lupa", "Agência Lupa"],
       "sites": ["lupa.news", "lupa.uol.com.br"]

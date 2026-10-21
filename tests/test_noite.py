@@ -19,7 +19,7 @@ from noite import Noite, zero_da_gravacao
 from publicador import ARQUIVO, Publicador
 from test_publicador import commits, git, remoto  # noqa: F401 - remoto é fixture
 from test_sessao import (CHECAGEM_DA_NOITE, DESEMPREGO, FALA_13, FALA_DESEMPREGO, FALA_MEDIACAO, FALA_PIX, FIXTURES,
-                         FOF_13, INICIO, PIX, Claude, Relogio, afirmacao)
+                         FOF_13, INICIO, PIX, Claude, Relogio, afirmacao, pedido)
 
 
 @pytest.fixture(scope="module")
@@ -41,6 +41,10 @@ class LinhaFalsa:
         self.desde, self.pausa, self.falha_depois, self.espera_parar = desde, pausa, falha_depois, espera_parar
         self.zeros = []
         self._parar = threading.Event()
+        self._ultimo_audio = None
+
+    def ultimo_audio(self):
+        return self._ultimo_audio
 
     def marcar_zero(self, instante):
         self.zeros.append(instante)
@@ -54,6 +58,7 @@ class LinhaFalsa:
                 raise RuntimeError("Whisper caiu")
             if self._parar.wait(self.pausa):
                 return
+            self._ultimo_audio = time.time()
             yield f
         if self.espera_parar:  # ao vivo: a linha só termina quando mandam parar
             self._parar.wait()
@@ -61,7 +66,7 @@ class LinhaFalsa:
 
 def falas_da_noite():
     return [Fala("Mediação", 0.0, 4.0, FALA_MEDIACAO), Fala("Lula", 300.0, 312.0, FALA_DESEMPREGO),
-            Fala("Flávio", 900.0, 905.0, FALA_PIX)]
+            Fala("Flávio", 900.0, 905.0, FALA_PIX, atraso_s=2.5)]
 
 
 def test_falas_da_linha_chegam_a_sessao_e_o_painel_fica_gravado_na_pasta(indice, tmp_path):
@@ -79,6 +84,21 @@ def test_falas_da_linha_chegam_a_sessao_e_o_painel_fica_gravado_na_pasta(indice,
     assert painel == noite.sessao.exporta()
     assert [json.loads(linha)["quem"] for linha in (tmp_path / "falas.jsonl").read_text(encoding="utf-8").splitlines()] \
         == ["Mediação", "Lula", "Flávio"]
+
+
+def test_pos_debate_nao_publica_sozinho_os_primeiros_10_min_da_gravacao(indice, tmp_path):
+    claude = Claude({FALA_DESEMPREGO: [DESEMPREGO], FALA_PIX: [PIX]})
+    noite = Noite(tmp_path, indice, lambda desde: LinhaFalsa(falas_da_noite(), desde), chamar=claude,
+                  relogio=Relogio(INICIO + timedelta(hours=2)), meta={"limiar_automatico": 0.9, "encerrado": True},
+                  relogio_da_gravacao=True)
+    noite.marca_zero(INICIO)
+
+    noite.comeca()
+    assert noite.espera(timeout=60)
+    noite.encerra()
+
+    assert [p["minutagem_s"] for p in noite.sessao.fila()] == [300.0]  # no aquecimento da gravação
+    assert [lig["minutagem_s"] for lig in noite.sessao.exporta()["ligacoes"]] == [900.0]
 
 
 def ate(condicao, segundos=30):
@@ -156,7 +176,7 @@ class ClaudeQueFalha(Claude):
         self.falha_em = falha_em
 
     def __call__(self, etapa, prompt, conteudo, schema):
-        if prompt == "extrair_afirmacoes.md" and any(f in conteudo for f in self.falha_em):
+        if pedido(schema) == "extracao" and any(f in conteudo for f in self.falha_em):
             raise ConnectionError("API do Claude fora do ar (529 overloaded)")
         return super().__call__(etapa, prompt, conteudo, schema)
 
@@ -169,7 +189,7 @@ def estado_da_tela(noite):
 def test_tela_mostra_os_erros_por_etapa_com_a_falha_do_claude_na_extracao(indice, tmp_path):
     claude = ClaudeQueFalha({FALA_DESEMPREGO: [DESEMPREGO], FALA_PIX: [PIX]}, falha_em=[FALA_DESEMPREGO])
     noite = Noite(tmp_path, indice, Linhas(falas_da_noite()), chamar=claude,
-                  relogio=Relogio(INICIO + timedelta(minutes=30)), porta=0)
+                  relogio=Relogio(INICIO + timedelta(minutes=30)), porta=0, esperas_entre_tentativas=(0, 0))
     noite.comeca()
     assert noite.espera(timeout=60)
     noite.sessao.registra_erro("publicar", "falha ao publicar: git push: rede")
@@ -181,11 +201,16 @@ def test_tela_mostra_os_erros_por_etapa_com_a_falha_do_claude_na_extracao(indice
     assert list(paineis) == ["Transcrição e áudio", "API do Claude", "API do Google (base)", "Publicação"]
     assert paineis["Transcrição e áudio"]["n"] == 0 and paineis["API do Google (base)"]["n"] == 0
     claude_api = paineis["API do Claude"]
-    assert claude_api["n"] == 1
+    assert claude_api["n"] == 3  # a extração foi tentada três vezes
     assert "529 overloaded" in claude_api["ultimo"]["mensagem"] and claude_api["ultimo"]["quem"] == "Lula"
     assert paineis["Publicação"]["n"] == 1
     assert [p["trecho"] for p in estado["fila"]] == [PIX["trecho"]]  # a noite seguiu depois da falha
     assert estado["situacao"]["falas"] == 3
+    assert estado["situacao"]["ultimo_audio_em"]  # o pulso do áudio, no cabeçalho
+    # o andamento mostra cada fala, inclusive a que falhou, e o atraso da entrega
+    andamento = sorted(estado["andamento"], key=lambda f: f["minutagem_s"])  # as análises correm em paralelo
+    assert [(f["quem"], f["analise"], f["atraso_s"]) for f in andamento] == [
+        ("Mediação", "mediacao", None), ("Lula", "erro", None), ("Flávio", "feita", 2.5)]
 
 
 def painel_no_remoto(nu):

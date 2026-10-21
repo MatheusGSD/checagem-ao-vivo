@@ -1,6 +1,6 @@
 """Tela de aprovação: página local, servida pela máquina do operador, que mostra a fila e o estado da
-sessão de checagem em tempo real e envia as ações do operador (aprovar com selo, recusar,
-despublicar com motivo, corrigir rótulo, marcar o 00:00).
+sessão de checagem em tempo real e envia as ações do operador (aprovar com selo, editar o trecho e a
+reformulação, recusar, despublicar com motivo, corrigir rótulo, marcar o 00:00).
 
 Só escuta em 127.0.0.1. A página (scripts/aprovacao.html) busca GET /estado a cada ~1,5 s e manda
 cada ação como POST /acao/<nome> com corpo JSON.
@@ -55,7 +55,8 @@ def painel_de_erros(erros):
 
 def estado(sessao, situacao=None):
     """O que a tela mostra: fila, publicadas, correções, recusadas, sem par, descartes, erros (um quadro
-    por etapa) e a situação da noite (situacao(): dicionário curto, da integração ao vivo)."""
+    por etapa), o andamento (cada fala e o que saiu dela, Sessao.andamento), as chamadas ao Claude em
+    curso e a situação da noite (situacao(): dicionário curto, da integração ao vivo)."""
     versao = len(sessao.eventos)  # lida antes: um evento no meio só faz a próxima busca redesenhar
     dados = sessao.exporta()
     return {
@@ -70,6 +71,8 @@ def estado(sessao, situacao=None):
         "descartados": sessao.descartados(),
         "erros": (erros := sessao.erros()),
         "painel_erros": painel_de_erros(erros),
+        "andamento": sessao.andamento(),
+        "chamadas_claude_em_curso": sessao.chamadas_em_curso(),
         "situacao": situacao() if situacao else None,
     }
 
@@ -78,6 +81,7 @@ def _acoes(sessao):
     return {
         "aprovar": lambda c: sessao.aprova(c["ligacao_id"], selos=c.get("selos"), manter=c.get("manter")),
         "recusar": lambda c: sessao.recusa(c["ligacao_id"], c.get("motivo")),
+        "editar": lambda c: sessao.edita(c["ligacao_id"], trecho=c.get("trecho"), reformulacao=c.get("reformulacao")),
         "despublicar": lambda c: sessao.despublica(c["ligacao_id"], c.get("motivo")),
         "rotulo": lambda c: sessao.corrige_rotulo(c["ligacao_id"], c["url"], c.get("rotulo")),
         "inicio": lambda c: sessao.marca_inicio(c.get("instante")),
@@ -155,9 +159,9 @@ def serve(sessao, porta=PORTA, situacao=None):
 
 def main():
     import argparse
-    import os
 
-    from base_checagens import Indice, pasta_base, raiz_principal
+    from base_checagens import Indice, pasta_base
+    from comum import pasta_dados
     from sessao import Sessao, le_limiar
 
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
@@ -171,9 +175,9 @@ def main():
     ap.add_argument("--ramo", default="main", help="ramo publicado pelo Pages (padrão: main)")
     ap.add_argument("--intervalo", type=float, default=60, help="segundos mínimos entre pushes (padrão: 60)")
     a = ap.parse_args()
-    dados = Path(a.dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data")
+    dados = pasta_dados(a.dados)
     pasta = Path(a.pasta) if a.pasta else dados / "sessao_globo"
-    limiar = le_limiar(dados)
+    limiar, sem_limiar = le_limiar(dados)
     indice = Indice.da_pasta(pasta_base(dados))
     publicador = None
     if a.publicar:
@@ -189,9 +193,11 @@ def main():
                          ao_mudar_publicado=publicador.notifica if publicador else None)
     if publicador:
         publicador.notifica(sessao.exporta())  # a sessão não avisa o estado inicial
+    if sem_limiar:  # o operador vê na tela por que nada sai sozinho
+        sessao.registra_erro("limiar", f"publicação automática desligada: {sem_limiar}", uma_vez=True)
     print(f"base: {len(indice.registros)} checagens · registro: {pasta / 'eventos.jsonl'} "
           f"({len(sessao.eventos)} eventos) · publicação automática: "
-          + (f"nota ≥ {limiar} depois de 10 min" if limiar is not None else "desligada"), flush=True)
+          + (f"nota ≥ {limiar} depois de 10 min" if limiar is not None else f"desligada ({sem_limiar})"), flush=True)
     if publicador:
         print(f"publicador: {publicador.repo / publicador.arquivo} → {a.remoto}/{a.ramo}, "
               f"no máximo um push a cada {a.intervalo:g} s", flush=True)

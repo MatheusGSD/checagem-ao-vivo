@@ -20,7 +20,6 @@ Linha de comando:
 """
 import argparse
 import json
-import os
 import queue
 import subprocess
 import sys
@@ -38,7 +37,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from vozes import MEDIACAO, TAXA  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
-DADOS = Path(os.environ.get("CHECAGEM_DADOS", r"C:\dev\debate_lulavsflavio\data"))
 MODELO_WHISPER = "large-v3-turbo"
 PROMPT = "Debate presidencial, segundo turno. Lula e Flávio Bolsonaro."
 JANELA_VOZ_S = 3.0  # quem fala é decidido em janelas de pelo menos ~3 s (relatório do ticket 08)
@@ -59,8 +57,9 @@ class Pedaco:
 
 @dataclass
 class Fala:
-    """Fala fechada, em segundos desde o 00:00. `atraso_s`: segundos entre o fim da fala no áudio e a
-    entrega (só com fonte no ritmo real; None no acelerado)."""
+    """Fala fechada, em segundos desde o 00:00 (`inicio_s` negativo: a fala já estava em andamento quando
+    o 00:00 foi marcado). `atraso_s`: segundos entre o fim da fala no áudio e a entrega (só com fonte no
+    ritmo real; None no acelerado)."""
     quem: str
     inicio_s: float
     fim_s: float
@@ -117,11 +116,12 @@ class Fechador:
         return [f] if (f := self._relativa(bruta)) else []
 
     def _relativa(self, bruta):
-        """Em segundos desde o 00:00; None para a fala que terminou antes dele."""
+        """Em segundos desde o 00:00; None para a fala que terminou antes dele. A fala em andamento no
+        00:00 sai com os tempos de verdade: começo negativo (antes do 00:00) e fim depois dele."""
         quem, ini, fim, texto = bruta
         if fim <= self.zero:
             return None
-        return Fala(quem, round(max(0.0, ini - self.zero), 2), round(fim - self.zero, 2), texto)
+        return Fala(quem, round(ini - self.zero, 2), round(fim - self.zero, 2), texto)
 
 
 # ---------------------------------------------------------------- fontes de áudio
@@ -389,7 +389,11 @@ class LinhaDeFalas:
     Whisper custa quase o mesmo para 3 s ou 30 s, então a linha se ajusta sozinha à carga da CPU."""
 
     def __init__(self, fonte, transcritor=None, reconhecedor=None, zero=None, max_fala_s=MAX_FALA_S,
-                 silencio_s=SILENCIO_S, registro=None, vad_silencio_ms=500, vad_max_s=12.0, atribuicao="viterbi"):
+                 silencio_s=SILENCIO_S, registro=None, vad_silencio_ms=500, vad_max_s=12.0, atribuicao="viterbi",
+                 vad=None):
+        """fonte: FonteArquivo ou FonteLoopback. transcritor (padrão: Transcritor()), reconhecedor (padrão:
+        vozes.Reconhecedor.carregar()) e vad (detector com prob(bloco de 512 amostras) -> 0..1; padrão:
+        Silero) podem ser trocados. zero: o 00:00 em segundos da fonte, se já se sabe."""
         from vad import Chunker, SegmentAssembler, SileroVad
         from vozes import Reconhecedor
 
@@ -399,8 +403,10 @@ class LinhaDeFalas:
         self.reconhecedor = reconhecedor or Reconhecedor.carregar()
         self.fechador = Fechador(zero=zero, max_s=max_fala_s, silencio_s=silencio_s)
         self.registro = open(registro, "a", encoding="utf-8") if registro else None
-        self._vad = SileroVad()
-        self._vad.load()
+        if vad is None:
+            vad = SileroVad()
+            vad.load()
+        self._vad = vad
         self._chunker = Chunker()
         self._montador = SegmentAssembler(min_silence_ms=vad_silencio_ms, max_segment_s=vad_max_s)
         self._entrada = queue.Queue()  # ("seg", início, sinal) | ("tempo", t) | ("zero", t) | ("fim",)
@@ -408,6 +414,7 @@ class LinhaDeFalas:
         self._threads = []
         self.erro = None
         self.estatisticas = {"lotes": 0, "segundos_de_audio": 0.0, "segundos_de_cpu": 0.0}
+        self.ultimo_audio_s = None  # time.time() do último bloco de áudio que chegou da fonte
 
     # ---------- interface
 
@@ -466,6 +473,7 @@ class LinhaDeFalas:
         inicio_seg = None
         ultimo_tempo = 0
         for bloco in self.fonte.blocos():
+            self.ultimo_audio_s = time.time()
             for chunk in self._chunker.push(bloco):
                 ev, audio = self._montador.feed(chunk, self._vad.prob(chunk))
                 pos += len(chunk)
@@ -580,9 +588,10 @@ class LinhaDeFalas:
 # ---------------------------------------------------------------- linha de comando
 
 def _mostra(f):
-    m, s = divmod(int(f.inicio_s), 60)
+    m, s = divmod(int(abs(f.inicio_s)), 60)
+    sinal = "-" if f.inicio_s < 0 else ""  # começou antes do 00:00
     atraso = f" (+{f.atraso_s:.1f} s)" if f.atraso_s is not None else ""
-    print(f"[{m // 60:d}:{m % 60:02d}:{s:02d}] {f.quem}{atraso}: {f.texto}", flush=True)
+    print(f"[{sinal}{m // 60:d}:{m % 60:02d}:{s:02d}] {f.quem}{atraso}: {f.texto}", flush=True)
 
 
 def main(argv=None):
@@ -601,7 +610,7 @@ def main(argv=None):
         p.add_argument("--saida", help="registro JSONL (pedaços, lotes e falas)")
         p.add_argument("--prompt", default=PROMPT)
         p.add_argument("--vocabulario", default=str(RAIZ / "data" / "vocabulario.json"))
-        p.add_argument("--dados", help="pasta de dados (padrão: CHECAGEM_DADOS ou C:\\dev\\debate_lulavsflavio\\data)")
+        p.add_argument("--dados", help="pasta de dados (padrão: CHECAGEM_DADOS ou data/ do checkout principal)")
     gr = sub.add_parser("gravar", help="só grava o som do Windows (sem transcrever); Ctrl+C encerra")
     gr.add_argument("--gravar", required=True)
     gr.add_argument("--dispositivo", type=int)
@@ -621,9 +630,10 @@ def main(argv=None):
             blocos.close()  # fecha o WAV e o stream antes de sair
         print(f"{fonte.posicao():.0f} s gravados.")
         return
+    from comum import pasta_dados
     from vozes import Reconhecedor
 
-    dados = Path(a.dados) if a.dados else DADOS
+    dados = pasta_dados(a.dados)
     if a.cmd == "loopback":
         fonte, zero = FonteLoopback(a.gravar, a.dispositivo), None
     else:

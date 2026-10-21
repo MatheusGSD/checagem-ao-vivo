@@ -5,7 +5,7 @@ tests/fixtures/base_sessao.json mais checagens publicadas depois do debate da Ba
 """
 import json
 import shutil
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -14,9 +14,10 @@ import pytest
 
 from avaliacao_band import avalia, congela, relatorio
 from base_checagens import Indice, atualiza_indice
+from test_sessao import pedido, resposta
 
 FIXTURES = Path(__file__).parent / "fixtures"
-BRASILIA = timezone(timedelta(hours=-3))
+from comum import BRASILIA  # noqa: E402
 
 DESEMPREGO_2025 = "https://example.org/aosfatos/desemprego-2025"
 DESEMPREGO_BAND = "https://example.org/lupa/debate-band-desemprego"  # revisada depois do debate
@@ -49,15 +50,14 @@ class Claude:
 
     def __call__(self, etapa, prompt, conteudo, schema):
         self.chamadas += 1
-        if prompt == "extrair_afirmacoes.md":
+        if pedido(schema) == "extracao":
             achadas = [a for fala, a in AFIRMACOES.items() if fala in conteudo]
             saida = {"afirmacoes": [{k: a[k] for k in ("trecho", "reformulacao", "tipo")} for a in achadas]}
         else:
             [a] = [a for a in AFIRMACOES.values() if a["trecho"] in conteudo]
             saida = {"confirmadas": [{"url": u, "nota": n, "motivo": m}
-                                     for u, (n, m) in a["confirma"].items() if f"URL: {u}\n" in conteudo]}
-        return saida, {"etapa": etapa, "modelo_respondeu": "dublê", "prompt_sha256": "0" * 64,
-                       "tokens": {"entrada": 0, "saida": 0}}
+                                     for u, (n, m) in a["confirma"].items() if u in conteudo]}
+        return resposta(etapa, saida)
 
 
 @pytest.fixture(scope="module")
@@ -207,6 +207,7 @@ def test_com_todas_certas_o_limiar_e_a_menor_nota(avaliacao, tmp_path):
 
     gravado = limiar_gravado(pasta)
     assert gravado["limiar"] == 0.7
+    assert gravado["modelo"] == "claude-sonnet-5-5"  # o limiar só vale para o modelo com que foi medido
     assert gravado["em"] == "2026-10-21T10:00:00-03:00"
     assert "4 ligações" in gravado["origem"]
 
@@ -258,7 +259,8 @@ def test_rodada_em_que_todas_as_chamadas_falham_nao_fica_valendo(dados, tmp_path
         raise TypeError("Could not resolve authentication method")
 
     with pytest.raises(SystemExit, match="authentication"):
-        avalia(dados, dados / "falas.json", saida=tmp_path / "avaliacao", chamar=sem_chave)
+        avalia(dados, dados / "falas.json", saida=tmp_path / "avaliacao", chamar=sem_chave,
+               esperas_entre_tentativas=(0, 0))
 
     assert not (tmp_path / "avaliacao" / "rodada_congelada" / "fila.json").exists()
     assert not (tmp_path / "avaliacao" / "marcacao.xlsx").exists()

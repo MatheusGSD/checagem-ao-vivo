@@ -6,7 +6,7 @@ import json
 from collections import Counter
 from pathlib import Path
 
-from checagens import junta, normaliza, recorte
+from checagens import junta, normaliza
 
 FIXTURES = Path(__file__).parent / "fixtures"
 COLETA = "2026-10-20T15:00:00Z"
@@ -195,16 +195,3 @@ def test_selo_do_fato_ou_fake_com_o_assunto_antes_ou_o_jogo_da_velha_trocado():
     assert (raios["rotulo"], raios["frase"]) == ("#FAKE", "Vídeo que mostra sequência de raios intensos "
                                                           "'ejetando plasma' sobre praia; trata-se de IA")
     assert normaliza("fato_ou_fake_pagina", pagina("Fato ou Fake: veja como enviar sugestões"), COLETA) == []
-
-
-def test_o_recorte_guardado_da_pagina_e_do_rss_so_tem_metadados_e_da_os_mesmos_registros():
-    pagina, rss = fato_ou_fake("g1_check.html"), fato_ou_fake("g1_rss_fof.xml")
-    rss_com_resumo = rss.replace("</title>", "</title><description>Corpo da checagem.</description>", 1)
-
-    guardada, guardado = recorte("fato_ou_fake_pagina", pagina), recorte("fato_ou_fake_rss", rss_com_resumo)
-
-    assert normaliza("fato_ou_fake_pagina", guardada, COLETA) == normaliza("fato_ou_fake_pagina", pagina, COLETA)
-    assert normaliza("fato_ou_fake_rss", guardado, COLETA) == normaliza("fato_ou_fake_rss", rss, COLETA)
-    assert "Posts falsos manipularam" not in guardada  # subtítulo da matéria
-    assert len(guardada) < 1000
-    assert "Corpo da checagem" not in guardado

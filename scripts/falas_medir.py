@@ -27,8 +27,9 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import vozes  # noqa: E402
-from falas import DADOS, FonteArquivo, LinhaDeFalas  # noqa: E402
+import vozes_medir as vozes  # noqa: E402
+from comum import pasta_dados  # noqa: E402
+from falas import FonteArquivo, LinhaDeFalas  # noqa: E402
 
 ZERO_BAND = 15581.2  # abertura do mediador na gravação (1ª palavra do Escriba, 274,98 s, + 15306,2 s)
 CLASSES = ("Lula", "Flávio", "Mediação")
@@ -180,7 +181,7 @@ def medir(dados, nomes, janela=None):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--dados", type=Path, default=DADOS)
+    ap.add_argument("--dados", type=Path, help="pasta de dados (padrão: CHECAGEM_DADOS ou data/ do checkout principal)")
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("rodar")
     r.add_argument("nome")
@@ -192,6 +193,7 @@ def main():
     m.add_argument("nomes", nargs="+")
     m.add_argument("--janela", type=float, nargs=2, help="mede só [A, B) s da gravação")
     a = ap.parse_args()
+    a.dados = pasta_dados(a.dados)
     if a.cmd == "rodar":
         rodar(a.dados, a.nome, a.inicio, a.fim, a.ritmo, a.atribuicao)
     else:

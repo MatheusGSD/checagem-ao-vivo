@@ -17,9 +17,9 @@ from base_checagens import Indice  # noqa: E402
 from falas import Fala  # noqa: E402
 from noite import Noite  # noqa: E402
 from publicador import Publicador  # noqa: E402
-from sessao import BRASILIA  # noqa: E402
+from comum import BRASILIA  # noqa: E402
 from test_sessao import (DESEMPREGO, FALA_DESEMPREGO, FALA_LICENCA, FALA_MEDIACAO, FALA_PIX,  # noqa: E402
-                         FIXTURES, LICENCA_2022, PIX, afirmacao)
+                         FIXTURES, LICENCA_2022, PIX, afirmacao, pedido, resposta)
 
 LICENCA = afirmacao("você foi o único deputado da Assembleia que votou contra a licença-maternidade",
                     "Flávio Bolsonaro votou contra a licença-maternidade de seis meses na Alerj.", "perene",
@@ -47,15 +47,14 @@ class Claude:
         with open(self.registro, "a", encoding="utf-8") as f:
             f.write(json.dumps({"etapa": etapa, "pid": os.getpid()}) + "\n")
         time.sleep(self.pausa)
-        if prompt == "extrair_afirmacoes.md":
+        if pedido(schema) == "extracao":
             achadas = [a for _, texto, a in MODELOS if a and texto in conteudo]
             saida = {"afirmacoes": [{k: a[k] for k in ("trecho", "reformulacao", "tipo")} for a in achadas]}
         else:
             a = next(a for _, _, a in MODELOS if a and a["trecho"] in conteudo)
             saida = {"confirmadas": [{"url": u, "nota": n, "motivo": m} for u, (n, m) in a["confirma"].items()
                                      if u in conteudo]}
-        return saida, {"etapa": etapa, "modelo_respondeu": "dublê", "prompt_sha256": "0" * 64,
-                       "tokens": {"entrada": 0, "saida": 0}}
+        return resposta(etapa, saida)
 
 
 class Linha:

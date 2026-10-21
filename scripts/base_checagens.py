@@ -14,6 +14,9 @@ Uso:
   python -P scripts/base_checagens.py atualizar [--dias 1]   durante o debate (a cada 10 min): Google com
         maxAgeDays e RSS do Fato ou Fake; só os registros novos entram na base e ganham vetores
   python -P scripts/base_checagens.py incorporar BRUTO.jsonl [...]   acrescenta à base o que for novo
+  --explorer-emergencia (coletar, atualizar): reserva de emergência, desligada por padrão; no lugar da API
+        oficial, o buscador interno do Fact Check Explorer (sem chave, não documentado), com pausa entre
+        requisições e só os metadados das checagens
 
 A chave vem de GOOGLE_FACTCHECK_KEY no ambiente ou no .env (ignorado pelo git). A base fica em
 DADOS/checagens/ (fora do git), onde DADOS é --dados, a variável CHECAGEM_DADOS ou a pasta data/
@@ -29,7 +32,6 @@ import argparse
 import json
 import os
 import re
-import subprocess
 import sys
 import threading
 import time
@@ -40,9 +42,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from agencias import carrega as politica_de_agencias, separa  # noqa: E402
 from checagens import junta, normaliza, recorte, url_canonica  # noqa: E402
+from comum import le_jsonl, pasta_dados, raiz_principal  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
 API = "https://factchecktools.googleapis.com/v1alpha1/claims:search"
+# buscador interno do Fact Check Explorer (sem chave, não documentado): só reserva de emergência, desligado por
+# padrão; liga com --explorer-emergencia, se a API oficial cair ou a chave parar de valer
+EXPLORER = "https://toolbox.google.com/factcheck/api/search"
+EXPLORER_POR_PAGINA = 10
+EXPLORER_MAX_PAGINAS = 20
 POR_PAGINA = 100
 PAUSA_S = 1.0
 MODELO = "intfloat/multilingual-e5-small"
@@ -55,19 +63,8 @@ SITEMAP_DIA = re.compile(r"/sitemap/g1/(\d{4})/(\d\d)/(\d\d)_\d+\.xml$")
 FOF_DESDE = "2025-01-01"
 
 
-def raiz_principal():
-    """Raiz do checkout principal (num worktree, data/ e .env só existem lá)."""
-    try:
-        comum = subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], cwd=RAIZ,
-                               capture_output=True, text=True, check=True).stdout.strip()
-        return Path(comum).parent
-    except (OSError, subprocess.CalledProcessError):
-        return RAIZ
-
-
 def pasta_base(dados=None):
-    dados = dados or os.environ.get("CHECAGEM_DADOS") or raiz_principal() / "data"
-    return Path(dados) / "checagens"
+    return pasta_dados(dados) / "checagens"
 
 
 def chave_google():
@@ -140,6 +137,53 @@ def coleta_google(termos, chave, saida, dias=None, pausa=PAUSA_S, log=print):
                     break
                 pagina += 1
             log(f"[{i}/{len(termos)}] {n:4d} afirmações em {pagina + 1} página(s)  {termo[:70]}")
+    return paginas, erros
+
+
+def coleta_explorer(termos, saida, http=None, pausa=PAUSA_S, max_paginas=EXPLORER_MAX_PAGINAS, log=print):
+    """Reserva de emergência: cada termo no buscador interno do Fact Check Explorer, de 10 em 10, até vir
+    uma página vazia (ou `max_paginas`), com `pausa` s entre requisições e o agente identificado. Grava cada
+    página como uma linha de `saida` (JSONL) com a resposta como veio, que o normalizador lê
+    (fonte google_explorer): só metadados das checagens (frase, agência, data, rótulo e link).
+    http: cliente com get(url, params=, timeout=) (padrão: requests.Session). Devolve (páginas, erros)."""
+    if http is None:
+        import requests
+
+        http = requests.Session()
+        http.headers["User-Agent"] = AGENTE
+    saida.parent.mkdir(parents=True, exist_ok=True)
+    paginas = erros = 0
+    with saida.open("a", encoding="utf-8") as f:
+        for i, termo in enumerate(termos, 1):
+            n = 0
+            for pagina in range(max_paginas):
+                p = {"hl": "pt", "num": EXPLORER_POR_PAGINA, "force": "false", "offset": pagina * EXPLORER_POR_PAGINA,
+                     "query": termo}
+                time.sleep(pausa)
+                try:
+                    r = http.get(EXPLORER, params=p, timeout=30)
+                except Exception as e:  # noqa: BLE001 - rede
+                    log(f"  rede: {type(e).__name__} ({termo!r}, página {pagina})")
+                    erros += 1
+                    break
+                if r.status_code != 200:
+                    log(f"  HTTP {r.status_code} ({termo!r}, página {pagina})")
+                    erros += 1
+                    break
+                try:
+                    achadas = normaliza("google_explorer", r.text, agora(), termo)
+                except (ValueError, IndexError, TypeError) as e:  # o formato não documentado mudou
+                    log(f"  resposta fora do formato conhecido ({termo!r}, página {pagina}): {type(e).__name__}")
+                    erros += 1
+                    break
+                if not achadas:
+                    break
+                f.write(json.dumps({"fonte": "google_explorer", "busca": termo, "pagina": pagina, "parametros": p,
+                                    "coletado_em": agora(), "resposta": r.text}, ensure_ascii=False) + "\n")
+                f.flush()
+                paginas += 1
+                n += len(achadas)
+            log(f"[{i}/{len(termos)}] {n:4d} checagens no Explorer  {termo[:70]}")
     return paginas, erros
 
 
@@ -290,10 +334,7 @@ def coleta_fof_sitemap(g1, pasta, saida, desde=FOF_DESDE, log=print):
 
 def le_brutos(pasta):
     """Todas as páginas brutas, da coleta mais antiga para a mais nova."""
-    for arq in sorted((pasta / "brutos").glob("*/*.jsonl")):
-        for linha in arq.read_text(encoding="utf-8").splitlines():
-            if linha.strip():
-                yield json.loads(linha)
+    return le_varios(sorted((pasta / "brutos").glob("*/*.jsonl")))
 
 
 def reconstroi(pasta):
@@ -312,10 +353,9 @@ def le_base(pasta):
     return json.loads((pasta / "base.json").read_text(encoding="utf-8"))["registros"]
 
 
-def le_jsonl(arquivos):
-    for arq in arquivos:
-        if Path(arq).exists():
-            yield from (json.loads(linha) for linha in Path(arq).read_text(encoding="utf-8").splitlines() if linha.strip())
+def le_varios(arquivos):
+    """As páginas brutas de vários arquivos JSONL, em ordem."""
+    return [pag for arq in arquivos for pag in le_jsonl(arq)]
 
 
 def incorpora(pasta, paginas):
@@ -337,17 +377,24 @@ def incorpora(pasta, paginas):
     return novos
 
 
-def atualiza(pasta, termos, chave, dias=1, pausa=PAUSA_S, pausa_google=0.5, log=print, ao_erro=None):
+def atualiza(pasta, termos, chave, dias=1, pausa=PAUSA_S, pausa_google=0.5, log=print, ao_erro=None, explorer=False):
     """Atualização durante o debate: Google só com checagens dos últimos `dias` dias e o RSS do Fato
     ou Fake; o que vier de novo entra na base (ver incorpora). Devolve os registros novos.
-    ao_erro(mensagem): buscas do Google que falharam e RSS fora do ar (a tela de aprovação)."""
+    ao_erro(mensagem): buscas do Google que falharam e RSS fora do ar (a tela de aprovação).
+    explorer: reserva de emergência; no lugar da API oficial (chave dispensada), a 1ª página de cada busca
+    no buscador interno do Fact Check Explorer, que vem com as checagens mais recentes."""
     inicio = agora().replace(":", "-")
-    saidas = [pasta / "brutos" / "google_api" / f"{inicio}.jsonl", pasta / "brutos" / "fato_ou_fake" / f"{inicio}.jsonl"]
+    saidas = [pasta / "brutos" / ("google_explorer" if explorer else "google_api") / f"{inicio}.jsonl",
+              pasta / "brutos" / "fato_ou_fake" / f"{inicio}.jsonl"]
     falhas = []
-    _, erros = coleta_google(termos, chave, saidas[0], dias=dias, pausa=pausa_google,
-                             log=lambda m: falhas.append(m.strip()) if m.lstrip().startswith(("HTTP", "rede")) else None)
+    anota = lambda m: falhas.append(m.strip()) if m.lstrip().startswith(("HTTP", "rede", "resposta")) else None  # noqa: E731
+    if explorer:
+        _, erros = coleta_explorer(termos, saidas[0], pausa=pausa, max_paginas=1, log=anota)
+    else:
+        _, erros = coleta_google(termos, chave, saidas[0], dias=dias, pausa=pausa_google, log=anota)
     if erros and ao_erro:
-        ao_erro(f"API do Google: {erros} de {len(termos)} buscas falharam (último: {falhas[-1] if falhas else '?'})")
+        ao_erro(f"{'Fact Check Explorer' if explorer else 'API do Google'}: {erros} de {len(termos)} buscas falharam "
+                f"(último: {falhas[-1] if falhas else '?'})")
     try:  # o g1 fora do ar não pode levar junto o que veio do Google
         if not coleta_fof_rss(G1(pausa=pausa, log=log), saidas[1]) and ao_erro:
             ao_erro("RSS do Fato ou Fake não respondeu")
@@ -355,7 +402,7 @@ def atualiza(pasta, termos, chave, dias=1, pausa=PAUSA_S, pausa_google=0.5, log=
         if not ao_erro:
             raise
         ao_erro(f"RSS do Fato ou Fake: {type(e).__name__}: {e}")
-    novos = incorpora(pasta, le_jsonl(saidas))
+    novos = incorpora(pasta, le_varios(saidas))
     log(f"atualização {inicio}: {len(novos)} checagens novas "
         + ", ".join(f"{ag} {n}" for ag, n in Counter(r["agencia"] for r in novos).most_common()))
     return novos
@@ -521,6 +568,9 @@ def main():
     ap.add_argument("-n", type=int, default=8)
     ap.add_argument("--desde", default=FOF_DESDE, help="fato-ou-fake: sitemaps diários a partir deste dia")
     ap.add_argument("--pausa", type=float, help=f"segundos entre requisições (padrão: {PAUSA_S} no g1, 0.5 no Google ao atualizar)")
+    ap.add_argument("--explorer-emergencia", action="store_true",
+                    help="coletar/atualizar: reserva de emergência; usa o buscador interno do Fact Check Explorer "
+                         "(sem chave, não documentado) no lugar da API oficial. Desligado por padrão")
     a = ap.parse_args()
     pasta = pasta_base(a.dados)
 
@@ -533,11 +583,12 @@ def main():
         return
 
     if a.comando == "atualizar":  # durante o debate, a cada 10 min
-        atualiza(pasta, termos_de_busca(a.buscas), chave_google(), dias=a.dias or 1,
+        atualiza(pasta, termos_de_busca(a.buscas), None if a.explorer_emergencia else chave_google(), dias=a.dias or 1,
+                 explorer=a.explorer_emergencia,
                  **({"pausa": a.pausa, "pausa_google": a.pausa} if a.pausa is not None else {}))
         return
     if a.comando == "incorporar":  # arquivos brutos (.jsonl) coletados à parte
-        novos = incorpora(pasta, le_jsonl(a.frases))
+        novos = incorpora(pasta, le_varios(a.frases))
         print(f"base: {len(novos)} registros novos " + ", ".join(
             f"{ag} {n}" for ag, n in Counter(r["agencia"] for r in novos).most_common()))
         return
@@ -547,7 +598,7 @@ def main():
         coleta_fof_rss(g1, saida)
         print(f"coleta do Fato ou Fake desde {a.desde} → {saida}")
         print(f"páginas lidas: {coleta_fof_sitemap(g1, pasta, saida, desde=a.desde)}")
-        novos = incorpora(pasta, le_jsonl([saida]))
+        novos = incorpora(pasta, le_varios([saida]))
         print(f"base: {len(novos)} registros novos do Fato ou Fake: "
               + ", ".join(f"{s} {n}" for s, n in Counter(r["rotulo"] for r in novos).most_common()))
 
@@ -557,9 +608,13 @@ def main():
             ja = {pag["busca"] for pag in le_brutos(pasta)}
             termos = [t for t in termos if t not in ja]
         inicio = agora()
-        saida = pasta / "brutos" / "google_api" / f"{inicio.replace(':', '-')}.jsonl"
+        fonte = "google_explorer" if a.explorer_emergencia else "google_api"
+        saida = pasta / "brutos" / fonte / f"{inicio.replace(':', '-')}.jsonl"
         print(f"coleta: {len(termos)} buscas → {saida}")
-        paginas, erros = coleta_google(termos, chave_google(), saida, dias=a.dias)
+        if a.explorer_emergencia:  # reserva: sem chave, só metadados, uma requisição por vez com pausa
+            paginas, erros = coleta_explorer(termos, saida, pausa=a.pausa if a.pausa is not None else PAUSA_S)
+        else:
+            paginas, erros = coleta_google(termos, chave_google(), saida, dias=a.dias)
         print(f"coleta: {paginas} páginas, {erros} buscas com erro")
 
     if a.comando in ("coletar", "reconstruir"):

@@ -81,7 +81,7 @@ def test_politica_do_repo_exclui_observador_e_lupa_com_motivo():
     politica = carrega()
     motivos = {e["nome"]: e["motivo"] for e in politica["excluidas"]}
     assert "brasileiros" in motivos["Observador"]
-    assert "ClaimReview" in motivos["Lupa"] and "22/10" in motivos["Lupa"]
+    assert "ClaimReview" in motivos["Lupa"] and "não autorizou" in motivos["Lupa"]
 
 
 def test_politica_do_repo_unifica_as_grafias_vistas_na_coleta():
