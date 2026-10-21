@@ -69,6 +69,9 @@
                  padding: 6px 10px; margin-bottom: 6px; font-size: 13px; }
   #aviso { grid-column: 1 / -1; display: none; background: #fdecea; color: #7a1a13; border-radius: 6px; padding: 8px 12px; }
   details { margin-top: 18px; }
+  details.editar { margin: 4px 0 8px; display: grid; gap: 6px; }
+  details.editar summary { text-transform: none; letter-spacing: 0; font-size: 13px; }
+  details.editar label.selo { margin-top: 6px; }
   details summary { cursor: pointer; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); }
   .linha { font-size: 13px; border-bottom: 1px solid var(--linha); padding: 6px 0; }
 </style>
@@ -141,7 +144,11 @@ function cartaoFila(p) {
       <span class="quem ${esc(p.quem)}">${esc(p.quem)}</span><span>${p.tipo === "numero" ? "número" : "fato perene"}</span>
       <span>nota <span class="nota">${num(p.nota)}</span></span><span>proposta ${hora(p.proposta_em)}</span></div>
     <p class="fala">${destaca(p.fala, p.trecho)}</p>
-    <p class="reform"><b>Afirmação:</b> ${esc(p.reformulacao)}</p>
+    <p class="reform"><b>Afirmação:</b> ${esc(p.reformulacao)}${p.editada ? ' <span class="fonte-rotulo">(editada)</span>' : ""}</p>
+    ${p.ja_publicadas.length ? "" : `<details class="editar"><summary>Editar trecho e afirmação</summary>
+      <label class="selo">Trecho (letra a letra da fala) <input type="text" class="novo-trecho" value="${esc(p.trecho)}"></label>
+      <label class="selo">Afirmação <input type="text" class="nova-reform" value="${esc(p.reformulacao)}"></label>
+      <div class="acoes"><button type="button" class="salvar-edicao">Salvar edição</button></div></details>`}
     ${p.ja_publicadas.length ? `<p class="reform"><b>Já no painel</b> (publicada sozinha com ${p.ja_publicadas.length} checagem${p.ja_publicadas.length > 1 ? "s" : ""}): aprovar acrescenta estas à mesma ligação; recusar não a tira do painel.</p>` : ""}
     ${p.checagens.map((c, i) => `
       <div class="checagem" data-url="${esc(c.url)}">
@@ -170,6 +177,9 @@ function cartaoFila(p) {
     });
     acao("aprovar", {ligacao_id: p.id, selos, manter}, ev.target);
   };
+  const salvar = el.querySelector(".salvar-edicao");
+  if (salvar) salvar.onclick = (ev) => acao("editar", {ligacao_id: p.id,
+    trecho: el.querySelector(".novo-trecho").value, reformulacao: el.querySelector(".nova-reform").value}, ev.target);
   el.querySelector(".recusar").onclick = (ev) =>
     acao("recusar", {ligacao_id: p.id, motivo: el.querySelector(".motivo-recusa").value}, ev.target);
   return el;

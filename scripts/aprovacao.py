@@ -1,6 +1,6 @@
 """Tela de aprovação: página local, servida pela máquina do operador, que mostra a fila e o estado da
-sessão de checagem em tempo real e envia as ações do operador (aprovar com selo, recusar,
-despublicar com motivo, corrigir rótulo, marcar o 00:00).
+sessão de checagem em tempo real e envia as ações do operador (aprovar com selo, editar o trecho e a
+reformulação, recusar, despublicar com motivo, corrigir rótulo, marcar o 00:00).
 
 Só escuta em 127.0.0.1. A página (scripts/aprovacao.html) busca GET /estado a cada ~1,5 s e manda
 cada ação como POST /acao/<nome> com corpo JSON.
@@ -78,6 +78,7 @@ def _acoes(sessao):
     return {
         "aprovar": lambda c: sessao.aprova(c["ligacao_id"], selos=c.get("selos"), manter=c.get("manter")),
         "recusar": lambda c: sessao.recusa(c["ligacao_id"], c.get("motivo")),
+        "editar": lambda c: sessao.edita(c["ligacao_id"], trecho=c.get("trecho"), reformulacao=c.get("reformulacao")),
         "despublicar": lambda c: sessao.despublica(c["ligacao_id"], c.get("motivo")),
         "rotulo": lambda c: sessao.corrige_rotulo(c["ligacao_id"], c["url"], c.get("rotulo")),
         "inicio": lambda c: sessao.marca_inicio(c.get("instante")),

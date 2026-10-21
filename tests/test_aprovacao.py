@@ -74,3 +74,15 @@ def test_outro_site_aberto_no_navegador_nao_age_na_sessao(tela):
     assert codigo == 403
 
     assert len(s.fila()) == 1
+
+
+def test_editar_pela_tela_troca_a_reformulacao_e_trecho_que_nao_bate_volta_com_o_motivo(tela):
+    s, base = tela
+    ident = s.fila()[0]["id"]
+
+    codigo, _ = pede(base + "/acao/editar", {"ligacao_id": ident, "reformulacao": "Flávio diz que o Pix é do governo Bolsonaro."})
+    assert codigo == 200
+    assert json.loads(pede(base + "/estado")[1])["fila"][0]["reformulacao"] == "Flávio diz que o Pix é do governo Bolsonaro."
+
+    codigo, corpo = pede(base + "/acao/editar", {"ligacao_id": ident, "trecho": "frase que ninguém disse"})
+    assert codigo == 400 and "letra a letra" in json.loads(corpo)["erro"]

@@ -361,6 +361,51 @@ def test_aprovar_com_selo_faz_o_painel_exibir_o_selo_e_nao_o_rotulo_do_claimrevi
     }
 
 
+def test_editar_reformulacao_e_trecho_da_ligacao_na_fila_vale_no_painel_ao_aprovar(indice):
+    s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX]}), relogio=relogio)
+    s.recebe_fala("Flávio", 1800.0, FALA_PIX)
+    [proposta] = s.fila()
+
+    s.edita(proposta["id"], trecho="Quem criou o Pix foi o governo do meu pai, isso todo mundo sabe",
+            reformulacao="Flávio Bolsonaro disse que o Pix foi criado no governo de Jair Bolsonaro.")
+
+    [editada] = s.fila()
+    assert editada["trecho"] == "Quem criou o Pix foi o governo do meu pai, isso todo mundo sabe"
+    s.aprova(editada["id"])
+    [lig] = s.exporta()["ligacoes"]
+    assert (lig["trecho"], lig["reformulacao"]) == (
+        "Quem criou o Pix foi o governo do meu pai, isso todo mundo sabe",
+        "Flávio Bolsonaro disse que o Pix foi criado no governo de Jair Bolsonaro.")
+    copia = Sessao.reconstroi(indice, json.loads(json.dumps(s.eventos)), chamar=Claude({}), relogio=relogio)
+    assert estado(copia) == estado(s)
+
+
+def test_editar_com_trecho_que_nao_esta_na_fala_letra_a_letra_nao_vale(indice):
+    s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX]}), relogio=relogio)
+    s.recebe_fala("Flávio", 1800.0, FALA_PIX)
+    ident = s.fila()[0]["id"]
+    n = len(s.eventos)
+
+    with pytest.raises(ValueError):
+        s.edita(ident, trecho="Quem inventou o Pix foi o governo do meu pai")
+    with pytest.raises(ValueError):
+        s.edita(ident, reformulacao="  ")
+
+    assert len(s.eventos) == n
+    assert s.fila()[0]["trecho"] == PIX["trecho"]
+
+
+def test_editar_so_mexe_no_que_foi_informado(indice):
+    s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX]}), relogio=relogio)
+    s.recebe_fala("Flávio", 1800.0, FALA_PIX)
+    ident = s.fila()[0]["id"]
+
+    s.edita(ident, reformulacao="O Pix foi criado no governo Bolsonaro, segundo Flávio.")
+
+    [p] = s.fila()
+    assert (p["trecho"], p["reformulacao"]) == (PIX["trecho"], "O Pix foi criado no governo Bolsonaro, segundo Flávio.")
+
+
 def test_aprovar_so_parte_das_checagens_publica_so_essas(indice):
     s = Sessao(indice, chamar=Claude({FALA_PIX: [PIX]}), relogio=Relogio(INICIO + timedelta(minutes=30)))
     s.recebe_fala("Flávio", 1800.0, FALA_PIX)
@@ -491,6 +536,17 @@ def test_recusar_o_resto_de_uma_ligacao_publicada_sozinha_mantem_a_ligacao_so_co
     copia = Sessao.reconstroi(indice, json.loads(json.dumps(s.eventos)), chamar=Claude({}), relogio=relogio,
                               meta={"limiar_automatico": 0.93})
     assert estado(copia) == estado(s)
+
+
+def test_ligacao_ja_no_painel_nao_se_edita_pela_fila(indice):
+    # o que já está publicado só muda por correção pública (despublicar e propor de novo)
+    relogio = Relogio(INICIO + timedelta(minutes=40))
+    s = sessao_com_limiar(indice, Claude({FALA_PIX: [PIX]}), relogio, 0.93)
+    s.recebe_fala("Flávio", 2400.0, FALA_PIX)  # Estadão saiu sozinha; AFP espera na fila
+    [resto] = s.fila()
+
+    with pytest.raises(ValueError):
+        s.edita(resto["id"], reformulacao="Outra reformulação.")
 
 
 def test_despublicar_uma_ligacao_publicada_sozinha_tira_o_resto_dela_da_fila(indice):

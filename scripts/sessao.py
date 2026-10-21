@@ -52,7 +52,8 @@ N_CANDIDATAS = 8
 CONFIRMACOES_EM_PARALELO = 4
 NUMERO_DESDE = "2025-01-01"  # afirmações numéricas só ligam com checagens a partir desta data
 AQUECIMENTO_S = 600  # nos primeiros 10 min desde o 00:00 nada é publicado sozinho
-EVENTOS_DE_PUBLICACAO = ("inicio", "aprovacao", "publicacao_automatica", "recusa", "despublicacao", "correcao_rotulo")
+EVENTOS_DE_PUBLICACAO = ("inicio", "aprovacao", "publicacao_automatica", "recusa", "despublicacao", "correcao_rotulo",
+                         "edicao")
 # falhas de uma chamada ao Claude que viram erro da fala: rede, API, resposta fora do formato e a recusa ou
 # o corte (agente.RespostaInvalida, que é um SystemExit para encerrar a linha de comando); outros
 # SystemExit (pedido de encerrar o processo) passam
@@ -296,6 +297,27 @@ class Sessao:
             self._registra({"tipo": "aprovacao", "ligacao_id": ligacao_id,
                             "checagens": [u for u in urls if u in manter],
                             "selos": {u: s for u, s in selos.items() if u in manter}})
+
+    def edita(self, ligacao_id, trecho=None, reformulacao=None):
+        """Corrige, antes de aprovar, o trecho literal e/ou a reformulação neutra de uma ligação da fila
+        (None: fica como está). O trecho tem de aparecer letra a letra na fala, como na extração. Só
+        vale para ligação que ainda não está no painel: o que já foi publicado muda por correção."""
+        with self._trava:
+            p = self._pendente(ligacao_id)
+            if ligacao_id in self._publicadas:
+                raise AcaoInvalida(f"{ligacao_id} já está no painel com parte das checagens: para mudar o texto, "
+                                   "despublique (a correção fica pública)")
+            novo_trecho = p["trecho"] if trecho is None else trecho.strip()
+            nova_reformulacao = p["reformulacao"] if reformulacao is None else reformulacao.strip()
+            if not novo_trecho or novo_trecho not in p["fala"]:
+                raise AcaoInvalida(f"{ligacao_id}: o trecho tem de aparecer letra a letra na fala")
+            if not nova_reformulacao:
+                raise AcaoInvalida(f"{ligacao_id}: a reformulação não pode ficar vazia")
+            if (novo_trecho, nova_reformulacao) == (p["trecho"], p["reformulacao"]):
+                raise AcaoInvalida(f"{ligacao_id}: nada a mudar")
+            self._registra({"tipo": "edicao", "ligacao_id": ligacao_id,
+                            "trecho": novo_trecho, "reformulacao": nova_reformulacao,
+                            "antes": {"trecho": p["trecho"], "reformulacao": p["reformulacao"]}})
 
     def recusa(self, ligacao_id, motivo=None):
         """Tira uma ligação da fila sem publicar."""
@@ -558,6 +580,9 @@ class Sessao:
         tipo, ident = e["tipo"], e.get("ligacao_id")
         if tipo == "inicio":
             self._inicio = e["instante"]
+        elif tipo == "edicao":
+            p = next(p for p in self._propostas if p["id"] == ident)
+            p.update(trecho=e["trecho"], reformulacao=e["reformulacao"], editada=True)
         elif tipo in ("aprovacao", "publicacao_automatica"):
             p = next(p for p in self._propostas if p["id"] == ident)
             selos = e.get("selos", {})
