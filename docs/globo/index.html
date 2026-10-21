@@ -276,7 +276,7 @@ const ARQUIVO = arquivoDados();
 const INTERVALO = 30000;
 document.getElementById("baixar").href = ARQUIVO;
 
-function checagem(c, tipo) {
+function checagem(c, tipo, mista) {
   const d = dia(c.data);
   // números: a data vem em destaque, porque o dado pode ter mudado desde a checagem
   const data = !d ? `<p class="dt">Checagem sem data</p>`
@@ -286,13 +286,19 @@ function checagem(c, tipo) {
     <p class="ag">${esc(c.agencia)}</p>
     <span class="rotulo">${esc(c.rotulo)}</span>
     ${c.fonte_rotulo === "dados_da_agencia" ? `<p class="fonte-rot">rótulo conforme dados da agência</p>` : ""}
+    ${mista ? `<p class="fonte-rot">${c.origem === "automatica" ? "publicada automaticamente" : "aprovada por uma pessoa"}</p>` : ""}
     ${data}
     <a href="${esc(link(c.url))}" target="_blank" rel="noopener">Ler a checagem<span aria-hidden="true"> ↗</span></a>
   </div>`;
 }
 
 function ligacao(l, nova) {
-  const origem = l.origem === "automatica"
+  // cada checagem diz como entrou: numa ligação publicada sozinha, o operador pode ter aprovado outras depois
+  const origens = new Set(l.checagens.map(c => c.origem || l.origem));
+  const mista = origens.size > 1;
+  const origem = mista
+    ? `<span class="selo ia"><i></i>Parte publicada automaticamente, parte aprovada por uma pessoa</span>`
+    : origens.has("automatica")
     ? `<span class="selo ia"><i></i>Publicada automaticamente</span>`
     : `<span class="selo pessoa"><i></i>Aprovada por uma pessoa</span>`;
   const n = l.checagens.length;
@@ -301,7 +307,7 @@ function ligacao(l, nova) {
     <p class="txt">“${esc(l.trecho)}”</p>
     <p class="res"><b>Afirmação:</b> ${esc(l.reformulacao)}</p>
     <p class="chk-h">${n === 1 ? "Checagem anterior" : `${n} checagens anteriores`}</p>
-    <div class="chks">${l.checagens.map(c => checagem(c, l.tipo)).join("")}</div>
+    <div class="chks">${l.checagens.map(c => checagem(c, l.tipo, mista)).join("")}</div>
   </article>`;
 }
 

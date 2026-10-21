@@ -355,9 +355,9 @@ def test_aprovar_com_selo_faz_o_painel_exibir_o_selo_e_nao_o_rotulo_do_claimrevi
     assert (lig["id"], lig["origem"], lig["publicada_em"]) == (proposta["id"], "aprovada", "2026-10-23T21:50:40-03:00")
     assert (lig["quem"], lig["minutagem_s"], lig["trecho"]) == ("Flávio", 1800.0, PIX["trecho"])
     assert lig["ligada_depois"] is False
-    assert {c["url"]: (c["agencia"], c["rotulo"], c["fonte_rotulo"]) for c in lig["checagens"]} == {
-        PIX_ESTADAO: ("Estadão", "Falso", "selo_da_pagina"),
-        PIX_AFP: ("AFP Checamos", "Não é bem assim", "dados_da_agencia"),
+    assert {c["url"]: (c["agencia"], c["rotulo"], c["fonte_rotulo"], c["origem"]) for c in lig["checagens"]} == {
+        PIX_ESTADAO: ("Estadão", "Falso", "selo_da_pagina", "aprovada"),
+        PIX_AFP: ("AFP Checamos", "Não é bem assim", "dados_da_agencia", "aprovada"),
     }
 
 
@@ -446,8 +446,10 @@ def test_aprovar_o_resto_de_uma_ligacao_publicada_sozinha_acrescenta_a_checagem_
     assert s.fila() == []
     [lig] = s.exporta()["ligacoes"]
     assert (lig["id"], lig["origem"], lig["publicada_em"]) == (resto["id"], "automatica", "2026-10-23T22:00:00-03:00")
-    assert [(c["url"], c["rotulo"], c["fonte_rotulo"]) for c in lig["checagens"]] == [
-        (PIX_ESTADAO, "Enganoso", "dados_da_agencia"), (PIX_AFP, "Falso", "selo_da_pagina")]
+    # cada checagem diz como entrou: a da AFP foi aprovada por uma pessoa, não publicada sozinha
+    assert [(c["url"], c["rotulo"], c["fonte_rotulo"], c["origem"]) for c in lig["checagens"]] == [
+        (PIX_ESTADAO, "Enganoso", "dados_da_agencia", "automatica"), (PIX_AFP, "Falso", "selo_da_pagina", "aprovada")]
+    assert valida(s.exporta()) == []
     with pytest.raises(ValueError):
         s.aprova(resto["id"])
 

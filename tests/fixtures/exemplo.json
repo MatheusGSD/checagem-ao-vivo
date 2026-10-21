@@ -42,8 +42,8 @@
       "publicada_em": "2026-10-23T22:35:10-03:00",
       "ligada_depois": false,
       "checagens": [
-        {"agencia": "Estadão Verifica", "data": "2026-02-11", "rotulo": "Enganoso", "fonte_rotulo": "selo_da_pagina", "url": "https://example.org/exemplo/estadao-alimentos"},
-        {"agencia": "AFP Checamos", "data": "2026-01-29", "rotulo": "Falso", "fonte_rotulo": "dados_da_agencia", "url": "https://example.org/exemplo/afp-alimentos"}
+        {"agencia": "Estadão Verifica", "data": "2026-02-11", "rotulo": "Enganoso", "fonte_rotulo": "selo_da_pagina", "origem": "aprovada", "url": "https://example.org/exemplo/estadao-alimentos"},
+        {"agencia": "AFP Checamos", "data": "2026-01-29", "rotulo": "Falso", "fonte_rotulo": "dados_da_agencia", "origem": "aprovada", "url": "https://example.org/exemplo/afp-alimentos"}
       ]
     },
     {
@@ -57,7 +57,8 @@
       "publicada_em": "2026-10-23T22:21:30-03:00",
       "ligada_depois": false,
       "checagens": [
-        {"agencia": "Aos Fatos", "data": "2025-05-02", "rotulo": "Verdadeiro", "fonte_rotulo": "dados_da_agencia", "url": "https://example.org/exemplo/aosfatos-salario"}
+        {"agencia": "Aos Fatos", "data": "2025-05-02", "rotulo": "Verdadeiro", "fonte_rotulo": "dados_da_agencia", "origem": "automatica", "url": "https://example.org/exemplo/aosfatos-salario"},
+        {"agencia": "Projeto Comprova", "data": "2025-06-10", "rotulo": "Contextualizando", "fonte_rotulo": "selo_da_pagina", "origem": "aprovada", "url": "https://example.org/exemplo/comprova-salario"}
       ]
     },
     {
@@ -71,7 +72,7 @@
       "publicada_em": "2026-10-23T22:30:02-03:00",
       "ligada_depois": true,
       "checagens": [
-        {"agencia": "Fato ou Fake (g1)", "data": "2023-03-14", "rotulo": "Não é bem assim", "fonte_rotulo": "selo_da_pagina", "url": "https://example.org/exemplo/fatooufake-pix"}
+        {"agencia": "Fato ou Fake (g1)", "data": "2023-03-14", "rotulo": "Não é bem assim", "fonte_rotulo": "selo_da_pagina", "origem": "aprovada", "url": "https://example.org/exemplo/fatooufake-pix"}
       ]
     }
   ],
@@ -96,7 +97,7 @@
         "publicada_em": "2026-10-23T21:55:00-03:00",
         "ligada_depois": false,
         "checagens": [
-          {"agencia": "UOL Confere", "data": "2025-08-20", "rotulo": "Verdadeiro", "fonte_rotulo": "dados_da_agencia", "url": "https://example.org/exemplo/uol-desmatamento"}
+          {"agencia": "UOL Confere", "data": "2025-08-20", "rotulo": "Verdadeiro", "fonte_rotulo": "dados_da_agencia", "origem": "aprovada", "url": "https://example.org/exemplo/uol-desmatamento"}
         ]
       }
     },

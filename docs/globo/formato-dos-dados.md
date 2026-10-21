@@ -51,7 +51,7 @@ As duas listas de agências saem de `agencias_do_painel(registros)` em `scripts/
 | `trecho` | texto | citação literal, conferida letra a letra contra a fala |
 | `reformulacao` | texto | reformulação neutra do que foi afirmado |
 | `tipo` | `"numero"` ou `"perene"` | número/estatística ou fato perene; com `"numero"` a página destaca a data da checagem |
-| `origem` | `"aprovada"` ou `"automatica"` | aprovada por uma pessoa ou publicada sozinha acima do limiar |
+| `origem` | `"aprovada"` ou `"automatica"` | como a ligação entrou no painel: aprovada por uma pessoa ou publicada sozinha acima do limiar. Cada checagem tem a sua `origem`: numa ligação publicada sozinha, as checagens que o operador aprovou depois são `"aprovada"` |
 | `publicada_em` | horário | quando entrou no painel |
 | `ligada_depois` | booleano | `true` quando a afirmação estava sem par e ganhou checagem numa atualização da base |
 | `checagens` | lista de checagem, pelo menos 1 | todas as checagens confirmadas, mesmo que discordem |
@@ -64,6 +64,7 @@ As duas listas de agências saem de `agencias_do_painel(registros)` em `scripts/
 | `data` | `"AAAA-MM-DD"` ou `null` | data da checagem |
 | `rotulo` | texto | rótulo exibido, sem tradução nem conversão |
 | `fonte_rotulo` | `"selo_da_pagina"` ou `"dados_da_agencia"` | `selo_da_pagina`: selo visível na página da agência, conferido pelo operador. `dados_da_agencia`: rótulo como veio nos dados (ClaimReview `textualRating` ou prefixo do título do Fato ou Fake); a página mostra "rótulo conforme dados da agência" |
+| `origem` | `"aprovada"` ou `"automatica"` | como esta checagem entrou na ligação: aprovada por uma pessoa ou publicada sozinha acima do limiar; quando as checagens de uma ligação diferem, a página mostra a origem de cada uma |
 | `url` | texto | link para a checagem |
 
 ## Afirmação sem par

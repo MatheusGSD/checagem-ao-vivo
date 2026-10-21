@@ -556,6 +556,7 @@ class Sessao:
             novas = {c["url"]: {"agencia": c["agencia"], "data": c["data"],
                                 "rotulo": selos.get(c["url"]) or c["rotulo"],
                                 "fonte_rotulo": "selo_da_pagina" if c["url"] in selos else "dados_da_agencia",
+                                "origem": "aprovada" if tipo == "aprovacao" else "automatica",
                                 "url": c["url"]}
                      for c in p["checagens"] if c["url"] in e["checagens"]}
             ja = {c["url"]: c for c in lig["checagens"]}

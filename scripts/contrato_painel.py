@@ -94,6 +94,7 @@ CHECAGEM = {
     "data": ou_nulo(dia),  # algumas checagens vêm sem data
     "rotulo": texto,
     "fonte_rotulo": FONTE_ROTULO,
+    "origem": um_de("aprovada", "automatica"),  # como esta checagem entrou na ligação
     "url": texto,
 }
 LIGACAO = {
@@ -103,7 +104,7 @@ LIGACAO = {
     "trecho": texto,
     "reformulacao": texto,
     "tipo": um_de("numero", "perene"),
-    "origem": um_de("aprovada", "automatica"),
+    "origem": um_de("aprovada", "automatica"),  # como a ligação entrou no painel (a 1ª publicação)
     "publicada_em": instante,
     "ligada_depois": booleano,
     "checagens": lista_de(CHECAGEM, minimo=1),
