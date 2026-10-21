@@ -74,3 +74,37 @@ def test_pagina_achada_no_sitemap_guarda_so_metadados_e_da_o_mesmo_registro(tmp_
     assert "Posts falsos manipularam" not in texto  # subtítulo da matéria
     assert len(json.loads(texto.splitlines()[0])["resposta"]) < 1000
     assert le_base(tmp_path) == [r]
+
+
+# ---------- buscador interno do Fact Check Explorer: reserva de emergência, desligada por padrão ----------
+
+VAZIA = ")]}'\n\n[[\"claims_response\"]]"
+
+
+class Explorer:
+    """O buscador interno do Explorer, dublê: a 1ª página de cada busca é a amostra real, a seguinte vem vazia."""
+
+    def __init__(self):
+        self.pedidos = []
+
+    def get(self, url, params=None, timeout=None, **kw):
+        self.pedidos.append((url, dict(params)))
+        texto = fixture("gfce_flavio_p0.txt") if params["offset"] == 0 else VAZIA
+        return SimpleNamespace(status_code=200, text=texto)
+
+
+def test_explorer_de_emergencia_pagina_cada_busca_ate_vir_vazia_e_guarda_o_que_o_normalizador_le(tmp_path):
+    from base_checagens import EXPLORER, coleta_explorer
+
+    explorer = Explorer()
+
+    coleta_explorer(["Flávio Bolsonaro"], tmp_path / "brutos" / "google_explorer" / "coleta.jsonl", http=explorer,
+                    pausa=0, log=lambda m: None)
+
+    assert [(u, p["query"], p["offset"]) for u, p in explorer.pedidos] == [
+        (EXPLORER, "Flávio Bolsonaro", 0), (EXPLORER, "Flávio Bolsonaro", 10)]
+    base = reconstroi(tmp_path)
+    esperado = normaliza("google_explorer", fixture("gfce_flavio_p0.txt"), "x", busca="Flávio Bolsonaro")
+    assert sorted(r["url"] for r in base) == sorted(r["url"] for r in esperado)
+    assert {r["fonte_coleta"] for r in base} == {"google_explorer"}
+    assert all(r["buscas"] == ["Flávio Bolsonaro"] for r in base)

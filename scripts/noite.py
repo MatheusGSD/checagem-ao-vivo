@@ -29,7 +29,7 @@ Uso:
       Continua a sessão da pasta a partir da última fala entregue.
 
 Opções comuns: --dados D (CHECAGEM_DADOS ou data/ do checkout principal) · --pasta P (padrão
-D/sessao_globo) · --porta 8765 · --prompt/--vocabulario (Whisper) · --sem-base · --intervalo-base 600 ·
+D/sessao_globo) · --porta 8765 · --prompt/--vocabulario (Whisper) · --sem-base · --intervalo-base 600 · --explorer-emergencia ·
 --publicar [--repo R] [--remoto origin] [--ramo main] [--intervalo 60].
 """
 import json
@@ -436,6 +436,9 @@ def main(argv=None):
                        help="nomes do debate para o Whisper (JSON com 'termos')")
         p.add_argument("--paralelo", type=int, default=3, help="falas analisadas ao mesmo tempo (padrão 3)")
         p.add_argument("--sem-base", action="store_true", help="não atualiza a base durante a noite")
+        p.add_argument("--explorer-emergencia", action="store_true",
+                       help="reserva de emergência: atualiza a base pelo buscador interno do Fact Check Explorer "
+                            "no lugar da API oficial (desligado por padrão)")
         p.add_argument("--intervalo-base", type=float, default=600, help="segundos entre atualizações (padrão 600)")
         p.add_argument("--publicar", action="store_true", help="envia o painel ao site (publicador.py)")
         p.add_argument("--repo", help="repositório do site (padrão: este)")
@@ -470,8 +473,8 @@ def main(argv=None):
     if not a.sem_base:
         termos = base_checagens.termos_de_busca(Path(base_checagens.RAIZ) / "data" / "buscas_checagens.json")
         atualiza_base = lambda ao_erro: base_checagens.atualiza(  # noqa: E731
-            pasta_base(dados), termos, base_checagens.chave_google(), dias=1, log=lambda m: print(f"[base] {m}", flush=True),
-            ao_erro=ao_erro)
+            pasta_base(dados), termos, None if a.explorer_emergencia else base_checagens.chave_google(), dias=1, log=lambda m: print(f"[base] {m}", flush=True),
+            ao_erro=ao_erro, explorer=a.explorer_emergencia)
 
     if a.cmd == "ao-vivo":
         fabrica = lambda desde: LinhaAoVivo(pasta, transcritor, reconhecedor, a.dispositivo)  # noqa: E731
