@@ -135,6 +135,9 @@ class Sessao:
         self._reconferir = {}
         self._reconferindo = set()  # bases sendo reconferidas agora (não é estado do registro)
         self._em_curso = 0  # chamadas ao Claude em andamento agora (não é estado do registro)
+        # análises que esgotaram as tentativas nesta execução, para refaz_falhas: {(tipo, id): fala ou
+        # afirmação}. Também não é estado do registro: ao reabrir, retoma_analises acha as mesmas pelo registro.
+        self._falharam = {}
         self._por_id = (None, {})  # (tamanho da base, registros por id) de andamento
         self._ultima_base = None
         self._inicio = None  # 00:00 marcado pelo operador (marca_inicio)
@@ -360,7 +363,8 @@ class Sessao:
         return situacao or "fila"
 
     def descartados(self):
-        """Afirmações extraídas e descartadas (trecho que não aparece letra a letra na fala), com o motivo."""
+        """Afirmações extraídas e descartadas (trecho que não aparece letra a letra na fala, ou sem
+        reformulação), com o motivo."""
         return [dict(d) for d in self._descartados]
 
     def erros(self):
@@ -485,6 +489,29 @@ class Sessao:
             for evento in self._analisa(fala):
                 self._registra(evento)
 
+    def falhas_pendentes(self):
+        """Quantas análises (extrações e confirmações) esgotaram as tentativas e esperam refaz_falhas."""
+        with self._trava:
+            return len(self._falharam)
+
+    def refaz_falhas(self):
+        """Refaz, na mesma noite, as análises que esgotaram as tentativas (a API ficou fora mais tempo que
+        as esperas): só elas, e não as que estão em andamento. As que falharem de novo voltam à lista."""
+        with self._trava:
+            falhas, self._falharam = self._falharam, {}
+        for (tipo, _), a in falhas.items():
+            if tipo == "afirmacao" and (evento := self._confirma(a)):
+                self._registra(evento)
+        for (tipo, _), fala in falhas.items():
+            if tipo == "fala":
+                for evento in self._analisa(fala):
+                    self._registra(evento)
+
+    def _falhou(self, a, entre):
+        if entre is None:  # a reconferência da base (ligação tardia) tem o seu próprio caminho de retomada
+            with self._trava:
+                self._falharam[("afirmacao", a["id"])] = a
+
     def exporta(self):
         """O estado no formato do arquivo de dados da página (docs/globo/formato-dos-dados.md)."""
         from contrato_painel import valida
@@ -526,16 +553,25 @@ class Sessao:
                                ESQUEMA_EXTRACAO, {"etapa": "extrair", "fala_id": fala["id"], "quem": fala["quem"],
                                                   "minutagem_s": fala["inicio_s"]})
         if resposta is None:
+            with self._trava:
+                self._falharam[("fala", fala["id"])] = fala
             return []
         saida, reg = resposta
         # a fala que já estava em andamento no 00:00 começa antes dele (inicio_s negativo): no painel, 00:00
         extraidas = [{"id": f"{fala['id']}a{k}", "fala_id": fala["id"], "quem": fala["quem"],
                       "minutagem_s": max(0.0, fala["inicio_s"]), **a}
                      for k, a in enumerate(saida["afirmacoes"], 1)]
-        # como no agente da Band, o trecho tem de estar na fala letra a letra; se não estiver, sai
-        afirmacoes = [a for a in extraidas if a["trecho"].strip() and a["trecho"] in fala["texto"]]
-        descartadas = [{**a, "motivo": "o trecho não aparece letra a letra na fala"}
-                       for a in extraidas if a not in afirmacoes]
+        # como no agente da Band, o trecho tem de estar na fala letra a letra; se não estiver, sai. Sem
+        # reformulação também sai: o painel exige texto não vazio e ficaria fora do contrato.
+        def motivo(a):
+            if not (a["trecho"].strip() and a["trecho"] in fala["texto"]):
+                return "o trecho não aparece letra a letra na fala"
+            if not a["reformulacao"].strip():
+                return "a extração veio sem reformulação"
+            return None
+
+        afirmacoes = [a for a in extraidas if motivo(a) is None]
+        descartadas = [{**a, "motivo": motivo(a)} for a in extraidas if a not in afirmacoes]
         eventos = [{"tipo": "afirmacoes", "fala_id": fala["id"], "afirmacoes": afirmacoes,
                     "descartadas": descartadas, "chamada": reg}]
         # uma chamada por afirmação, em paralelo para não atrasar a fila; os eventos saem na ordem
@@ -555,7 +591,7 @@ class Sessao:
                 return self._chamar(etapa, prompt, conteudo, schema)
             except FALHAS_DO_CLAUDE as e:
                 depois = (f"tenta de novo em {self._esperas[k]:g} s" if k < len(self._esperas)
-                          else "fica para quando a sessão for reaberta")
+                          else "a noite tenta de novo daqui a pouco")
                 self._registra({"tipo": "erro", **erro, "tentativa": k + 1, "tentativas": tentativas,
                                 "mensagem": f"{type(e).__name__}: {e} (tentativa {k + 1} de {tentativas}; {depois})"})
                 if k < len(self._esperas):
@@ -576,6 +612,7 @@ class Sessao:
             candidatas = [r for _, r in self.indice.busca(a["reformulacao"], N_CANDIDATAS, desde=desde, entre=entre)]
         except Exception as e:  # noqa: BLE001 - a fala segue; o operador vê na tela
             self._registra({"tipo": "erro", **erro, "mensagem": f"{type(e).__name__}: {e}"})
+            self._falhou(a, entre)
             return None
         if not candidatas:
             return {"tipo": "confirmacao", "afirmacao": a, "candidatas": [], "confirmadas": [],
@@ -587,6 +624,7 @@ class Sessao:
                     f"  reformulação: {a['reformulacao']}\n  tipo: {a['tipo']}\n\nCandidatas:\n" + "\n".join(linhas))
         resposta = self._tenta(f"confirmar_{a['id']}", CONFIRMAR, conteudo, ESQUEMA_CONFIRMACAO, erro)
         if resposta is None:
+            self._falhou(a, entre)
             return None
         saida, reg = resposta
         por_url = {r["url"]: r for r in candidatas}

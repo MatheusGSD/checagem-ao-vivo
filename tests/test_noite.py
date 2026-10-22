@@ -324,3 +324,82 @@ def test_a_base_atualiza_em_segundo_plano_e_liga_o_que_estava_sem_par(registros,
     assert [(e["etapa"], e["mensagem"]) for e in noite.sessao.erros()] == [
         ("base", "API do Google: 3 de 200 buscas falharam (HTTP 503)"),
         ("base", "a atualização da base falhou (ConnectionError: sem rede)")]
+
+
+class LinhaComPortao(LinhaFalsa):
+    """Entrega as falas até `parar_em`, espera o portão abrir e entrega o resto (como a linha de verdade,
+    em que as falas depois de remarcar o 00:00 já vêm contadas do zero novo)."""
+
+    def __init__(self, falas, desde=None, parar_em=1, **kw):
+        super().__init__(falas, desde, espera_parar=True, **kw)
+        self.parar_em, self.portao = parar_em, threading.Event()
+
+    def __iter__(self):
+        for k, f in enumerate(self.falas):
+            while k == self.parar_em and not self.portao.wait(0.05):
+                if self._parar.is_set():
+                    return
+            if self._parar.is_set():
+                return
+            self._ultimo_audio = time.time()
+            yield f
+        self._parar.wait()
+
+
+def test_remarcar_o_00_00_mais_tarde_nao_descarta_as_falas_seguintes(indice, tmp_path):
+    antes = Fala("Mediação", 680.0, 700.0, FALA_MEDIACAO)  # pré-estreia, com o 00:00 marcado cedo demais
+    depois = Fala("Lula", 5.0, 17.0, FALA_DESEMPREGO)  # já contada do 00:00 remarcado 690 s depois
+    linhas = []
+    noite = Noite(tmp_path, indice, lambda desde: linhas.append(LinhaComPortao([antes, depois], desde)) or linhas[-1],
+                  chamar=Claude({FALA_DESEMPREGO: [DESEMPREGO]}), relogio=Relogio(INICIO))
+    noite.sessao.marca_inicio(INICIO)
+    noite.comeca()
+    ate(lambda: noite._n_falas == 1)
+
+    noite.sessao.marca_inicio(INICIO + timedelta(seconds=690))  # "Remarcar 00:00" na tela
+    linhas[0].portao.set()
+
+    ate(lambda: noite._n_falas == 2)
+    noite.encerra()
+    entregues = [json.loads(x) for x in (tmp_path / "falas.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert [f["texto"] for f in entregues] == [FALA_MEDIACAO, FALA_DESEMPREGO]
+
+    # reaberta, a noite segue do fim da última fala no 00:00 remarcado, não do maior fim de antes dele
+    linhas.clear()
+    reaberta = Noite(tmp_path, indice, lambda desde: linhas.append(LinhaComPortao([], desde)) or linhas[-1],
+                     chamar=Claude({}), relogio=Relogio(INICIO))
+    reaberta.comeca()
+    ate(lambda: linhas)
+    assert linhas[0].desde == 17.0
+    reaberta.encerra()
+
+
+def test_fala_cortada_no_meio_da_gravacao_nao_impede_a_noite_de_reabrir(indice, tmp_path):
+    (tmp_path / "falas.jsonl").write_text(
+        json.dumps({"quem": "Lula", "inicio_s": 300.0, "fim_s": 312.0, "texto": FALA_DESEMPREGO}) + "\n"
+        + '{"quem": "Flávio", "inicio_s": 900.0, "fim', encoding="utf-8")  # janela fechada no meio
+    linhas = Linhas([Fala("Flávio", 900.0, 905.0, FALA_PIX)], espera_parar=True)
+    primeira = Noite(tmp_path, indice, linhas, chamar=Claude({FALA_PIX: [PIX]}), relogio=Relogio(INICIO))
+    primeira.comeca()
+    ate(lambda: primeira._n_falas == 1)
+    primeira.encerra()
+
+    segunda = Noite(tmp_path, indice, Linhas([], espera_parar=True), chamar=Claude({}), relogio=Relogio(INICIO))
+
+    assert segunda._ultimo_fim == 905.0
+    segunda.encerra()
+
+
+def test_analise_que_esgotou_as_tentativas_e_refeita_pela_noite_sem_reabrir(indice, tmp_path):
+    from test_sessao import SEM_ESPERA, ClaudeInstavel
+    claude = ClaudeInstavel({FALA_PIX: [PIX]}, {("extracao", FALA_PIX): 3})  # a API fora mais que 3 tentativas
+    linhas = Linhas([Fala("Flávio", 900.0, 905.0, FALA_PIX)], espera_parar=True)
+    noite = Noite(tmp_path, indice, linhas, chamar=claude, relogio=Relogio(INICIO), esperas_entre_tentativas=SEM_ESPERA,
+                  intervalo_refazer=0.05)
+    noite.sessao.marca_inicio(INICIO)
+    noite.comeca()
+
+    ate(lambda: noite.sessao.fila())
+    noite.encerra()
+    assert [p["trecho"] for p in noite.sessao.fila()] == [PIX["trecho"]]
+    assert claude.extracoes() == 4

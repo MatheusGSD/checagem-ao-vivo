@@ -64,7 +64,7 @@ class Noite:
                  recomeca_se_acabar=False, reinicios=20, espera_reinicio=5.0, atualiza_base=None,
                  intervalo_base=600.0, porta=None, publicador=None, alerta_sem_fala_s=None, log=print,
                  esperas_entre_tentativas=None, relogio_da_gravacao=False, carregar=None, preparo=None,
-                 destino=None):
+                 destino=None, intervalo_refazer=120.0):
         """pasta: pasta da sessão. fabrica_linha(desde_s) -> linha de falas (iterável de falas.Fala, com
         marcar_zero(instante) e parar()) que entrega só as falas que terminam depois de `desde_s` (segundos
         desde o 00:00; None = do começo). chamar, relogio, meta: os da Sessao. recomeca_se_acabar: ao vivo,
@@ -82,23 +82,29 @@ class Noite:
         carregar() -> modelos (Whisper, vozes...), rodado em segundo plano por `abre`; o resultado fica em
         `self.modelos` e o Começar só vale depois dele. preparo: a lista que a tela mostra antes do Começar
         (preparo.Preparo: itens() e parar(), chamado antes de a captura abrir o dispositivo). destino: para
-        onde a noite publica ({"tipo": "real" | "ensaio" | "nenhum", "url": página}), sempre na tela."""
+        onde a noite publica ({"tipo": "real" | "ensaio" | "nenhum", "url": página}), sempre na tela.
+        intervalo_refazer: de quanto em quanto tempo (s) as análises que esgotaram as tentativas são refeitas."""
         self.pasta = Path(pasta)
         self.pasta.mkdir(parents=True, exist_ok=True)
         self._fabrica_linha = fabrica_linha
         self._recomeca_se_acabar = recomeca_se_acabar
         self._reinicios, self._espera_reinicio = reinicios, espera_reinicio
         self._atualiza_base, self._intervalo_base = atualiza_base, intervalo_base
+        self._intervalo_refazer = intervalo_refazer
         self._log = log
         self.publicador = publicador
-        self._ja_entregues = le_jsonl(self.pasta / "falas.jsonl")  # falas de rodadas anteriores
-        # fim (s desde o 00:00) da última fala entregue à sessão: a linha nova segue dali
-        self._ultimo_fim = max((f["fim_s"] for f in self._ja_entregues), default=None)
+        # falas de rodadas anteriores; uma fala cortada pelo fechamento da janela sai do arquivo, senão a
+        # próxima gravação grudaria nela e o arquivo não abriria mais
+        self._ja_entregues = le_jsonl(self.pasta / "falas.jsonl", corta_incompleta=True)
         self.sessao = Sessao.abre(self.pasta, indice, chamar=chamar, relogio=relogio, meta=meta,
                                   ao_mudar_publicado=self._mudou_publicado, ao_marcar_inicio=self._zero_da_linha,
                                   aquecimento_pela_gravacao=relogio_da_gravacao,
                                   **({"esperas_entre_tentativas": esperas_entre_tentativas}
                                      if esperas_entre_tentativas is not None else {}))
+        # fim (s desde o 00:00) da última fala entregue à sessão: a linha nova segue dali. Fala gravada com
+        # outro 00:00 (antes de remarcar) é trazida para o 00:00 de agora.
+        self._zero_em = self._inicio()
+        self._ultimo_fim = max((f["fim_s"] - self._desvio(f.get("zero")) for f in self._ja_entregues), default=None)
         self._analises = ThreadPoolExecutor(max_workers=paralelo, thread_name_prefix="analise")
         self._falas = (self.pasta / "falas.jsonl").open("a", encoding="utf-8")
         self._trava = threading.Lock()
@@ -167,6 +173,7 @@ class Noite:
         if self._alerta_sem_fala_s:
             self._inicia(self._vigia, "vigia")
         self._inicia(self._roda_linha, "linha")
+        self._inicia(self._refaz_falhas, "refaz")
         if self._atualiza_base:
             self._inicia(self._roda_base, "base")
         return True
@@ -368,9 +375,21 @@ class Noite:
                 self.sessao.registra_erro("audio", f"nenhuma fala há {parado:.0f} s depois do 00:00: o g1 está "
                                                    "tocando, com som, no dispositivo de saída padrão?")
 
+    def _desvio(self, zero):
+        """Segundos entre o 00:00 `zero` (ISO, o de uma fala gravada) e o 00:00 de agora."""
+        if not zero or not self._zero_em:
+            return 0.0
+        return (self._zero_em - datetime.fromisoformat(zero)).total_seconds()
+
     def _zero_da_linha(self, instante):
+        """00:00 marcado ou remarcado. Remarcado, as falas seguintes vêm contadas do zero novo: o fim da
+        última fala entregue passa para ele, senão as falas novas (de fim menor) seriam descartadas como
+        já entregues até o relógio novo alcançar o antigo."""
         self._ultimo_sinal = time.monotonic()
         with self._trava:
+            if self._zero_em and self._ultimo_fim is not None:
+                self._ultimo_fim -= (instante - self._zero_em).total_seconds()
+            self._zero_em = instante
             if self._linha:
                 self._linha.marcar_zero(instante)
 
@@ -378,7 +397,8 @@ class Noite:
         if self._ultimo_fim is not None and fala.fim_s <= self._ultimo_fim:
             return  # já entregue por uma linha anterior
         with self._trava:
-            self._falas.write(json.dumps({**asdict(fala), "entregue_em": _agora()}, ensure_ascii=False) + "\n")
+            zero = {"zero": self._zero_em.isoformat()} if self._zero_em else {}
+            self._falas.write(json.dumps({**asdict(fala), "entregue_em": _agora(), **zero}, ensure_ascii=False) + "\n")
             self._falas.flush()
             os.fsync(self._falas.fileno())
             self._ultimo_fim = fala.fim_s
@@ -396,6 +416,17 @@ class Noite:
             self.sessao.recebe_fala(quem, inicio_s, texto, atraso_s=atraso_s)
         except Exception as e:  # noqa: BLE001
             self.sessao.registra_erro("sessao", f"fala de {quem} em {inicio_s:.0f} s: {type(e).__name__}: {e}")
+
+    def _refaz_falhas(self):
+        """A cada `intervalo_refazer` s, refaz as análises que esgotaram as tentativas (API do Claude fora
+        do ar por um tempo): sem isso, só reabrir a janela as refaria, perdendo o áudio do intervalo."""
+        self._pronto.wait()
+        while not self._parar.wait(self._intervalo_refazer):
+            if self.sessao.falhas_pendentes():
+                try:
+                    self.sessao.refaz_falhas()
+                except Exception as e:  # noqa: BLE001
+                    self.sessao.registra_erro("sessao", f"refazer análises: {type(e).__name__}: {e}")
 
     # ---------- base ----------
 

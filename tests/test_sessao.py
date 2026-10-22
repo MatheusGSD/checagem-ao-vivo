@@ -147,6 +147,21 @@ def test_trecho_que_nao_e_literal_e_descartado_e_registrado(indice):
     assert claude.confirmacoes() == 0
 
 
+def test_afirmacao_sem_reformulacao_e_descartada_e_o_painel_segue_dentro_do_contrato(indice):
+    # o esquema da extração aceita texto vazio; uma reformulação vazia no painel deixaria a sessão sem
+    # conseguir exportar (nem reabrir), porque o contrato exige texto não vazio
+    vazia = afirmacao("o desemprego é o menor da história do IBGE", "  ", "numero")
+    claude = Claude({FALA_DESEMPREGO: [vazia]})
+    s = sessao(indice, claude)
+
+    s.recebe_fala("Lula", 300.0, FALA_DESEMPREGO)
+
+    assert s.exporta()["sem_par"] == [] and s.fila() == []
+    [d] = s.descartados()
+    assert d["trecho"] == "o desemprego é o menor da história do IBGE"
+    assert claude.confirmacoes() == 0
+
+
 def test_afirmacao_numerica_nao_liga_com_checagem_anterior_a_2025(indice):
     # o dublê confirmaria as checagens antigas se elas chegassem até ele
     desemprego = afirmacao("o desemprego é o menor da história do IBGE",
@@ -954,6 +969,35 @@ def test_confirmacao_que_falhou_em_todas_as_tentativas_e_refeita_ao_reabrir_sem_
 
     assert [p["trecho"] for p in reaberta.fila()] == [PIX["trecho"]]
     assert (claude.extracoes(), claude.confirmacoes()) == (0, 1)
+
+
+def test_analise_que_falhou_em_todas_as_tentativas_e_refeita_na_mesma_noite_sem_reabrir(indice):
+    # a API fora do ar por mais tempo que as tentativas: a fala não pode ficar sem análise até alguém
+    # fechar e reabrir a janela (o que perde o áudio desse intervalo)
+    claude = ClaudeInstavel({FALA_PIX: [PIX], FALA_DESEMPREGO: [DESEMPREGO]},
+                            {("extracao", FALA_PIX): 3, ("confirmacao", DESEMPREGO["trecho"]): 3})
+    s = Sessao(indice, chamar=claude, relogio=relogio, esperas_entre_tentativas=SEM_ESPERA)
+    s.recebe_fala("Flávio", 800.0, FALA_PIX)
+    s.recebe_fala("Lula", 900.0, FALA_DESEMPREGO)
+    assert s.fila() == [] and s.falhas_pendentes() == 2
+
+    s.refaz_falhas()
+
+    assert sorted(p["trecho"] for p in s.fila()) == sorted([PIX["trecho"], DESEMPREGO["trecho"]])
+    assert s.falhas_pendentes() == 0
+    assert (claude.extracoes(), claude.confirmacoes()) == (3 + 1 + 1, 1 + 3 + 1)  # nada repetido além da falha
+    s.refaz_falhas()  # sem falhas pendentes, não chama o Claude
+    assert (claude.extracoes(), claude.confirmacoes()) == (5, 5)
+
+
+def test_falha_que_continua_volta_para_as_pendentes(indice):
+    claude = ClaudeInstavel({FALA_PIX: [PIX]}, {("extracao", FALA_PIX): 99})
+    s = Sessao(indice, chamar=claude, relogio=relogio, esperas_entre_tentativas=SEM_ESPERA)
+    s.recebe_fala("Flávio", 800.0, FALA_PIX)
+
+    s.refaz_falhas()
+
+    assert s.falhas_pendentes() == 1 and claude.extracoes() == 6
 
 
 def test_reconferencia_da_base_que_falhou_e_refeita_ao_reabrir():
