@@ -5,8 +5,8 @@ Para cada fala de candidato: o Claude extrai as afirmações checáveis (prompts
 a base é consultada por sentido e o Claude confirma quais candidatas tratam da mesma afirmação
 (prompts/confirmar_ligacao.md). Ligações confirmadas vão para a fila; afirmações sem nenhuma
 confirmada ficam "sem par". A cada atualização da base (`atualiza_base`), as afirmações sem par são
-conferidas de novo contra os registros novos (ligação tardia). O estado sai no formato do arquivo de
-dados da página (docs/globo/formato-dos-dados.md).
+conferidas de novo contra os registros novos que entrariam entre as candidatas delas (ligação tardia).
+O estado sai no formato do arquivo de dados da página (docs/globo/formato-dos-dados.md).
 
 Todo o estado muda por eventos (`Sessao.eventos`, também entregues a `ao_registrar`), que levam o que
 o Claude respondeu: repetir os eventos reconstrói o estado sem chamar o Claude de novo
@@ -206,7 +206,8 @@ class Sessao:
     def atualiza_base(self, registros):
         """Novos registros de checagem (atualização da base durante o debate, ver
         base_checagens.atualiza): entram na base e as afirmações sem par são conferidas de novo só
-        contra eles (ligação tardia). As que ganham par seguem o caminho de qualquer ligação."""
+        contra eles, e só quando um deles entraria entre as candidatas da afirmação (ligação tardia).
+        As que ganham par seguem o caminho de qualquer ligação."""
         ja = {r["id"] for r in self.indice.registros}
         novos = list({r["id"]: r for r in registros if r["id"] not in ja}.values())
         if not novos:
@@ -609,7 +610,11 @@ class Sessao:
         # números mudam com o tempo: só valem checagens recentes; fatos perenes valem de qualquer data
         desde = NUMERO_DESDE if a["tipo"] == "numero" else None
         try:
-            candidatas = [r for _, r in self.indice.busca(a["reformulacao"], N_CANDIDATAS, desde=desde, entre=entre)]
+            # na ligação tardia, só os registros novos que estariam entre as candidatas se já estivessem na
+            # base na hora da fala: a semelhança não separa "mesma afirmação" de "mesmo assunto", então
+            # sem esse corte cada atualização da base chamaria o Claude para quase todas as sem par
+            candidatas = [r for _, r in self.indice.busca(a["reformulacao"], N_CANDIDATAS, desde=desde)
+                          if entre is None or r["id"] in entre]
         except Exception as e:  # noqa: BLE001 - a fala segue; o operador vê na tela
             self._registra({"tipo": "erro", **erro, "mensagem": f"{type(e).__name__}: {e}"})
             self._falhou(a, entre)

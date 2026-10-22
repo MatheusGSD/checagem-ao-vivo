@@ -14,6 +14,7 @@ import pytest
 from agente import RespostaInvalida
 from base_checagens import Indice
 from contrato_painel import valida
+import sessao as sessao_mod
 from sessao import Sessao
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -1058,3 +1059,28 @@ def test_atualizacao_da_base_interrompida_no_meio_termina_ao_retomar_sem_refazer
     feitas = len(claude_original.chamadas)
     original.retoma_analises()  # a atualização que terminou não é refeita
     assert len(claude_original.chamadas) == feitas
+
+
+def test_ligacao_tardia_so_chama_o_claude_para_a_afirmacao_que_teria_a_checagem_nova_entre_as_candidatas(monkeypatch):
+    # a base de exemplo tem só 20 checagens: com 8 candidatas, quase toda checagem nova entraria entre elas
+    monkeypatch.setattr(sessao_mod, "N_CANDIDATAS", 2)
+    registros = json.loads((FIXTURES / "base_sessao.json").read_text(encoding="utf-8"))["registros"]
+    licenca = afirmacao("votou contra a licença-maternidade de seis meses",
+                        "Flávio Bolsonaro votou contra a licença-maternidade de seis meses na Alerj em 2009.", "perene")
+    gasolina = afirmacao("a gasolina caiu trinta por cento no posto em um ano",
+                         "O preço da gasolina caiu 30% em um ano no governo Bolsonaro.", "numero",
+                         {GASOLINA_NOITE_URL: (0.85, "Mesmo número.")})
+    claude = Claude({FALA_LICENCA: [licenca], FALA_GASOLINA: [gasolina]})
+    s = Sessao(Indice(registros), chamar=claude, relogio=relogio)
+    s.recebe_fala("Lula", 1500.0, FALA_LICENCA)
+    s.recebe_fala("Flávio", 1530.0, FALA_GASOLINA)
+    assert len(s.exporta()["sem_par"]) == 2
+    antes = claude.confirmacoes()
+
+    s.atualiza_base([GASOLINA_NOITE])
+
+    # a checagem da gasolina não estaria entre as candidatas da licença: só a gasolina volta ao Claude
+    assert claude.confirmacoes() == antes + 1
+    [lig] = s.fila()
+    assert (lig["trecho"], lig["ligada_depois"]) == (gasolina["trecho"], True)
+    assert [a["trecho"] for a in s.exporta()["sem_par"]] == [licenca["trecho"]]
