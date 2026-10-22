@@ -121,8 +121,8 @@ class Publicador:
                 continue
             try:
                 commit = self._envia(conteudo, dados)
-            except ErroGit as e:
-                self._falhou(str(e))
+            except Exception as e:  # noqa: BLE001 - a thread não pode morrer: sem ela nada mais vai ao site
+                self._falhou(str(e) if isinstance(e, ErroGit) else f"{type(e).__name__}: {e}")
                 if parar:
                     return
                 self._proximo = time.monotonic() + self.espera_erro

@@ -156,6 +156,28 @@ def test_falha_de_push_aparece_e_a_ultima_mudanca_sai_quando_o_remoto_volta(tmp_
     assert "voltou a funcionar" in erros[1]
 
 
+def test_erro_inesperado_no_envio_aparece_e_o_publicador_continua_vivo(remoto, abre, monkeypatch):
+    # qualquer exceção que não seja do git (ex.: a pasta temporária do índice que o Windows não deixa
+    # apagar) mataria a thread em silêncio, e nada mais iria para o site pelo resto da noite
+    nu, repo = remoto
+    erros = []
+    p = abre(repo, intervalo=0, espera_erro=0.2, ao_erro=erros.append)
+    original, vezes = p._envia, []
+
+    def envia_que_falha_uma_vez(*a):
+        vezes.append(1)
+        if len(vezes) == 1:
+            raise PermissionError("[WinError 32] o arquivo já está sendo usado por outro processo")
+        return original(*a)
+
+    monkeypatch.setattr(p, "_envia", envia_que_falha_uma_vez)
+    p.notifica(dados(1))
+
+    ate(lambda: len(commits(nu)) == 2)
+    assert publicado(nu) == dados(1)
+    assert "PermissionError" in erros[0]
+
+
 def test_situacao_diz_o_ultimo_envio_e_a_falha_em_curso_para_a_tela(tmp_path, remoto, abre):
     nu, repo = remoto
     p = abre(repo, intervalo=0, espera_erro=0.3, ao_erro=lambda m: None)
