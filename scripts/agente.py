@@ -32,6 +32,11 @@ PROMPTS = RAIZ / "prompts"
 LOGS = RAIZ / "data" / "agente"
 MODELO = "claude-opus-5-5"
 ESFORCO = "high"
+# no ao vivo, uma conexão que trava em silêncio (Wi-Fi) prenderia a análise pelos 10 min padrão do SDK, mais
+# 2 tentativas: com o stream, `read` é o silêncio máximo entre dois pedaços (a API manda ping enquanto pensa).
+# Quem tenta de novo é a sessão (esperas_entre_tentativas), e cada falha aparece na tela.
+TEMPO_LIMITE = anthropic.Timeout(600.0, connect=10.0, read=180.0)
+TENTATIVAS_DO_SDK = 1
 TIPOS = ["ataque", "defesa", "proposta", "outro"]
 TEMAS = ["Caso Vorcaro", "Fraude no INSS", "Lulinha e Luchsinger", "Família Bolsonaro", "Mentira e credibilidade",
          "Corrupção em geral", "Segurança e armas", "Economia e dívidas", "Bolsa Família", "PF e Judiciário",
@@ -60,7 +65,7 @@ def chama(etapa, prompt, conteudo, schema, logs=None, modelo=None):
     (saída, registro). `modelo` padrão: MODELO (o da análise da Band)."""
     modelo = modelo or MODELO
     system = (PROMPTS / prompt).read_text(encoding="utf-8")
-    with anthropic.Anthropic().beta.messages.stream(
+    with anthropic.Anthropic(timeout=TEMPO_LIMITE, max_retries=TENTATIVAS_DO_SDK).beta.messages.stream(
         model=modelo,
         max_tokens=64000,
         betas=["server-side-fallback-2026-07-01"],
