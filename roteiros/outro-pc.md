@@ -13,6 +13,7 @@ Os itens abaixo ficam fora do git de propósito (`.gitignore`). Copie-os do note
 | `.env` | `ANTHROPIC_API_KEY` e `GOOGLE_FACTCHECK_KEY` | o Claude não roda |
 | `data/vozes/` | perfis de voz de Lula e Flávio (`perfis.json`) | `noite.py` não sobe (`Reconhecedor.carregar`) |
 | `data/checagens/` (~26 MB) | base de checagens e vetores e5 | nenhuma ligação com checagens; refazer com `scripts/base_checagens.py` leva tempo e usa a chave do Google |
+| `data/avaliacao/limiar.json` | nota mínima para aprovar ligação sozinha | a publicação automática fica desligada |
 | `data/vocabulario_globo.json` | termos da Globo para o Whisper | roda com o vocabulário da Band e mostra um aviso |
 
 O restante de `data/` (áudio e transcrições da Band, avaliações, sessões antigas) só serve para refazer medições. Não precisa copiar.
@@ -23,7 +24,7 @@ O restante de `data/` (áudio e transcrições da Band, avaliações, sessões a
 2. **Pacotes.** O torch roda em CPU (`device="cpu"` em `falas.py` e `vozes.py`), então a versão CPU basta:
 
    ```powershell
-   python -m pip install --user anthropic numpy scikit-learn faster-whisper speechbrain torch torchaudio sentence-transformers pyaudiowpatch soxr soundfile pytest
+   python -m pip install --user anthropic numpy scikit-learn faster-whisper speechbrain torch torchaudio sentence-transformers pyaudiowpatch soxr soundfile silero-vad openpyxl pytest
    ```
 
    Versões do notebook principal, caso alguma mais nova quebre: anthropic 1.15.0, faster-whisper 1.2.1, speechbrain 1.1.2, sentence-transformers 5.3.0, numpy 2.3.5, scikit-learn 1.8.0, PyAudioWPatch 0.2.12.9.

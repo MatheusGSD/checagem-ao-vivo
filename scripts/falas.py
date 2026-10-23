@@ -194,6 +194,7 @@ class FonteLoopback:
     def anota(self, **campos):
         """Acrescenta campos ao arquivo .json ao lado da gravação (ex.: o 00:00 marcado)."""
         self.info.update(campos)
+        self.gravar_em.parent.mkdir(parents=True, exist_ok=True)
         self.gravar_em.with_suffix(".json").write_text(json.dumps(self.info, ensure_ascii=False, indent=1),
                                                          encoding="utf-8")
 
